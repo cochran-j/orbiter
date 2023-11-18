@@ -3,6 +3,9 @@
 #include "QPainter"
 #include "QResizeEvent"
 
+#include <limits>
+#include <algorithm>
+
 Colorbar::Colorbar(QWidget *parent)
 	: QWidget(parent)
 {
@@ -160,8 +163,8 @@ void ColorbarOverlay::paintEvent(QPaintEvent *event)
 	char cbuf[1024];
 
 	if (m_mode == TILEMODE_ELEVATION || m_mode == TILEMODE_ELEVMOD) {
-		if (m_val != DBL_MAX) {
-			int x = max(1, min(w - 2, (m_val - m_vmin) / (m_vmax - m_vmin) * w));
+		if (m_val != std::numeric_limits<double>::max()) {
+			int x = std::max(1.0, std::min(static_cast<double>(w - 2), (m_val - m_vmin) / (m_vmax - m_vmin) * w));
 			painter.setPen(m_penIndicator0);
 			painter.drawLine(x, 0, x, cbh - 1);
 			painter.setPen(m_penIndicator1);
@@ -174,7 +177,7 @@ void ColorbarOverlay::paintEvent(QPaintEvent *event)
 		sprintf(cbuf, "%+0.1lf m", m_vmax);
 		QString qs(cbuf);
 		painter.drawText(w - fm.width(qs), h-2, qs);
-		if (m_val != DBL_MAX)
+		if (m_val != std::numeric_limits<double>::max())
 			sprintf(cbuf, "%+0.1lf m", m_val);
 		else
 			strcpy(cbuf, "N/A");

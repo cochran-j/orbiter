@@ -1,10 +1,15 @@
-#include <windows.h>
 #include <vector>
 #include <algorithm>
+#include <cstring>
+#include <cstdint>
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <png.h>
 #include "elv_io.h"
+
+using UINT8 = std::uint8_t;
+using INT16 = std::int16_t;
 
 #pragma pack(push,1)
 
@@ -38,7 +43,7 @@ ElevData elvread(const char *fname)
 		return edata;
 
 	int res = fread(&hdr, sizeof(ELEVFILEHEADER), 1, f);
-	if (res != 1 || strncmp(hdr.id, "ELE\01", 4))
+	if (res != 1 || std::strncmp(hdr.id, "ELE\01", 4))
 		return edata;
 
 	if (hdr.hdrsize != sizeof(ELEVFILEHEADER)) {
@@ -451,7 +456,7 @@ void elvwrite_png(const char *fname, const ElevData &edata, double vmin, double 
 		for (int iw = 0; iw < w; iw++) {
 			double v = edata.data[iw + ih*w];
 			double vmap = (v - vmin)*scale;
-			vmap = max(0.0, min(v16max, vmap));
+			vmap = std::max(0.0, std::min(v16max, vmap));
 			buf[idx++] = (unsigned short)vmap;
 		}
 	}

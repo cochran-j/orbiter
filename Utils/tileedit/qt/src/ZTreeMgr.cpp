@@ -1,3 +1,6 @@
+#include <cstring>
+#include <cstdint>
+
 #include "ZTreeMgr.h"
 #include "zlib.h"
 
@@ -31,13 +34,13 @@ bool TreeFileHeader::fread(FILE *f)
 {
 	BYTE buf[4];
 	DWORD sz, flags;
-	if (::fread(buf, 1, 4, f) < 4 || memcmp(buf, magic, 4))
+	if (::fread(buf, 1, 4, f) < 4 || std::memcmp(buf, magic, 4))
 		return false;
 	if (::fread(&sz, sizeof(DWORD), 1, f) != 1 || sz != size)
 		return false;
 	::fread(&flags, sizeof(DWORD), 1, f);
 	::fread(&dataOfs, sizeof(DWORD), 1, f);
-	::fread(&dataLength, sizeof(__int64), 1, f);
+	::fread(&dataLength, sizeof(std::int64_t), 1, f);
 	::fread(&nodeCount, sizeof(DWORD), 1, f);
 	::fread(&rootPos1, sizeof(DWORD), 1, f);
 	::fread(&rootPos2, sizeof(DWORD), 1, f);
@@ -131,7 +134,7 @@ bool ZTreeMgr::OpenArchive()
 	rootPos3 = tfh.rootPos3;
 	for (int i = 0; i < 2; i++)
 		rootPos4[i] = tfh.rootPos4[i];
-	dofs = (__int64)tfh.dataOfs;
+	dofs = (std::int64_t)tfh.dataOfs;
 
 	if (!toc.fread(tfh.nodeCount, treef)) {
 		fclose(treef);
@@ -171,8 +174,14 @@ DWORD ZTreeMgr::ReadData(DWORD idx, BYTE **outp) const
 	if (!esize) // node doesn't have data, but has descendants with data
 		return 0;
 
+    /* TODO(jec) */
+#ifdef _WIN32
 	if (_fseeki64(treef, toc[idx].pos+dofs, SEEK_SET))
 		return 0;
+#else
+    if (fseeko64(treef, toc[idx].pos+dofs, SEEK_SET))
+        return 0;
+#endif
 
 	DWORD zsize = NodeSizeDeflated(idx);
 	BYTE *zbuf = new BYTE[zsize];	
@@ -196,8 +205,10 @@ DWORD ZTreeMgr::ReadData(DWORD idx, BYTE **outp) const
 DWORD ZTreeMgr::Inflate(const BYTE *inp, DWORD ninp, BYTE *outp, DWORD noutp) const
 {
 	DWORD ndata = noutp;
+    /* TODO(jec):  zlib
 	if (uncompress (outp, &ndata, inp, ninp) != Z_OK)
 		return 0;
+    */
 	return ndata;
 }
 

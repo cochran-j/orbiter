@@ -8,6 +8,9 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+find_package(PNG REQUIRED)
+find_package(ZLIB REQUIRED)
+
 if(CMAKE_VERSION VERSION_LESS "3.7.0")
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
 endif()
@@ -46,8 +49,11 @@ add_dependencies(tileedit
 
 target_include_directories(tileedit PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}/../extern/libpng/include
-	${CMAKE_CURRENT_SOURCE_DIR}/../extern/zlib/include
+    # TODO(jec):  Integrate with zlib and libpng packages
+    # ${CMAKE_CURRENT_SOURCE_DIR}/../extern/libpng/include
+    # ${CMAKE_CURRENT_SOURCE_DIR}/../extern/zlib/include
+    ${PNG_INCLUDE_DIR}
+    ${ZLIB_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/../extern/fastdxt
 )
 
@@ -55,9 +61,16 @@ target_link_libraries(tileedit
 	Qt5::Widgets
 	Qt5::Core
 	Qt5::Gui
-	${CMAKE_CURRENT_SOURCE_DIR}/../extern/zlib/lib/zlib.lib
-	${CMAKE_CURRENT_SOURCE_DIR}/../extern/libpng/lib/libpng16_static.lib
+    # TODO(jec):  Integrate with zlib and libpng packages.
+    # ${CMAKE_CURRENT_SOURCE_DIR}/../extern/zlib/lib/zlib.lib
+    # ${CMAKE_CURRENT_SOURCE_DIR}/../extern/libpng/lib/libpng16_static.lib
+    ${PNG_LIBRARY}
+    ${ZLIB_LIBRARY}
 	${FASTDXT_LIB}
+)
+
+target_compile_options(tileedit
+    PUBLIC "-std=c++17"
 )
 
 set_target_properties(tileedit
@@ -70,8 +83,14 @@ add_custom_command(TARGET tileedit
 	POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/tmp
 	COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:tileedit> ${CMAKE_CURRENT_BINARY_DIR}/tmp
-	COMMAND ${Qt5_DIR}/../../../bin/windeployqt ${CMAKE_CURRENT_BINARY_DIR}/tmp/$<TARGET_FILE_NAME:tileedit>
 )
+
+if(WIN32)
+    add_custom_command(TARGET tileedit
+        COMMAND ${Qt5_DIR}/../../../bin/windeployqt ${CMAKE_CURRENT_BINARY_DIR}/tmp/$<TARGET_FILE_NAME:tileedit>
+    )
+endif()
+
 
 # Installation - this is currently skipped
 

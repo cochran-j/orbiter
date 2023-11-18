@@ -1,4 +1,6 @@
 #include <iostream>
+#include <algorithm>
+
 #include "tilecanvas.h"
 #include "tileedit.h"
 #include "QPainter"
@@ -224,9 +226,9 @@ void TileCanvas::setTileBlock(const TileBlock *tileBlock, TileMode mode)
 	else if (m_tileedit) {
 		m_lvl = m_tileedit->m_lvl;
 		m_ilat0 = m_tileedit->m_ilat;
-		m_ilat1 = min(nLat(m_lvl), m_ilat0 + m_tileedit->m_blocksize);
+		m_ilat1 = std::min(nLat(m_lvl), m_ilat0 + m_tileedit->m_blocksize);
 		m_ilng0 = m_tileedit->m_ilng;
-		m_ilng1 = min(nLng(m_lvl), m_ilng0 + m_tileedit->m_blocksize);
+		m_ilng1 = std::min(nLng(m_lvl), m_ilng0 + m_tileedit->m_blocksize);
 	}
 
 	if (m_glyphMode == GLYPHMODE_NAVIGATE) {

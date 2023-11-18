@@ -7,13 +7,16 @@
 #define __ZTREEMGR_H
 
 #include <iostream>
-#include <windows.h>
+#include <cstdint>
+
+using DWORD = std::uint32_t;
+using BYTE = std::uint8_t;
 
 // =======================================================================
 // Tree node structure
 
 struct TreeNode {
-	__int64 pos;  // file position of node data
+    std::int64_t pos;  // file position of node data
 	DWORD size;   // data block size [bytes]
 	DWORD child[4]; // array index positions of the children ((DWORD)-1=no child)
 
@@ -32,15 +35,15 @@ class TreeFileHeader {
 
 public:
 	TreeFileHeader();
-	size_t TreeFileHeader::fwrite(FILE *f);
-	bool TreeFileHeader::fread(FILE *f);
+	size_t fwrite(FILE *f);
+	bool fread(FILE *f);
 
 private:
 	BYTE magic[4];      // file ID and version
 	DWORD size;         // header size [bytes]
 	DWORD flags;        // bit flags
 	DWORD dataOfs;      // file offset of start of data block (header + TOC)
-	__int64 dataLength; // total length of compressed data block
+    std::int64_t dataLength; // total length of compressed data block
 	DWORD nodeCount;    // total number of tree nodes
 	DWORD rootPos1;     // index of level-1 tile ((DWORD)-1 for not present)
 	DWORD rootPos2;     // index of level-2 tile ((DWORD)-1 for not present)
@@ -71,7 +74,7 @@ private:
 	TreeNode *tree;    // array containing all tree node entries
 	DWORD ntree;       // number of entries
 	DWORD ntreebuf;    // array size
-	__int64 totlength; // total data size (deflated)
+    std::int64_t totlength; // total data size (deflated)
 };
 
 // =======================================================================
@@ -111,7 +114,7 @@ private:
 	DWORD rootPos2;    // index of level-2 tile ((DWORD)-1 for not present)
 	DWORD rootPos3;    // index of level-3 tile ((DWORD)-1 for not present)
 	DWORD rootPos4[2]; // index of the level-4 tiles (quadtree roots; (DWORD)-1 for not present)
-	__int64 dofs;
+    std::int64_t dofs;
 };
 
 #endif // !__ZTREEMGR_H

@@ -4,6 +4,8 @@
 #include "cmap.h"
 #include <iostream>
 #include <algorithm>
+#include <cstring>
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -72,7 +74,7 @@ ElevData ElevData::SubTile(const std::pair<DWORD, DWORD> &xrange, const std::pai
 	int y0 = TILE_FILERES - yrange.second;
 
 	for (int y = 0; y < sub.height; y++) {
-		memcpy(subptr + y*sub.width, dataptr + (y + y0) * width + xrange.first, sub.width * sizeof(double));
+        std::memcpy(subptr + y*sub.width, dataptr + (y + y0) * width + xrange.first, sub.width * sizeof(double));
 	}
 
 	sub.dmin = *std::min_element(sub.data.begin(), sub.data.end());

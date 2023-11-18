@@ -9,7 +9,7 @@ Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin);
 int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
-	tileedit w;
+	tileedit w {argv[0]};
 	w.show();
 	return a.exec();
 }

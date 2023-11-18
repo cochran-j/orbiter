@@ -1,7 +1,6 @@
 #ifndef TILE_H
 #define TILE_H
 
-#include <windows.h>
 #include <vector>
 #include "ddsread.h"
 #include "ZTreeMgr.h"
@@ -78,6 +77,8 @@ protected:
 	static int s_openMode;
 	static TileLoadMode s_globalLoadMode;
 };
+
+class TileBlock;
 
 class DXT1Tile: public Tile
 {

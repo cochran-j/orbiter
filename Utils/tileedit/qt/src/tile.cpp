@@ -3,7 +3,9 @@
 #include "ddsread.h"
 #include <iostream>
 #include <algorithm>
-#include <direct.h>
+#include <filesystem>
+#include <string>
+
 #include <dxt_io.h>
 
 int Tile::s_openMode = 0x3;
@@ -14,13 +16,16 @@ std::string Tile::s_root;
 
 void ensureLayerDir(const char *rootDir, const char *layer, int lvl, int ilat)
 {
-	char path[256];
-	sprintf(path, "%s/%s", rootDir, layer);
-	mkdir(path);
-	sprintf(path, "%s/%s/%02d", rootDir, layer, lvl);
-	mkdir(path);
-	sprintf(path, "%s/%s/%02d/%06d", rootDir, layer, lvl, ilat);
-	mkdir(path);
+    std::filesystem::path path_ = rootDir;
+
+    path_ /= layer;
+    std::filesystem::create_directory(path_);
+
+    path_ /= std::to_string(lvl);
+    std::filesystem::create_directory(path_);
+
+    path_ /= std::to_string(ilat);
+    std::filesystem::create_directory(path_);
 }
 
 
@@ -32,7 +37,7 @@ Tile::Tile(int lvl, int ilat, int ilng)
     m_ilat = m_subilat = ilat;
     m_ilng = m_subilng = ilng;
 
-    int sz = 1 << min(lvl+6, 9);
+    int sz = 1 << std::min(lvl+6, 9);
     lat_subrange = std::make_pair(0, sz);
     lng_subrange = std::make_pair(0, sz);
 }
@@ -84,9 +89,11 @@ void Tile::ensureLayerDir()
 void Tile::ensureTmpLayerDir()
 {
 	char cbuf[1024];
-	sprintf(cbuf, "%s/tileedit.tmp", s_root.c_str());
-	mkdir(cbuf);
-	::ensureLayerDir(cbuf, Layer().c_str(), m_lvl, m_ilat);
+    std::filesystem::path tmpPath = s_root;
+    tmpPath /= "tileedit.tmp";
+
+    std::filesystem::create_directory(tmpPath);
+	::ensureLayerDir(tmpPath.c_str(), Layer().c_str(), m_lvl, m_ilat);
 }
 
 DXT1Tile::DXT1Tile(int lvl, int ilat, int ilng)

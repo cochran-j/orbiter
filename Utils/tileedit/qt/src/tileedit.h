@@ -38,7 +38,7 @@ class tileedit : public QMainWindow
 	friend class TileCanvas;
 
 public:
-    explicit tileedit(QWidget *parent = 0);
+    explicit tileedit(const char* programName, QWidget *parent = 0);
     ~tileedit();
 
 	void elevDisplayParamChanged();
@@ -62,7 +62,7 @@ private:
 	QString ModeString() const;
 	std::pair<int, int> ElevNodeFromPixCoord(int canvasIdx, int x, int y);
 	void editElevation(int canvasIdx, int x, int y);
-	void setupTreeManagers(std::string &root);
+	void setupTreeManagers(const std::string &root);
 	void releaseTreeManagers();
 
 private slots:

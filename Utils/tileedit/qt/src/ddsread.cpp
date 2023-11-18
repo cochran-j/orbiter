@@ -1,6 +1,10 @@
-#include <windows.h>
 #include <iostream>
+#include <cstdint>
+#include <cstring>
 #include "ddsread.h"
+
+using DWORD = std::uint32_t;
+using WORD = std::int16_t;
 
 struct DDSPIXELFORMAT {
     DWORD dwSize;
@@ -43,7 +47,7 @@ Image ddsread(const char *fname)
 
     char magic[4];
     fread(magic, sizeof(char), 4, f);
-    if (strncmp(magic, "DDS ", 4)) {
+    if (std::strncmp(magic, "DDS ", 4)) {
         std::cerr << "ddsread: Invalid file format" << std::endl;
         exit(1);
     }
@@ -55,7 +59,7 @@ Image ddsread(const char *fname)
         exit(1);
     }
 
-    if (strncmp((char*)&ddsh.ddspf.dwFourCC, "DXT1", 4)) {
+    if (std::strncmp((char*)&ddsh.ddspf.dwFourCC, "DXT1", 4)) {
         std::cerr << "ddsread: Only implemented for DXT1 format" << std::endl;
         exit(1);
     }
@@ -81,7 +85,7 @@ Image ddsscan(const BYTE *data, int ndata)
 {
 	Image img;
 
-	if (ndata < 4 || strncmp((char*)data, "DDS ", 4)) {
+	if (ndata < 4 || std::strncmp((char*)data, "DDS ", 4)) {
 		std::cerr << "ddsread: Invalid file format" << std::endl;
 		exit(1);
 	}
@@ -97,7 +101,7 @@ Image ddsscan(const BYTE *data, int ndata)
 		exit(1);
 	}
 
-	if (strncmp((char*)&ddsh.ddspf.dwFourCC, "DXT1", 4)) {
+	if (std::strncmp((char*)&ddsh.ddspf.dwFourCC, "DXT1", 4)) {
 		std::cerr << "ddsread: Only implemented for DXT1 format" << std::endl;
 		exit(1);
 	}

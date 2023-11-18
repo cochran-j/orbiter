@@ -2,7 +2,9 @@
 #define IMAGETOOLS_H
 
 #include <vector>
-#include <windows.h>
+#include <cstdint>
+
+using DWORD = std::uint32_t;
 
 struct Image {
 	std::vector<DWORD> data;

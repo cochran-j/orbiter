@@ -1,7 +1,6 @@
 #ifndef TILECANVAS_H
 #define TILECANVAS_H
 
-#include <windows.h>
 #include "QWidget"
 #include "QBoxLayout"
 #include "QPen"

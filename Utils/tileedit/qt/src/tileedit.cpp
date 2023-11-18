@@ -9,11 +9,16 @@
 #include "dlgelevexport.h"
 #include "dlgelevimport.h"
 #include <random>
+#include <filesystem>
+#include <algorithm>
+#include <cstdint>
 
 #include "QFileDialog"
 #include "QResizeEvent"
 #include "QMessageBox"
 #include "QSettings"
+
+using INT16 = std::int16_t;
 
 static std::vector<std::pair<int, int> > paintStencil1 = { {0,0} };
 static std::vector<std::pair<int, int> > paintStencil2 = { {0,0}, {1,0}, {0,1}, {1,1} };
@@ -24,15 +29,14 @@ static std::vector<std::vector<std::pair<int, int>>*> paintStencil = { &paintSte
 
 std::default_random_engine generator;
 
-tileedit::tileedit(QWidget *parent)
+tileedit::tileedit(const char* programName, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::tileedit)
 {
-	char path[1024], drive[16], dir[1024], name[1024], ext[1024];
-	GetModuleFileNameA(NULL, path, 1024);
-	_splitpath(path, drive, dir, name, ext);
-	sprintf(path, "%s%s%s.ini", drive, dir, name);
-	m_settings = new QSettings(path, QSettings::IniFormat);
+    auto configPath = std::filesystem::path{programName};
+    configPath.replace_extension("ini");
+
+	m_settings = new QSettings(configPath.c_str(), QSettings::IniFormat);
 
 	m_elevDisplayParam.cmName = (CmapName)m_settings->value("elevdisp/cmap", CMAP_GREY).toInt();
 	m_elevDisplayParam.useWaterMask = m_settings->value("elevdisp/wmask", false).toBool();
@@ -248,8 +252,8 @@ void tileedit::setBlockSize(int bsize)
 		m_blocksize = bsize;
 
 		// reload current tile
-		m_ilat = max(0, min(m_ilat, nLat(m_lvl) - bsize));
-		m_ilng = max(0, min(m_ilng, nLng(m_lvl) - bsize));
+		m_ilat = std::max(0, std::min(m_ilat, nLat(m_lvl) - bsize));
+		m_ilng = std::max(0, std::min(m_ilng, nLng(m_lvl) - bsize));
 		if (Tile::root().size())
 			setTile(m_lvl, m_ilat, m_ilng);
 
@@ -342,8 +346,8 @@ void tileedit::onElevConfigDestroyed(int r)
 
 void tileedit::loadTile(int lvl, int ilat, int ilng)
 {
-	int ilat1 = min(nLat(lvl), ilat + m_blocksize);
-	int ilng1 = min(nLng(lvl), ilng + m_blocksize);
+	int ilat1 = std::min(nLat(lvl), ilat + m_blocksize);
+	int ilng1 = std::min(nLng(lvl), ilng + m_blocksize);
 
     if (m_sTileBlock)
         delete m_sTileBlock;
@@ -735,7 +739,7 @@ void tileedit::editElevation(int canvasIdx, int x, int y)
 				ui->spinElevPaintSize->value() :
 				ui->spinElevRandomSize->value()
 				);
-			sz = min(sz, 5);
+			sz = std::min(sz, 5);
 			int mode = (m_elevEditMode == ELEVEDIT_PAINT ?
 				ui->comboElevPaintMode->currentIndex() :
 				ui->comboElevRandomMode->currentIndex()
@@ -805,7 +809,7 @@ void tileedit::editElevation(int canvasIdx, int x, int y)
 	case ELEVEDIT_ERASE:
 		{
 			int sz = ui->spinElevEraseSize->value();
-			sz = min(sz, 5);
+			sz = std::min(sz, 5);
 			std::vector<std::pair<int, int>> *stencil = paintStencil[sz - 1];
 			ElevData &edata = m_eTileBlock->getData();
 			ElevData &edataBase = m_eTileBlock->getBaseData();
@@ -905,7 +909,7 @@ void tileedit::setTile(int lvl, int ilat, int ilng)
 	ui->labelLngmax->setText(cbuf);
 }
 
-void tileedit::setupTreeManagers(std::string &root)
+void tileedit::setupTreeManagers(const std::string &root)
 {
 	releaseTreeManagers();
 
