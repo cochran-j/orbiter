@@ -1,12 +1,12 @@
 // Copyright (c) Martin Schweiger
 // Licensed under the MIT License
 
-#include "panel.h"
+#include "Panel.h"
 #include <windows.h>
-#include < GL\gl.h >
+#include <GL/gl.h>
 #include <math.h>
 #include <stdio.h>
-#include "orbitersdk.h"
+#include "Orbitersdk.h"
 #include "resource.h"
 
 HFONT hFNT_Panel;
@@ -48,13 +48,16 @@ int LoadOGLBitmap(const char *filename)
    unsigned char *l_texture;
    int l_index, l_index2=0;
    FILE *file;
+   /* TODO(jec)
    BITMAPFILEHEADER fileheader; 
    BITMAPINFOHEADER infoheader;
    RGBTRIPLE rgb; 
+   */
    int num_texture=1; //we only use one OGL texture ,so...
    
 
    if( (file = fopen(filename, "rb"))==NULL) return (-1); 
+   /* TODO(jec)
    fread(&fileheader, sizeof(fileheader), 1, file); 
    fseek(file, sizeof(fileheader), SEEK_SET);
    fread(&infoheader, sizeof(infoheader), 1, file);
@@ -72,6 +75,7 @@ int LoadOGLBitmap(const char *filename)
       l_texture[l_index2+3] = 255; // Alpha value
       l_index2 += 4; // Go to the next position
    }
+   */
 
    fclose(file); // Closes the file stream
 
@@ -82,12 +86,14 @@ int LoadOGLBitmap(const char *filename)
    //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+   /* TODO(jec)
    glTexImage2D(GL_TEXTURE_2D, 0, 4, infoheader.biWidth, infoheader.biHeight, 
 	                               0, GL_RGBA, GL_UNSIGNED_BYTE, l_texture);
    
 
 
    free(l_texture); 
+   */
 
 return (num_texture);
 };
@@ -95,9 +101,11 @@ return (num_texture);
 
 void MoveTo(HDC PANEL_hdc, int x, int y)
 { HPEN oldp;
+  /* TODO(jec)
   oldp=static_cast <HPEN> (SelectObject(PANEL_hdc,hPEN_NULL));
   LineTo(PANEL_hdc,x,y);
   SelectObject(PANEL_hdc,oldp);
+  */
 };
 Panel::Panel()
 {
@@ -106,7 +114,10 @@ Panel::Panel()
 };
 
 Panel::~Panel()
-{ DeleteDC(hDC3);
+{
+  /* TODO(jec)
+  DeleteDC(hDC3);
+  */
   instrument_list *runner=instruments;
   instrument_list *gone;
   while (runner){ gone=runner;
@@ -119,6 +130,7 @@ void Panel::MakeYourBackground()
 { 
 	surf=oapiCreateSurface(Wdth,Hght);
 	hDC=oapiGetDC(surf);
+    /* TODO(jec)
 	hDC2=CreateCompatibleDC(hDC);
 	hDC3=CreateCompatibleDC(hDC);
 	hBitmap=CreateCompatibleBitmap(hDC,Wdth,Hght);
@@ -126,11 +138,14 @@ void Panel::MakeYourBackground()
 	DeleteObject(hBitmapOld);
 	SelectObject(hDC2,hBRUSH_Background);
 	Rectangle(hDC2,0,0,Wdth,Hght);
+    */
 	Panel::NowPutScrews();
 	Panel::NowPutTextOnBackground();
 	Panel::NowPutCText();
 	Panel::NowPutBorders();
+    /* TODO(je)
 	DeleteDC(hDC2);
+    */
 	oapiReleaseDC(surf,hDC);
 	oapiDestroySurface(surf);
 
@@ -138,18 +153,24 @@ void Panel::MakeYourBackground()
 }
 void Panel::NowPutScrews()
 {int di=5*sqrt(2.0)/2;
+ /* TODO(jec)
  SelectObject(hDC2,hPEN_White);
  SelectObject(hDC2,hBRUSH_Background);
+ */
  int x,y;
 	for (int i=0;i<screw_num;i++)
 	{  x=Screw_list[i].x;
 	   y=Screw_list[i].y;
+       /* TODO(jec)
 	   Ellipse(hDC2,x-5,y-5,x+5,y+5);
 	   MoveTo(hDC2,x-di,y-di);LineTo(hDC2,x+di,y+di);
+       */
 	}
 };
 void Panel::NowPutTextOnBackground()
-{  SetBkMode(hDC2,TRANSPARENT); 
+{
+    /* TODO(jec)
+    SetBkMode(hDC2,TRANSPARENT); 
  //  SetTextColor(hDC2,RGB(0,147,221));
 SetTextColor(hDC2,RGB(255,100,100));
    SetTextAlign(hDC2,TA_CENTER);
@@ -157,9 +178,11 @@ SetTextColor(hDC2,RGB(255,100,100));
    for (int i=0;i<text_num;i++)
 	TextOut(hDC2,Text_list[i].x,Text_list[i].y,Text_list[i].text, sizeof(char)*strlen(Text_list[i].text));
   
+    */
 }
 void Panel::NowPutCText()
 { 
+  /* TODO(jec)
   SetBkMode(hDC2,TRANSPARENT); 
   //SetTextColor(hDC2,RGB(0,147,221));
   SetTextColor(hDC2,RGB(255,100,100));
@@ -173,10 +196,12 @@ void Panel::NowPutCText()
  
   TextOut(hDC2,CText_list[i].x,CText_list[i].y,CText_list[i].text, sizeof(char)*strlen(CText_list[i].text));
   }
+  */
 };
   
 void Panel::NowPutBorders()
 { int px,py,nr;
+ /* TODO(jec)
  SetBkMode(hDC2,TRANSPARENT); 
  SelectObject(hDC2,hPEN_Black);
  for (int i=0;i<border_num;i++){
@@ -192,6 +217,7 @@ void Panel::NowPutBorders()
  Arc(hDC2,px-5,py-5,px+6,py+6,px+5,py,px,py-5);
  MoveTo(hDC2,px,py-5);LineTo(hDC2,px-45*nr-5,py-5);
  }
+ */
 }
 void Panel::AddInstrument(instrument *new_inst)
 { instrument_list *new_item=new instrument_list;
@@ -352,6 +378,7 @@ runner=instruments;
 
 LRESULT WINAPI MsgProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
+    /* TODO(jec)
     switch( msg )
     {
         case WM_DESTROY:
@@ -363,6 +390,8 @@ LRESULT WINAPI MsgProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
     }
 
     return DefWindowProc( hWnd, msg, wParam, lParam );
+    */
+    return FALSE;
 }
 
 void PANEL_DLLAtach()
@@ -371,6 +400,7 @@ void PANEL_DLLAtach()
 
 void PANEL_InitGDIResources(HINSTANCE hModule)
 { if (Panel_Resources_Loaded) return;
+  /* TODO(jec)
   hPEN_White=CreatePen(PS_SOLID,1,RGB(250,250,250));
   hPEN_Gray=CreatePen(PS_SOLID,1,RGB(100,100,100));
   hPEN_Black=CreatePen(PS_SOLID,1,RGB(15,15,15));
@@ -426,12 +456,15 @@ void PANEL_InitGDIResources(HINSTANCE hModule)
   hFront_Panel_SRF[4]=oapiCreateSurface (LoadBitmap(hModule,MAKEINTRESOURCE(IDB_BITMAP15)));
   hFront_Panel_SRF[5]=oapiCreateSurface (LoadBitmap(hModule,MAKEINTRESOURCE(IDB_BITMAP24)));
   hFront_Panel_SRF[6]=oapiCreateSurface (LoadBitmap(hModule,MAKEINTRESOURCE(IDB_BITMAP25)));
+  */
   Panel_Resources_Loaded=1;
  }
 	
 
 void PANEL_ReleaseGDIResources()
-{  DeleteObject(hPEN_White);
+{
+   /* TODO(jec)
+   DeleteObject(hPEN_White);
    DeleteObject(hPEN_Gray);
    DeleteObject(hPEN_Black);
    DeleteObject(hPEN_NULL);
@@ -455,6 +488,7 @@ void PANEL_ReleaseGDIResources()
    DeleteObject(hBRUSH_FYellow);
    DeleteObject(hBRUSH_Gray);
    DeleteObject(hBITMAP_ADI);
+   */
 
    oapiDestroySurface(hClockSRF);	
    oapiDestroySurface(hSwitchSRF);

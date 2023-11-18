@@ -18,10 +18,12 @@ set_target_properties(Solarsail
 target_include_directories(Solarsail
 	PUBLIC ${ORBITER_SOURCE_SDK_INCLUDE_DIR}
 	PUBLIC ${CMAKE_CURRENT_BINARY_DIR}                 # for the dynamically generated header files
+    PUBLIC ${WIN32_INCLUDE_DIR}
 )
 
 target_link_libraries(Solarsail
-	${ORBITER_LIB}
+    # TODO(jec)
+    # ${ORBITER_LIB}
 	${ORBITER_SDK_LIB}
 	lua
 )

@@ -10,10 +10,29 @@
 // ==============================================================
 
 #define STRICT 1
+
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "HoverSubsys.h"
 #include "meshres_p0.h"
 #include "meshres_vc.h"
 #include "dg_vc_anim.h"
+
+
+static bool caseInsensitiveStartsWith(const std::string_view& str,
+                                      const std::string_view& start) {
+
+    return (str.size() >= start.size()) &&
+        std::equal(str.begin(), str.begin() + start.size(),
+                   start.begin(), start.end(),
+                   [](char c1, char c2) {
+                       return std::tolower(static_cast<unsigned char>(c1)) ==
+                              std::tolower(static_cast<unsigned char>(c2));
+                   });
+}
+
 
 using std::min;
 using std::max;
@@ -249,7 +268,7 @@ void HoverAttitudeComponent::clbkSaveState (FILEHANDLE scn)
 
 bool HoverAttitudeComponent::clbkParseScenarioLine (const char *line)
 {
-	if (!_strnicmp (line, "HOVERMODE", 9)) {
+	if (caseInsensitiveStartsWith(line, "HOVERMODE")) {
 		double ph, rh;
 		int n = sscanf (line+9, "%d%lf%lf", &mode, &ph, &rh);
 		if (mode == 2 && n == 3) // copy manual settings
@@ -460,7 +479,7 @@ void HoverHoldComponent::clbkSaveState (FILEHANDLE scn)
 
 bool HoverHoldComponent::clbkParseScenarioLine (const char *line)
 {
-	if (!_strnicmp (line, "HOVERHOLD", 9)) {
+	if (caseInsensitiveStartsWith(line, "HOVERHOLD")) {
 		int iact, imode;
 		double alt, vspd;
 		int n = sscanf (line+9, "%d%d%lf%lf", &iact, &imode, &alt, &vspd);

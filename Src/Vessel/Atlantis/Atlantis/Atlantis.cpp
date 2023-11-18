@@ -14,6 +14,11 @@
 
 #define STRICT 1
 #define ORBITER_MODULE
+
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "Atlantis.h"
 #include "PlBayOp.h"
 #include "AscentAP.h"
@@ -27,6 +32,31 @@
 
 using std::min;
 using std::max;
+
+
+static bool caseInsensitiveEquals(const std::string_view& str1,
+                                  const std::string_view& str2) {
+
+    return std::equal(str1.begin(), str1.end(),
+                      str2.begin(), str2.end(),
+                      [](char c1, char c2) {
+                           return std::tolower(static_cast<unsigned char>(c1)) ==
+                                  std::tolower(static_cast<unsigned char>(c2));
+                      });
+}
+
+static bool caseInsensitiveStartsWith(const std::string_view& str,
+                                      const std::string_view& start) {
+
+    return (str.size() >= start.size()) &&
+        std::equal(str.begin(), str.begin() + start.size(),
+                   start.begin(), start.end(),
+                   [](char c1, char c2) {
+                       return std::tolower(static_cast<unsigned char>(c1)) ==
+                              std::tolower(static_cast<unsigned char>(c2));
+                   });
+}
+
 
 #ifdef _DEBUG
     // D. Beachy: for BoundsChecker debugging
@@ -53,8 +83,8 @@ HELPCONTEXT g_hc = {
 // ==============================================================
 // Local prototypes
 
-INT_PTR CALLBACK Atlantis_DlgProc (HWND, UINT, WPARAM, LPARAM);
-INT_PTR CALLBACK RMS_DlgProc (HWND, UINT, WPARAM, LPARAM);
+INT_PTR Atlantis_DlgProc (HWND, UINT, WPARAM, LPARAM);
+INT_PTR RMS_DlgProc (HWND, UINT, WPARAM, LPARAM);
 extern void GetSRB_State (double met, double &thrust_level, double &prop_level);
 
 // ==============================================================
@@ -770,15 +800,19 @@ void Atlantis::ToggleGrapple (void)
 		ATTACHMENTHANDLE hAtt = CanArrest();
 		DetachChildWithMass(rms_attach);
 		if (hDlg = oapiFindDialog (g_Param.hDLL, IDD_RMS)) {
+            /* TODO(jec)
 			SetWindowText (GetDlgItem (hDlg, IDC_GRAPPLE), "Grapple");
 			EnableWindow (GetDlgItem (hDlg, IDC_STOW), TRUE);
+            */
 		}
 		// check whether the object being ungrappled is ready to be clamped into the payload bay
 		if (hAtt) {
 			AttachChildWithMass(hV, sat_attach, hAtt);
 			if (hDlg) {
+                /* TODO(jec)
 				SetWindowText (GetDlgItem (hDlg, IDC_PAYLOAD), "Purge");
 				EnableWindow (GetDlgItem (hDlg, IDC_PAYLOAD), TRUE);
+                */
 			}
 		}
 
@@ -825,8 +859,10 @@ void Atlantis::ToggleGrapple (void)
 							DetachChildWithMass(sat_attach);
 						AttachChildWithMass(hV, rms_attach, hAtt);
 						if (hDlg = oapiFindDialog (g_Param.hDLL, IDD_RMS)) {
+                            /* TODO(jec)
 							SetWindowText (GetDlgItem (hDlg, IDC_GRAPPLE), "Release");
 							EnableWindow (GetDlgItem (hDlg, IDC_STOW), FALSE);
+                            */
 						}
 						return;
 					}
@@ -868,8 +904,10 @@ void Atlantis::ToggleArrest (void)
 	if (SatStowed()) { // purge satellite
 		DetachChildWithMass(sat_attach, 0.1);
 		if (hDlg = oapiFindDialog (g_Param.hDLL, IDD_RMS)) {
+            /* TODO(jec)
 			SetWindowText (GetDlgItem (hDlg, IDC_PAYLOAD), "Arrest");
 			EnableWindow (GetDlgItem (hDlg, IDC_PAYLOAD), CanArrest() ? TRUE:FALSE);
+            */
 		}
 	} else if (CanArrest()) {           // try to arrest satellite
 		ToggleGrapple();
@@ -1259,8 +1297,10 @@ void Atlantis::SetAnimationArm (UINT anim, double state)
 
 	HWND hDlg;
 	if (!SatStowed() && (hDlg = oapiFindDialog (g_Param.hDLL, IDD_RMS))) {
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (hDlg, IDC_PAYLOAD), "Arrest");
 		EnableWindow (GetDlgItem (hDlg, IDC_PAYLOAD), CanArrest() ? TRUE : FALSE);
+        */
 	}
 }
 
@@ -1345,30 +1385,30 @@ void Atlantis::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 	spdb_status = AnimState::CLOSED; spdb_proc = 0.0;
 
 	while (oapiReadScenario_nextline (scn, line)) {
-        if (!_strnicmp (line, "CONFIGURATION", 13)) {
+        if (caseInsensitiveStartsWith(line, "CONFIGURATION")) {
             sscanf (line+13, "%d", &status);
-		//} else if (!_strnicmp (line, "MET", 3)) {
+		//} else if (caseInsensitiveStartsWith(line, "MET")) {
 		//	sscanf (line+3, "%lf", &met);
-		} else if (!_strnicmp (line, "GEAR", 4)) {
+		} else if (caseInsensitiveStartsWith(line, "GEAR")) {
 			sscanf (line+4, "%d%lf", &action, &gear_proc);
 			gear_status = (AnimState::Action)(action+1);
-		} else if (!_strnicmp (line, "SPEEDBRAKE", 10)) {
+		} else if (caseInsensitiveStartsWith(line, "SPEEDBRAKE")) {
 			sscanf (line+10, "%d%lf", &action, &spdb_proc);
 			spdb_status = (AnimState::Action)(action+1);
-		} else if (!_strnicmp (line, "SRB_IGNITION_TIME", 17)) {
+		} else if (caseInsensitiveStartsWith(line, "SRB_IGNITION_TIME")) {
 			sscanf (line+17, "%lf", &srbtime);
-		} else if (!_strnicmp (line, "SAT_OFS_X", 9)) {
+		} else if (caseInsensitiveStartsWith(line, "SAT_OFS_X")) {
 			sscanf (line+9, "%lf", &sts_sat_x);
-		} else if (!_strnicmp (line, "SAT_OFS_Y", 9)) {
+		} else if (caseInsensitiveStartsWith(line, "SAT_OFS_Y")) {
 			sscanf (line+9, "%lf", &sts_sat_y);
-		} else if (!_strnicmp (line, "SAT_OFS_Z", 9)) {
+		} else if (caseInsensitiveStartsWith(line, "SAT_OFS_Z")) {
 			sscanf (line+9, "%lf", &sts_sat_z);
-		} else if (!_strnicmp (line, "CARGO_STATIC_MESH", 17)) {
+		} else if (caseInsensitiveStartsWith(line, "CARGO_STATIC_MESH")) {
 			sscanf (line+17, "%s", cargo_static_mesh_name);
 			do_cargostatic = true;
-		} else if (!_strnicmp (line, "CARGO_STATIC_OFS", 16)) {
+		} else if (caseInsensitiveStartsWith(line, "CARGO_STATIC_OFS")) {
 			sscanf (line+16, "%lf%lf%lf", &cargo_static_ofs.x, &cargo_static_ofs.y, &cargo_static_ofs.z);
-		} else if (!_strnicmp (line, "ARM_STATUS", 10)) {
+		} else if (caseInsensitiveStartsWith(line, "ARM_STATUS")) {
 			sscanf (line+10, "%lf%lf%lf%lf%lf%lf", &arm_sy, &arm_sp, &arm_ep, &arm_wp, &arm_wy, &arm_wr);
         } else {
 			if      (plop->ParseScenarioLine (line)) continue;  // offer the line to bay door operations
@@ -1715,8 +1755,10 @@ void Atlantis::clbkPreStep (double simt, double simdt, double mjd)
 		center_arm_t = t0;
 		if (da) {
 			center_arm = false; // finished stowing
+            /* TODO(jec)
 			HWND hDlg = oapiFindDialog (g_Param.hDLL, IDD_RMS);
 			if (hDlg) EnableWindow (GetDlgItem (hDlg, IDC_GRAPPLE), TRUE);
+            */
 		}
 	}
 
@@ -1735,38 +1777,38 @@ void Atlantis::clbkPreStep (double simt, double simdt, double mjd)
 // --------------------------------------------------------------
 bool Atlantis::clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event)
 {
-	if (!_stricmp (event_type, "JET")) {
-		if (!_stricmp (event, "SRB")) {
+	if (caseInsensitiveEquals(event_type, "JET")) {
+		if (caseInsensitiveEquals(event, "SRB")) {
 			bManualSeparate = true;
 			return true;
 		}
-		else if (!_stricmp (event, "ET")) {
+		else if (caseInsensitiveEquals(event, "ET")) {
 			bManualSeparate = true;
 			return true;
 		}
-	} else if (!_stricmp (event_type, "STATUS")) {
-		if (!_stricmp (event, "SRB_IGNITION")) {
+	} else if (caseInsensitiveEquals(event_type, "STATUS")) {
+		if (caseInsensitiveEquals(event, "SRB_IGNITION")) {
 			status = 1;
 			t0 = event_t + SRB_STABILISATION_TIME;
 			return true;
 		}
-	} else if (!_stricmp (event_type, "ADJUST_LAUNCHTIME")) {
+	} else if (caseInsensitiveEquals(event_type, "ADJUST_LAUNCHTIME")) {
 		sscanf (event, "%lf", &t0);
 		return true;
-	} else if (!_stricmp (event_type, "CARGODOOR")) {
-		if (!_stricmp(event, "OPEN"))       plop->SetDoorAction (AnimState::OPENING, true);
-		else if (!_stricmp(event, "CLOSE")) plop->SetDoorAction (AnimState::CLOSING, true);
-		else if (!_stricmp(event, "ISOPEN")) plop->SetDoorAction (AnimState::OPEN, true);
-		else if (!_stricmp(event, "ISCLOSED")) plop->SetDoorAction (AnimState::CLOSED, true);
+	} else if (caseInsensitiveEquals(event_type, "CARGODOOR")) {
+		if (caseInsensitiveEquals(event, "OPEN"))       plop->SetDoorAction (AnimState::OPENING, true);
+		else if (caseInsensitiveEquals(event, "CLOSE")) plop->SetDoorAction (AnimState::CLOSING, true);
+		else if (caseInsensitiveEquals(event, "ISOPEN")) plop->SetDoorAction (AnimState::OPEN, true);
+		else if (caseInsensitiveEquals(event, "ISCLOSED")) plop->SetDoorAction (AnimState::CLOSED, true);
 		return true;
-	} else if (!_stricmp (event_type, "GEAR")) {
-		OperateLandingGear (!_stricmp (event, "UP") ? AnimState::CLOSING : AnimState::OPENING);
+	} else if (caseInsensitiveEquals(event_type, "GEAR")) {
+		OperateLandingGear (caseInsensitiveEquals(event, "UP") ? AnimState::CLOSING : AnimState::OPENING);
 		return true;
-	} else if (!_stricmp (event_type,"SPEEDBRAKE")) {
-		OperateSpeedbrake (!_stricmp (event, "CLOSE") ? AnimState::CLOSING : AnimState::OPENING);
+	} else if (caseInsensitiveEquals(event_type,"SPEEDBRAKE")) {
+		OperateSpeedbrake (caseInsensitiveEquals(event, "CLOSE") ? AnimState::CLOSING : AnimState::OPENING);
 		return true;
-	} else if (!_stricmp (event_type, "KUBAND")) {
-		plop->SetKuAntennaAction (!_stricmp (event, "CLOSE") ? AnimState::CLOSING : AnimState::OPENING);
+	} else if (caseInsensitiveEquals(event_type, "KUBAND")) {
+		plop->SetKuAntennaAction (caseInsensitiveEquals(event, "CLOSE") ? AnimState::CLOSING : AnimState::OPENING);
 		return true;
 	}
 
@@ -2239,7 +2281,9 @@ DLLCLBK void InitModule (HINSTANCE hModule)
 {
 	g_Param.hDLL = hModule;
 	oapiRegisterCustomControls (hModule);
+    /* TODO(jec)
 	g_Param.tkbk_label = oapiCreateSurface (LOADBMP (IDB_TKBKLABEL));
+    */
 
 	// allocate GDI resources
 	g_Param.font[0] = oapiCreateFont(-11, false, (char*)"Arial");
@@ -2272,8 +2316,9 @@ DLLCLBK void ovcExit (VESSEL *vessel)
 // Message callback function for Atlantis control dialog box
 // ==============================================================
 
-INT_PTR CALLBACK Atlantis_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR Atlantis_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	Atlantis *sts = (uMsg == WM_INITDIALOG ? (Atlantis*)lParam : (Atlantis*)oapiGetDialogContext (hWnd));
 	// pointer to vessel instance was passed as dialog context
 
@@ -2295,6 +2340,7 @@ INT_PTR CALLBACK Atlantis_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		}
 		break;
 	}
+    */
 	return oapiDefDialogProc (hWnd, uMsg, wParam, lParam);
 }
 
@@ -2302,8 +2348,9 @@ INT_PTR CALLBACK Atlantis_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 // Message callback function for RMS control dialog box
 // ==============================================================
 
-INT_PTR CALLBACK RMS_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR RMS_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	Atlantis *sts = (uMsg == WM_INITDIALOG ? (Atlantis*)lParam : (Atlantis*)oapiGetDialogContext (hWnd));
 	// pointer to vessel instance was passed as dialog context
 
@@ -2410,5 +2457,6 @@ INT_PTR CALLBACK RMS_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 		}
 		break;
 	}
+    */
 	return oapiDefDialogProc (hWnd, uMsg, wParam, lParam);
 }

@@ -12,10 +12,28 @@
 
 #define STRICT 1
 
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "LightSubsys.h"
 #include "meshres_p1.h"
 #include "meshres_vc.h"
 #include "dg_vc_anim.h"
+
+
+static bool caseInsensitiveStartsWith(const std::string_view& str,
+                                      const std::string_view& start) {
+
+    return (str.size() >= start.size()) &&
+        std::equal(str.begin(), str.begin() + start.size(),
+                   start.begin(), start.end(),
+                   [](char c1, char c2) {
+                       return std::tolower(static_cast<unsigned char>(c1)) ==
+                              std::tolower(static_cast<unsigned char>(c2));
+                   });
+}
+
 
 using std::min;
 using std::max;
@@ -120,7 +138,7 @@ void InstrumentLight::clbkSaveState (FILEHANDLE scn)
 
 bool InstrumentLight::clbkParseScenarioLine (const char *line)
 {
-	if (!strnicmp (line, "INSTRLIGHT", 10)) {
+	if (caseInsensitiveStartsWith(line, "INSTRLIGHT")) {
 		int lon;
 		sscanf (line+10, "%d%d%lf", &lon, &light_col, &brightness);
 		light_on = (lon != 0);
@@ -276,7 +294,7 @@ void CockpitLight::clbkSaveState (FILEHANDLE scn)
 
 bool CockpitLight::clbkParseScenarioLine (const char *line)
 {
-	if (!strnicmp (line, "FLOODLIGHT", 10)) {
+	if (caseInsensitiveStartsWith(line, "FLOODLIGHT")) {
 		sscanf (line+10, "%d%lf", &light_mode, &brightness);
 		light_mode = max (0, min (2, light_mode));
 		brightness = max (0.0, min (1.0, brightness));
@@ -408,7 +426,7 @@ void LandDockLight::clbkSaveState (FILEHANDLE scn)
 
 bool LandDockLight::clbkParseScenarioLine (const char *line)
 {
-	if (!strnicmp (line, "LANDDOCKLIGHT", 13)) {
+	if (caseInsensitiveStartsWith(line, "LANDDOCKLIGHT")) {
 		sscanf (line+13, "%d", &light_mode);
 		light_mode = max (0, min (2, light_mode));
 		return true;
@@ -536,7 +554,7 @@ void StrobeLight::clbkSaveState (FILEHANDLE scn)
 
 bool StrobeLight::clbkParseScenarioLine (const char *line)
 {
-	if (!strnicmp (line, "STROBELIGHT", 11)) {
+	if (caseInsensitiveStartsWith(line, "STROBELIGHT")) {
 		int mode;
 		sscanf (line+11, "%d", &mode);
 		light_on = (mode != 0);
@@ -665,7 +683,7 @@ void NavLight::clbkSaveState (FILEHANDLE scn)
 
 bool NavLight::clbkParseScenarioLine (const char *line)
 {
-	if (!strnicmp (line, "NAVLIGHT", 8)) {
+	if (caseInsensitiveStartsWith(line, "NAVLIGHT")) {
 		int mode;
 		sscanf (line+8, "%d", &mode);
 		light_on = (mode != 0);

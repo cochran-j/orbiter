@@ -19,12 +19,30 @@
 // interface to the script functions.
 // ==============================================================
 
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+#include <cstdio>
+
 #include "AAPSubsys.h"
 #include "InstrHsi.h"
 #include "meshres_p0.h"
 
 using std::min;
 using std::max;
+
+
+static bool caseInsensitiveStartsWith(const std::string_view& str,
+                                      const std::string_view& start) {
+
+    return (str.size() >= start.size()) &&
+        std::equal(str.begin(), str.begin() + start.size(),
+                   start.begin(), start.end(),
+                   [](char c1, char c2) {
+                        return std::tolower(static_cast<unsigned char>(c1)) ==
+                               std::tolower(static_cast<unsigned char>(c2));
+                   });
+}
 
 static const float texw = (float)PANEL2D_TEXW; // texture width
 static const float texh = (float)PANEL2D_TEXH; // texture height
@@ -64,7 +82,7 @@ void AAPSubsystem::clbkSaveState (FILEHANDLE scn)
 
 bool AAPSubsystem::clbkParseScenarioLine (const char *line)
 {
-	if (!_strnicmp (line, "AAP", 3)) {
+	if (caseInsensitiveStartsWith(line, "AAP")) {
 		aap->SetState (line);
 		return true;
 	} else
@@ -89,7 +107,7 @@ AAP::AAP (AAPSubsystem *_subsys)
 	oapiExecScriptCmd (hAAP, "run('dg/aap')"); // load the autopilot code
 
 	char setVesselCmd[256];
-	sprintf_s(setVesselCmd,256,"setvessel(vessel.get_interface('%s'))",vessel->GetName());
+    std::snprintf(setVesselCmd,256,"setvessel(vessel.get_interface('%s'))",vessel->GetName());
 	oapiAsyncScriptCmd (hAAP, setVesselCmd); // set autopilot vessel
 
 	active_block = -1;

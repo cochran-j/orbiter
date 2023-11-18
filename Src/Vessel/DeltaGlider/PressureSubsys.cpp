@@ -9,6 +9,10 @@
 // Cabin and airlock pressure control subsystem
 // ==============================================================
 
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "PressureSubsys.h"
 #include "DockingSubsys.h"
 #include "DeltaGlider.h"
@@ -16,6 +20,20 @@
 #include "meshres_p1.h"
 #include "meshres_vc.h"
 #include "dg_vc_anim.h"
+
+
+static bool caseInsensitiveEquals(const std::string_view& str1,
+                                  const std::string_view& str2) {
+
+    return std::equal(str1.begin(), str1.end(),
+                      str2.begin(), str2.end(),
+                      [](char c1, char c2) {
+                          return std::tolower(static_cast<unsigned char>(c1)) ==
+                                 std::tolower(static_cast<unsigned char>(c2));
+                      });
+}
+
+
 
 using std::min;
 using std::max;
@@ -468,12 +486,12 @@ bool AirlockCtrl::clbkLoadVC (int vcid)
 
 bool AirlockCtrl::clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event)
 {
-	if (!_stricmp (event_type, "OLOCK")) {
-		if (!_stricmp (event, "CLOSE")) CloseOuterLock();
+	if (caseInsensitiveEquals(event_type, "OLOCK")) {
+		if (caseInsensitiveEquals(event, "CLOSE")) CloseOuterLock();
 		else                            OpenOuterLock();
 		return true;
-	} else if (!_stricmp (event_type, "ILOCK")) {
-		if (!_stricmp (event, "CLOSE")) CloseInnerLock();
+	} else if (caseInsensitiveEquals(event_type, "ILOCK")) {
+		if (caseInsensitiveEquals(event, "CLOSE")) CloseInnerLock();
 		else                            OpenInnerLock();
 		return true;
 	}
@@ -779,8 +797,8 @@ bool TophatchCtrl::clbkLoadVC (int vcid)
 
 bool TophatchCtrl::clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event)
 {
-	if (!_stricmp (event_type, "HATCH")) {
-		if (!_stricmp (event, "CLOSE")) CloseHatch();
+	if (caseInsensitiveEquals(event_type, "HATCH")) {
+		if (caseInsensitiveEquals(event, "CLOSE")) CloseHatch();
 		else                            OpenHatch();
 		return true;
 	}

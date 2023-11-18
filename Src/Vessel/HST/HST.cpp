@@ -13,8 +13,26 @@
 
 #define ORBITER_MODULE
 
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "HST.h"
 #include <stdio.h>
+
+
+static bool caseInsensitiveStartsWith(const std::string_view& str,
+                                      const std::string_view& start) {
+
+    return (str.size() >= start.size()) &&
+        std::equal(str.begin(), str.begin() + start.size(),
+                   start.begin(), start.end(),
+                   [](char c1, char c2) {
+                       return std::tolower(static_cast<unsigned char>(c1)) ==
+                              std::tolower(static_cast<unsigned char>(c2));
+                   });
+}
+
 
 using std::min;
 using std::max;
@@ -130,11 +148,11 @@ void HST::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 	char *line;
 
 	while (oapiReadScenario_nextline (scn, line)) {
-		if (!_strnicmp (line, "ANT", 3)) {
+		if (caseInsensitiveStartsWith(line, "ANT")) {
 			sscanf (line+3, "%d%lf", &ant_status, &ant_proc);
-		} else if (!_strnicmp (line, "HATCH", 5)) {
+		} else if (caseInsensitiveStartsWith(line, "HATCH")) {
 			sscanf (line+5, "%d%lf", &hatch_status, &hatch_proc);
-		} else if (!_strnicmp (line, "FOLD", 4)) {
+		} else if (caseInsensitiveStartsWith(line, "FOLD")) {
 			sscanf (line+5, "%d%lf", &array_status, &array_proc);
 		} else {
 			ParseScenarioLineEx (line, vs);

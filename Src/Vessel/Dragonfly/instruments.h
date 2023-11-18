@@ -7,8 +7,10 @@
 #include <stdlib.h>
 #include <windows.h>
 #include "vectors.h"
-#include "orbitersdk.h"
+#include "Orbitersdk.h"
 
+/* TODO(jec):  Compat definitions */
+using HGLRC = void*;
 
 class Panel;
 

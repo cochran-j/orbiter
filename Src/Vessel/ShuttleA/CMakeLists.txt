@@ -41,10 +41,12 @@ target_include_directories(ShuttleA
 	PUBLIC ${VESSEL_COMMON_DIR}
 	PUBLIC ${ORBITER_SOURCE_MODULE_DIR}/ScnEditor      # for ScnEditorAPI.h
 	PUBLIC ${CMAKE_CURRENT_BINARY_DIR}                 # for the dynamically generated header files
+    PUBLIC ${WIN32_INCLUDE_DIR}
 )
 
 target_link_libraries(ShuttleA
-	${ORBITER_LIB}
+    # TODO(jec)
+    # ${ORBITER_LIB}
 	${ORBITER_SDK_LIB}
 	${ORBITER_DLGCTRL_LIB}
 	lua

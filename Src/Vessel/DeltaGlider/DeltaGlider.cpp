@@ -11,6 +11,10 @@
 
 #define ORBITER_MODULE
 
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "DeltaGlider.h"
 #include "HudCtrl.h"
 #include "MainRetroSubsys.h"
@@ -39,6 +43,20 @@
 
 using std::min;
 using std::max;
+
+
+static bool caseInsensitiveStartsWith(const std::string_view& str,
+                                      const std::string_view& start) {
+
+    return (str.size() >= start.size()) &&
+        std::equal(str.begin(), str.begin() + start.size(),
+                   start.begin(), start.end(),
+                   [](char c1, char c2) {
+                       return std::tolower(static_cast<unsigned char>(c1)) ==
+                              std::tolower(static_cast<unsigned char>(c2));
+                   });
+}
+
 
 // ==============================================================
 // Global parameters
@@ -90,7 +108,7 @@ static TOUCHDOWNVTX tdvtx_gearup[ntdvtx_gearup] = {
 // ==============================================================
 // Local prototypes
 
-INT_PTR CALLBACK Ctrl_DlgProc (HWND, UINT, WPARAM, LPARAM);
+INT_PTR Ctrl_DlgProc (HWND, UINT, WPARAM, LPARAM);
 void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd = 0);
 
 //INT_PTR CALLBACK Damage_DlgProc (HWND, UINT, WPARAM, LPARAM);
@@ -1113,14 +1131,14 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
     char *line;
 
 	while (oapiReadScenario_nextline (scn, line)) {
-		if (!_strnicmp (line, "TANKCONFIG", 10)) {
+		if (caseInsensitiveStartsWith(line, "TANKCONFIG")) {
 			if (ssys_scram) sscanf (line+10, "%d", &tankconfig);
-		} else if (!_strnicmp (line, "PSNGR", 5)) {
+		} else if (caseInsensitiveStartsWith(line, "PSNGR")) {
 			DWORD i, res, pi[4];
 			res = sscanf (line+5, "%d%d%d%d", pi+0, pi+1, pi+2, pi+3);
 			for (i = 0; i < res; i++)
 				if (pi[i]-1 < 4) psngr[pi[i]-1] = true;
-		} else if (!_strnicmp (line, "SKIN", 4)) {
+		} else if (caseInsensitiveStartsWith(line, "SKIN")) {
 			sscanf (line+4, "%s", skinpath);
 			char fname[256];
 			strcpy (fname, "DG\\Skins\\");
@@ -1134,7 +1152,7 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 				oapiReleaseTexture (skin[2]);
 				skin[2] = NULL;
 			}
-		} else if (!_strnicmp (line, "PANELCOL", 8)) {
+		} else if (caseInsensitiveStartsWith(line, "PANELCOL")) {
 			sscanf (line+8, "%d", &panelcol);
         } else {
 			// offer the line to all subsystems
@@ -1603,9 +1621,11 @@ DLLCLBK void InitModule (HINSTANCE hModule)
 	oapiRegisterCustomControls (hModule);
 
 	// allocate SketchPad resources
+    /* TODO(jec)
 	g_Param.pen[0] = oapiCreatePen (PS_SOLID, 1, RGB(224,224,224));
 	g_Param.pen[1] = oapiCreatePen (PS_SOLID, 3, RGB(164,164,164));
 	g_Param.surf = oapiLoadTexture ("DG\\blitsrc1.dds", true);
+    */
 }
 
 // --------------------------------------------------------------
@@ -1651,7 +1671,9 @@ DeltaGlider *GetDG (HWND hDlg)
 {
 	// retrieve DG interface from scenario editor
 	OBJHANDLE hVessel;
+    /* TODO(jec)
 	SendMessage (hDlg, WM_SCNEDITOR, SE_GETVESSEL, (LPARAM)&hVessel);
+    */
 	return (DeltaGlider*)oapiGetVesselInterface (hVessel);
 }
 
@@ -1662,19 +1684,24 @@ void UpdateDamage (HWND hTab, DeltaGlider *dg)
 
 	i = (int)(dg->lwingstatus*100.0+0.5);
 	snprintf (cbuf, sizeof(cbuf) - 1, "%d %%", i);
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_LEFTWING_STATUS), cbuf);
 	oapiSetGaugePos (GetDlgItem (hTab, IDC_LEFTWING_SLIDER), i);
+    */
 	i = (int)(dg->rwingstatus*100.0+0.5);
 	snprintf (cbuf, sizeof(cbuf) - 1, "%d %%", i);
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_RIGHTWING_STATUS), cbuf);
 	oapiSetGaugePos (GetDlgItem (hTab, IDC_RIGHTWING_SLIDER), i);
+    */
 }
 
 // --------------------------------------------------------------
 // Message procedure for editor page 1 (animation settings)
 // --------------------------------------------------------------
-INT_PTR CALLBACK EdPg1Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR EdPg1Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_COMMAND:
 		switch (LOWORD (wParam)) {
@@ -1733,17 +1760,19 @@ INT_PTR CALLBACK EdPg1Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	}
+    */
 	return FALSE;
 }
 
 // --------------------------------------------------------------
 // Message procedure for editor page 2 (passengers)
 // --------------------------------------------------------------
-INT_PTR CALLBACK EdPg2Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR EdPg2Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	DeltaGlider *dg;
 	int i;
 
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG: {
 		char cbuf[256];
@@ -1771,16 +1800,18 @@ INT_PTR CALLBACK EdPg2Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	}
+    */
 	return FALSE;
 }
 
 // --------------------------------------------------------------
 // Message procedure for editor page 3 (damage)
 // --------------------------------------------------------------
-INT_PTR CALLBACK EdPg3Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR EdPg3Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	DeltaGlider *dg;
 
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG: {
 		dg = (DeltaGlider*)oapiGetVesselInterface ((OBJHANDLE)lParam);
@@ -1820,6 +1851,7 @@ INT_PTR CALLBACK EdPg3Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	}
+    */
 	return FALSE;
 }
 
@@ -1831,12 +1863,18 @@ DLLCLBK void secInit (HWND hEditor, OBJHANDLE hVessel)
 	DeltaGlider *dg = (DeltaGlider*)oapiGetVesselInterface (hVessel);
 
 	EditorPageSpec eps1 = {"Animations", g_Param.hDLL, IDD_EDITOR_PG1, EdPg1Proc};
+    /* TODO(jec)
 	SendMessage (hEditor, WM_SCNEDITOR, SE_ADDPAGEBUTTON, (LPARAM)&eps1);
+    */
 	EditorPageSpec eps2 = {"Passengers", g_Param.hDLL, IDD_EDITOR_PG2, EdPg2Proc};
+    /* TODO(jec)
 	SendMessage (hEditor, WM_SCNEDITOR, SE_ADDPAGEBUTTON, (LPARAM)&eps2);
+    */
 	if (dg->bDamageEnabled) {
 		EditorPageSpec eps3 = {"Damage", g_Param.hDLL, IDD_EDITOR_PG3, EdPg3Proc};
+        /* TODO(jec)
 		SendMessage (hEditor, WM_SCNEDITOR, SE_ADDPAGEBUTTON, (LPARAM)&eps3);
+        */
 	}
 }
 
@@ -1844,8 +1882,9 @@ DLLCLBK void secInit (HWND hEditor, OBJHANDLE hVessel)
 // Message callback function for control dialog box
 // ==============================================================
 
-INT_PTR CALLBACK Ctrl_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR Ctrl_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	DeltaGlider *dg = (uMsg == WM_INITDIALOG ? (DeltaGlider*)lParam : (DeltaGlider*)oapiGetDialogContext (hWnd));
 	// pointer to vessel instance was passed as dialog context
 
@@ -1941,12 +1980,15 @@ INT_PTR CALLBACK Ctrl_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		}
 		break;
 	}
+    */
 	return oapiDefDialogProc (hWnd, uMsg, wParam, lParam);
 }
 
 void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd)
 {
+    /* TODO(jec)
 	static int bstatus[2] = {BST_UNCHECKED, BST_CHECKED};
+    */
 
 	if (!hWnd) hWnd = oapiFindDialog (g_Param.hDLL, IDD_CTRL);
 	if (!hWnd) return;
@@ -1956,70 +1998,99 @@ void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd)
 	op = (dg->SubsysGear()->GearState().IsOpening() ? 1 :
 		  dg->SubsysGear()->GearState().IsClosing() ? 0 :
 		  dg->SubsysGear()->GearState().State() > 0.5 ? 1 : 0);
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_GEAR_DOWN, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_GEAR_UP, BM_SETCHECK, bstatus[1-op], 0);
+    */
 
 	op = (dg->SubsysMainRetro()->RetroCoverState().IsOpening() ? 1 :
 		  dg->SubsysMainRetro()->RetroCoverState().IsClosing() ? 0 :
 		  dg->SubsysMainRetro()->RetroCoverState().State() > 0.5 ? 1 : 0);
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_RETRO_OPEN, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_RETRO_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
+    */
 
 	op = dg->SubsysAerodyn()->AirbrakeSubsys()->TargetState();
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_AIRBRAKE_RETRACT, BM_SETCHECK, op == 0 ? BST_CHECKED : BST_UNCHECKED, 0);
 	SendDlgItemMessage (hWnd, IDC_AIRBRAKE_EXTEND, BM_SETCHECK, op == 2 ? BST_CHECKED : BST_UNCHECKED, 0);
+    */
 
 	op = (dg->SubsysDocking()->NconeState().IsOpening() ? 1 :
 		  dg->SubsysDocking()->NconeState().IsClosing() ? 0 :
 		  dg->SubsysDocking()->NconeState().State() > 0.5 ? 1 : 0);
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_NCONE_OPEN, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_NCONE_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
+    */
 
 	op = (dg->SubsysPressure()->OLockState().IsOpening() ? 1 :
 		  dg->SubsysPressure()->OLockState().IsClosing() ? 0 :
 		  dg->SubsysPressure()->OLockState().State() > 0.5 ? 1 : 0);
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_OLOCK_OPEN, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_OLOCK_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
+    */
 
 	op = (dg->SubsysPressure()->ILockState().IsOpening() ? 1 :
 		  dg->SubsysPressure()->ILockState().IsClosing() ? 0 :
 		  dg->SubsysPressure()->ILockState().State() > 0.5 ? 1 : 0);
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_ILOCK_OPEN, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_ILOCK_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
+    */
 
 	op = (dg->SubsysDocking()->LadderState().IsOpening() ? 1 :
 		  dg->SubsysDocking()->LadderState().IsClosing() ? 0 :
 		  dg->SubsysDocking()->LadderState().State() > 0.5 ? 1 : 0);
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_LADDER_EXTEND, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_LADDER_RETRACT, BM_SETCHECK, bstatus[1-op], 0);
+    */
 
 	op = (dg->SubsysPressure()->HatchState().IsOpening() ? 1 :
 		  dg->SubsysPressure()->HatchState().IsClosing() ? 0 :
 		  dg->SubsysPressure()->HatchState().State() > 0.5 ? 1 : 0);
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_HATCH_OPEN, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_HATCH_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
+    */
 
 	op = (dg->SubsysThermal()->RadiatorState().IsOpening() ? 1 :
 		  dg->SubsysThermal()->RadiatorState().IsClosing() ? 0 :
 		  dg->SubsysThermal()->RadiatorState().State() > 0.5 ? 1 : 0);
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_RADIATOR_EXTEND, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_RADIATOR_RETRACT, BM_SETCHECK, bstatus[1-op], 0);
+    */
 
 	op = dg->SubsysLights()->InstrumentlightSubsys()->GetLight();
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_INSTRUMENTLIGHT, BM_SETCHECK, bstatus[op], 0);
+    */
 
 	op = dg->SubsysLights()->CockpitlightSubsys()->GetLight();
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_FLOODWLIGHT, BM_SETCHECK, op == 1 ? BST_CHECKED : BST_UNCHECKED, 0);
 	SendDlgItemMessage (hWnd, IDC_FLOODRLIGHT, BM_SETCHECK, op == 2 ? BST_CHECKED : BST_UNCHECKED, 0);
 
+    */
+
 	op = dg->SubsysLights()->LandDocklightSubsys()->GetLight();
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_DOCKINGLIGHT, BM_SETCHECK, op == 1 ? BST_CHECKED : BST_UNCHECKED, 0);
 	SendDlgItemMessage (hWnd, IDC_LANDINGLIGHT, BM_SETCHECK, op == 2 ? BST_CHECKED : BST_UNCHECKED, 0);
+    */
 
 	op = dg->beacon[0].active ? 1:0;
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_NAVLIGHT, BM_SETCHECK, bstatus[op], 0);
+    */
 	op = dg->beacon[5].active ? 1:0;
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_STROBELIGHT, BM_SETCHECK, bstatus[op], 0);
+    */
 }
 
 // ==============================================================
@@ -2027,7 +2098,7 @@ void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd)
 // ==============================================================
 
 #ifdef UNDEF
-INT_PTR CALLBACK Damage_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR Damage_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	DeltaGlider *dg = (uMsg == WM_INITDIALOG ? (DeltaGlider*)lParam : (DeltaGlider*)oapiGetDialogContext (hWnd));
 	// pointer to vessel instance was passed as dialog context

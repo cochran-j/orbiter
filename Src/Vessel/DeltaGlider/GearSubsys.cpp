@@ -11,11 +11,28 @@
 
 #define STRICT 1
 
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "GearSubsys.h"
 #include "meshres.h"
 #include "meshres_vc.h"
 #include "meshres_p0.h"
 #include "dg_vc_anim.h"
+
+
+static bool caseInsensitiveEquals(const std::string_view& str1,
+                                  const std::string_view& str2) {
+
+    return std::equal(str1.begin(), str1.end(),
+                      str2.begin(), str2.end(),
+                      [](char c1, char c2) {
+                          return std::tolower(static_cast<unsigned char>(c1)) ==
+                                 std::tolower(static_cast<unsigned char>(c2));
+                      });
+}
+
 
 // ==============================================================
 // Landing gear subsystem
@@ -275,8 +292,8 @@ bool GearControl::clbkDrawHUD (int mode, const HUDPAINTSPEC *hps, oapi::Sketchpa
 
 bool GearControl::clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event)
 {
-	if (!_stricmp (event_type, "GEAR")) {
-		if (!_stricmp (event, "UP")) RaiseGear();
+	if (caseInsensitiveEquals(event_type, "GEAR")) {
+		if (caseInsensitiveEquals(event, "UP")) RaiseGear();
 		else                         LowerGear();
 		return true;
 	}

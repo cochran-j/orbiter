@@ -10,11 +10,42 @@
 // ==============================================================
 
 #define STRICT 1
+
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "MainRetroSubsys.h"
 #include "meshres.h"
 #include "meshres_p0.h"
 #include "meshres_vc.h"
 #include "dg_vc_anim.h"
+
+
+static bool caseInsensitiveEquals(const std::string_view& str1,
+                                  const std::string_view& str2) {
+
+    return std::equal(str1.begin(), str1.end(),
+                      str2.begin(), str2.end(),
+                      [](char c1, char c2) {
+                          return std::tolower(static_cast<unsigned char>(c1)) ==
+                                 std::tolower(static_cast<unsigned char>(c2));
+                      });
+}
+
+static bool caseInsensitiveStartsWith(const std::string_view& str,
+                                      const std::string_view& start) {
+
+    return (str.size() >= start.size()) &&
+        std::equal(str.begin(), str.begin() + start.size(),
+                   start.begin(), start.end(),
+                   [](char c1, char c2) {
+                       return std::tolower(static_cast<unsigned char>(c1)) ==
+                              std::tolower(static_cast<unsigned char>(c2));
+                   });
+}
+
+
 
 using std::min;
 using std::max;
@@ -439,7 +470,7 @@ void GimbalControl::clbkSaveState (FILEHANDLE scn)
 
 bool GimbalControl::clbkParseScenarioLine (const char *line)
 {
-	if (!_strnicmp (line, "MGIMBALMODE", 11)) {
+	if (caseInsensitiveStartsWith(line, "MGIMBALMODE")) {
 		double pg[2], yg[2];
 		int n = sscanf (line+11, "%d%lf%lf%lf%lf", &mode, pg+0, pg+1, yg+0, yg+1);
 		if (mode ==2 && n == 5) // copy manual settings
@@ -1094,8 +1125,8 @@ bool RetroCoverControl::clbkLoadVC (int vcid)
 
 bool RetroCoverControl::clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event)
 {
-	if (!_stricmp (event_type, "RCOVER")) {
-		if (!_stricmp (event, "CLOSE")) CloseRetroCover();
+	if (caseInsensitiveEquals(event_type, "RCOVER")) {
+		if (caseInsensitiveEquals(event, "CLOSE")) CloseRetroCover();
 		else                            OpenRetroCover();
 		return true;
 	}

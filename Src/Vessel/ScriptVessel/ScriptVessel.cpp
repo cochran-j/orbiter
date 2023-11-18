@@ -22,7 +22,7 @@
 extern "C" {
 #include "Lua/lua.h"
 }
-#include "orbitersdk.h"
+#include "Orbitersdk.h"
 
 const int NCLBK        = 4;
 const int SETCLASSCAPS = 0;

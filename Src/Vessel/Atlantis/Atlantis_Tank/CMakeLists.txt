@@ -21,10 +21,12 @@ set_target_properties(${VESSEL_NAME}
 target_include_directories(${VESSEL_NAME}
 	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../Atlantis
 	PUBLIC ${ORBITER_SOURCE_SDK_INCLUDE_DIR}
+    PUBLIC ${WIN32_INCLUDE_DIR}
 )
 
 target_link_libraries(${VESSEL_NAME}
-	${ORBITER_LIB}
+    # TODO(jec)
+    # ${ORBITER_LIB}
 	${ORBITER_SDK_LIB}
 	$<TARGET_LINKER_FILE:Atlantis_SRB>
 )

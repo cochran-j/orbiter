@@ -9,11 +9,28 @@
 // Nosecone and undock controls
 // ==============================================================
 
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "DockingSubsys.h"
 #include "meshres.h"
 #include "meshres_p0.h"
 #include "meshres_vc.h"
 #include "dg_vc_anim.h"
+
+
+static bool caseInsensitiveEquals(const std::string_view& str1,
+                                  const std::string_view& str2) {
+
+    return std::equal(str1.begin(), str1.end(),
+                      str2.begin(), str2.end(),
+                      [](char c1, char c2) {
+                          return std::tolower(static_cast<unsigned char>(c1)) ==
+                                 std::tolower(static_cast<unsigned char>(c2));
+                      });
+}
+
 
 // ==============================================================
 // Docking control subsystem
@@ -261,8 +278,8 @@ void NoseconeCtrl::clbkPostCreation ()
 
 bool NoseconeCtrl::clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event)
 {
-	if (!_stricmp (event_type, "NOSECONE")) {
-		if (!_stricmp (event, "CLOSE")) CloseNcone();
+	if (caseInsensitiveEquals(event_type, "NOSECONE")) {
+		if (caseInsensitiveEquals(event, "CLOSE")) CloseNcone();
 		else                            OpenNcone();
 		return true;
 	}
@@ -613,8 +630,8 @@ bool EscapeLadderCtrl::clbkParseScenarioLine (const char *line)
 
 bool EscapeLadderCtrl::clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event)
 {
-	if (!_stricmp (event_type, "LADDER")) {
-		if (!_stricmp (event, "CLOSE")) RetractLadder();
+	if (caseInsensitiveEquals(event_type, "LADDER")) {
+		if (caseInsensitiveEquals(event, "CLOSE")) RetractLadder();
 		else                            ExtendLadder();
 		return true;
 	}

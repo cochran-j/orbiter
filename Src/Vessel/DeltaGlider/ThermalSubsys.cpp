@@ -11,6 +11,10 @@
 
 #define STRICT 1
 
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "ThermalSubsys.h"
 #include "PressureSubsys.h"
 #include "ScramSubsys.h"
@@ -18,6 +22,31 @@
 #include "meshres_p1.h"
 #include "meshres_vc.h"
 #include "dg_vc_anim.h"
+
+
+static bool caseInsensitiveEquals(const std::string_view& str1,
+                                  const std::string_view& str2) {
+
+    return std::equal(str1.begin(), str1.end(),
+                      str2.begin(), str2.end(),
+                      [](char c1, char c2) {
+                           return std::tolower(static_cast<unsigned char>(c1)) ==
+                                  std::tolower(static_cast<unsigned char>(c2));
+                      });
+}
+
+static bool caseInsensitiveStartsWith(const std::string_view& str,
+                                      const std::string_view& start) {
+
+    return (str.size() >= start.size()) &&
+        std::equal(str.begin(), str.begin() + start.size(),
+                   start.begin(), start.end(),
+                   [](char c1, char c2) {
+                       return std::tolower(static_cast<unsigned char>(c1)) ==
+                              std::tolower(static_cast<unsigned char>(c2));
+                   });
+}
+
 
 using std::min;
 using std::max;
@@ -214,7 +243,7 @@ void ThermalSubsystem::clbkSaveState (FILEHANDLE scn)
 
 bool ThermalSubsystem::clbkParseScenarioLine (const char *line)
 {
-	if (!_strnicmp(line, "COMPARTMENT_TEMP", 16)) {
+	if (caseInsensitiveStartsWith(line, "COMPARTMENT_TEMP")) {
 		sscanf(line+16, "%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf",
 			&cprm[0].T, &cprm[1].T, &cprm[2].T, &cprm[3].T, &cprm[4].T, &cprm[5].T,
 			&cprm[6].T, &cprm[7].T, &cprm[8].T, &cprm[9].T, &cprm[10].T, &cprm[11].T,
@@ -731,7 +760,7 @@ void CoolantLoop::clbkSaveState (FILEHANDLE scn)
 
 bool CoolantLoop::clbkParseScenarioLine (const char *line)
 {
-	if (!_strnicmp(line, "COOLANT_STATE", 13)) {
+	if (caseInsensitiveStartsWith(line, "COOLANT_STATE")) {
 		int i;
 		double rate, temp;
 		sscanf(line+13, "%d%lf%lf", &i, &rate, &temp);
@@ -1169,8 +1198,8 @@ void RadiatorControl::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
 
 bool RadiatorControl::clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event)
 {
-	if (!_stricmp (event_type, "RADIATOR")) {
-		if (!_stricmp (event, "CLOSE")) CloseRadiator();
+	if (caseInsensitiveEquals(event_type, "RADIATOR")) {
+		if (caseInsensitiveEquals(event, "CLOSE")) CloseRadiator();
 		else                            OpenRadiator();
 		return true;
 	}

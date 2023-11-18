@@ -21,10 +21,12 @@ set_target_properties(Quadcopter
 target_include_directories(Quadcopter
 	PUBLIC ${ORBITER_SOURCE_SDK_INCLUDE_DIR}
 	PUBLIC ${VESSEL_COMMON_DIR}
+    PUBLIC ${WIN32_INCLUDE_DIR}
 )
 
 target_link_libraries(Quadcopter
-	${ORBITER_LIB}
+    # TODO(jec)
+    # ${ORBITER_LIB}
 	${ORBITER_SDK_LIB}
 	lua
 )

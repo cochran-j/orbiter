@@ -15,9 +15,26 @@
 #define ORBITER_MODULE
 #define ATLANTIS_SRB_MODULE
 
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "Atlantis.h"
 #include "math.h"
 #include "stdio.h"
+
+static bool caseInsensitiveStartsWith(const std::string_view& str,
+                                      const std::string_view& start) {
+
+    return (str.size() >= start.size()) &&
+        std::equal(str.begin(), str.begin() + start.size(),
+                   start.begin(), start.end(),
+                   [](char c1, char c2) {
+                       return std::tolower(static_cast<unsigned char>(c1)) ==
+                              std::tolower(static_cast<unsigned char>(c2));
+                   });
+}
+
 
 // ==============================================================
 // Specialised vessel class Atlantis_SRB
@@ -221,7 +238,7 @@ void Atlantis_SRB::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 	char *line;
 
 	while (oapiReadScenario_nextline (scn, line)) {
-		if (!_strnicmp (line, "MET ", 4)) {
+		if (caseInsensitiveStartsWith(line, "MET ")) {
 			double met;
 			sscanf (line+4, "%lf", &met);
 			t0 = oapiGetSimTime()-met;

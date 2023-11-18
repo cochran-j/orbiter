@@ -20,15 +20,14 @@
 // ==============================================================
 
 class RadiatorControl;
+class CoolantLoop;
 
 class ThermalSubsystem: public DGSubsystem {
 	friend class CoolantLoop;
 
 public:
 	ThermalSubsystem (DeltaGlider *v);
-	void OpenRadiator ();
-	void CloseRadiator ();
-	const AnimState2 &RadiatorState() const;
+	void OpenRadiator (); void CloseRadiator (); const AnimState2 &RadiatorState() const;
 	void clbkPreStep (double simt, double simdt, double mjd);
 	void clbkSaveState (FILEHANDLE scn);
 	bool clbkParseScenarioLine (const char *line);
@@ -109,6 +108,11 @@ private:
 // ==============================================================
 // Coolant loop
 // ==============================================================
+
+class CoolantLoopDisplay;
+class CoolantPumpSwitch;
+class CoolantPumpDial;
+class CoolantReftempDial;
 
 class CoolantLoop: public DGSubsystem {
 	friend class CoolantLoopDisplay;
@@ -240,6 +244,8 @@ private:
 // ==============================================================
 // Radiator control
 // ==============================================================
+
+class RadiatorSwitch;
 
 class RadiatorControl: public DGSubsystem {
 	friend class RadiatorSwitch;

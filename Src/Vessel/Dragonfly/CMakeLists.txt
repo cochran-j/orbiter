@@ -27,10 +27,12 @@ set_target_properties(Dragonfly
 
 target_include_directories(Dragonfly
 	PUBLIC ${ORBITER_SOURCE_SDK_INCLUDE_DIR}
+    PUBLIC ${WIN32_INCLUDE_DIR}
 )
 
 target_link_libraries(Dragonfly
-	${ORBITER_LIB}
+    # TODO(jec)
+    # ${ORBITER_LIB}
 	${ORBITER_SDK_LIB}
 	OpenGL::GL
 	OpenGL::GLU

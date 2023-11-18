@@ -12,6 +12,10 @@
 
 #define STRICT 1
 
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "AerodynSubsys.h"
 #include "meshres.h"
 #include "meshres_p0.h"
@@ -20,6 +24,31 @@
 
 using std::min;
 using std::max;
+
+static bool caseInsensitiveEquals(const std::string_view& str1,
+                                  const std::string_view& str2) {
+
+    return std::equal(str1.begin(), str1.end(),
+                      str2.begin(), str2.end(),
+                      [](char c1, char c2) {
+                           return std::tolower(static_cast<unsigned char>(c1)) ==
+                                  std::tolower(static_cast<unsigned char>(c2));
+                      });
+}
+
+static bool caseInsensitiveStartsWith(const std::string_view& str,
+                                      const std::string_view& start) {
+
+    return (str.size() >= start.size()) &&
+        std::equal(str.begin(), str.begin() + start.size(),
+                   start.begin(), start.end(),
+                   [](char c1, char c2) {
+                       return std::tolower(static_cast<unsigned char>(c1)) ==
+                              std::tolower(static_cast<unsigned char>(c2));
+                   });
+}
+
+
 
 // ==============================================================
 // Aerodynamic control subsystem
@@ -371,8 +400,8 @@ void Airbrake::clbkPostCreation ()
 
 bool Airbrake::clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event)
 {
-	if (!_stricmp (event_type, "AIRBRAKE")) {
-		if (!_stricmp (event, "CLOSE")) Retract();
+	if (caseInsensitiveEquals(event_type, "AIRBRAKE")) {
+		if (caseInsensitiveEquals(event, "CLOSE")) Retract();
 		else                            Extend();
 		return true;
 	}
@@ -487,7 +516,7 @@ void ElevatorTrim::clbkSaveState (FILEHANDLE scn)
 
 bool ElevatorTrim::clbkParseScenarioLine (const char *line)
 {
-	if (!_strnicmp (line, "TRIM", 4)) {
+	if (caseInsensitiveStartsWith(line, "TRIM")) {
 		double trim;
 		sscanf (line+4, "%lf", &trim);
 		DG()->SetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM, trim, true);

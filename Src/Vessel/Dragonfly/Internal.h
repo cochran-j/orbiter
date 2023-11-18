@@ -5,10 +5,15 @@
 #define __INTERNAL_H__
 
 
-#include "panel.h"
-#include "hsystems.h"
-#include "esystems.h"
-#include "orbitersdk.h"
+#include "Panel.h"
+#include "Hsystems.h"
+#include "Esystems.h"
+#include "Orbitersdk.h"
+
+class inst_MFD;
+class Docker;
+class CW;
+class Switch;
 
 class ShipInternal
 { public:

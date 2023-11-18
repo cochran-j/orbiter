@@ -43,6 +43,8 @@ private:
 // Control selector dial
 // ==============================================================
 
+class AerodynSelectorDial;
+
 class AerodynSelector: public DGSubsystem {
 	friend class AerodynSelectorDial;
 
@@ -80,6 +82,8 @@ private:
 // ==============================================================
 // Airbrake
 // ==============================================================
+
+class AirbrakeLever;
 
 class Airbrake: public DGSubsystem {
 	friend class AirbrakeLever;
@@ -127,6 +131,8 @@ private:
 // ==============================================================
 // Elevator trim control
 // ==============================================================
+
+class ElevatorTrimWheel;
 
 class ElevatorTrim: public DGSubsystem {
 	friend class ElevatorTrimWheel;

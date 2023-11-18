@@ -11,11 +11,29 @@
 
 #define STRICT
 
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "Dragonfly.h"
 #include <stdio.h>
 #include <math.h>
-#include "internal.h"
+#include "Internal.h"
 //#include "glstuff.cpp"
+
+
+static bool caseInsensitiveStartsWith(const std::string_view& str,
+                                      const std::string_view& start) {
+
+    return (str.size() >= start.size()) &&
+        std::equal(str.begin(), str.begin() + start.size(),
+                   start.begin(), start.end(),
+                   [](char c1, char c2) {
+                       return std::tolower(static_cast<unsigned char>(c1)) ==
+                              std::tolower(static_cast<unsigned char>(c2));
+                   });
+}
+
 
 using std::min;
 using std::max;
@@ -210,14 +228,14 @@ void Dragonfly::LoadState (FILEHANDLE scn, void *vs)
 {
     char *line;
 	while (oapiReadScenario_nextline (scn, line)) {
-        if (!strnicmp (line, "UPPERANT", 8)) {
+        if (caseInsensitiveStartsWith(line, "UPPERANT")) {
 			sscanf (line+8, "%f %f %i %i %i", &UP_pos ,&UY_pos,&UP_handle, &UY_handle,&UAnt_handle);
-		} else if (!strnicmp (line, "LOWERANT", 8)) {
+		} else if (caseInsensitiveStartsWith(line, "LOWERANT")) {
 			sscanf (line+8, "%f %f %i %i %i", &LP_pos, &LY_pos,&LP_handle,&LY_handle,&LAnt_handle);
 			//SetGearParameters (gear_proc);
-		} else if (!strnicmp (line, "HATCH", 5)) {
+		} else if (caseInsensitiveStartsWith(line, "HATCH")) {
 			sscanf (line+5, "%f %i", &dock_latched, &latch_handle);
-		} else if (!strnicmp (line, "ANTTRG", 6)) {
+		} else if (caseInsensitiveStartsWith(line, "ANTTRG")) {
 			Dock_target_object=oapiGetObjectByName(line+7);
 			//sscanf (line+5, "%f %i", &dock_latched, &latch_handle);
         } else {
@@ -797,6 +815,7 @@ void Dragonfly::RedrawPanel_SensorInfo (SURFHANDLE surf)
 	bool engaged = false;
 	OBJHANDLE hObj = GetDockStatus (GetDockHandle (0));
 	HDC hDC = oapiGetDC (surf);
+    /* TODO(jec)
 //	SelectObject (hDC, g_Param.font[1]);
 	SetTextColor (hDC, RGB(0,255,0));
 	SetBkMode (hDC, TRANSPARENT);
@@ -819,6 +838,7 @@ void Dragonfly::RedrawPanel_SensorInfo (SURFHANDLE surf)
 		SetBkMode (hDC, OPAQUE);
 		TextOut (hDC, 50, 0, "ENG", 3);
 	}
+    */
 	oapiReleaseDC (surf, hDC);
 };
 
@@ -826,6 +846,7 @@ void Dragonfly::RedrawPanel_CGIndicator (SURFHANDLE surf)
 {
 	char cbuf[20];
 	HDC hDC = oapiGetDC (surf);
+    /* TODO(jec)
 //	SelectObject (hDC, g_Param.font[1]);
 	SetTextColor (hDC, RGB(0,255,0));
 	SetBkMode (hDC, TRANSPARENT);
@@ -834,11 +855,12 @@ void Dragonfly::RedrawPanel_CGIndicator (SURFHANDLE surf)
 	int loc = 4+min ((int)(cgofs*3.784), 74);
 //	SelectObject (hDC, g_Param.pen[0]);
 	MoveToEx (hDC, loc, 15, NULL); LineTo (hDC, loc-3, 22); LineTo (hDC, loc+3, 22); LineTo (hDC, loc, 15);
+    */
 	oapiReleaseDC (surf, hDC);
 };
 
 void Dragonfly::LoadPanel(int id)
-{ 
+{
 	Internals.PanelList[id].MakeYourBackground();
 	oapiRegisterPanelBackground(Internals.PanelList[id].hBitmap,Internals.PanelList[id].ATT_mode,0xFFFFFF);
 	oapiSetPanelNeighbours(Internals.PanelList[id].neighbours[0],Internals.PanelList[id].neighbours[1],Internals.PanelList[id].neighbours[2],Internals.PanelList[id].neighbours[3]);
@@ -989,6 +1011,15 @@ bool Dragonfly::clbkPanelMouseEvent (int id, int event, int mx, int my)
 // API interface
 // ==============================================================
 
+DLLCLBK void InitModule (HINSTANCE hModule) {
+    hDLL = hModule;
+    PANEL_DLLAtach();
+}
+
+DLLCLBK void ExitModule (HINSTANCE hModule) {
+    return;
+}
+
 // Initialisation
 DLLCLBK VESSEL *ovcInit (OBJHANDLE hvessel, int flightmodel)
 {	PANEL_InitGDIResources(hDLL);
@@ -1001,6 +1032,7 @@ DLLCLBK void ovcExit (VESSEL *vessel)
 	if (vessel) delete (Dragonfly*)vessel;
 }
 
+/* NOTE(jec):  Delete in favor of InitModule / ExitModule
 BOOL WINAPI DllMain (HINSTANCE hModule,
 					 DWORD ul_reason_for_call,
 					 LPVOID lpReserved)
@@ -1027,3 +1059,5 @@ BOOL WINAPI DllMain (HINSTANCE hModule,
 	}
 	return TRUE;
 }
+
+*/

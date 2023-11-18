@@ -14,7 +14,7 @@
 #ifndef __ATLANTIS_ASCENTAP
 #define __ATLANTIS_ASCENTAP
 
-#include "Common\Dialog\TabDlg.h"
+#include "Common/Dialog/TabDlg.h"
 
 class Atlantis;
 class Graph;

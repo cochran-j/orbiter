@@ -2,14 +2,14 @@
 // Licensed under the MIT License
 
 #include "instruments.h"
-#include < GL\gl.h >                                
-#include < GL\glu.h >
-#include "vectors.h"        
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include "vectors.h"
 #include "panel.cpp"
 #include "math.h"
 #include "resource.h"
-#include "orbitersdk.h"
-#include "dragonfly.h"
+#include "Orbitersdk.h"
+#include "Dragonfly.h"
 
 using std::min;
 
@@ -180,6 +180,7 @@ void SFSwitch::PaintMe()
 { int lng=24/sqrt(3.0);
 
 HDC hDC=oapiGetDC(parent->surf);
+/* TODO(jec)
 SelectObject(hDC,hBRUSH_Background);SelectObject(hDC,hPEN_NULL);
 Rectangle(hDC,0,0,51,50);
 SelectObject(hDC,hPEN_Black);
@@ -225,7 +226,7 @@ else
    BitBlt(hDC,10,0,30,4,hTEMPDC,10,0,SRCCOPY);
 
 }                                             
-
+*/
 oapiReleaseDC(parent->surf,hDC);                                       
 
 }
@@ -268,10 +269,12 @@ type=37;//Egauge
 
 void screwdraw(HDC h,int x, int y)
 {int di=5*sqrt(2.0)/2;
+ /* TODO(jec)
  SelectObject(h,hPEN_White);
  SelectObject(h,hBRUSH_Background);
  Ellipse(h,x-5,y-5,x+5,y+5);
  MoveTo(h,x-di,y-di);LineTo(h,x+di,y+di);
+ */
  }
 
 void EGauge::RegisterMe(int index)
@@ -288,6 +291,7 @@ void EGauge::RegisterMe(int index)
  oapiBlt(parent->surf,hEgaugeSRF,0,0,0,0,100,100); //copy the backgorund
 
 HDC hDC=oapiGetDC(parent->surf);
+/* TODO(jec)
 SelectObject(hDC,hBRUSH_Gray);
 SelectObject(hDC,hPEN_LGray);			// some of the circles
 for (i=0;i<16;i++) {
@@ -314,6 +318,7 @@ TR[1].x=20;TR[1].y=75;
 TR[2].x=80;TR[2].y=75;
 Polygon(hDC,TR,3);
 TextOut(hDC,50,70,unit,sizeof(char)*strlen(unit));
+*/
 oapiReleaseDC(parent->surf,hDC);
 oapiBlt(temps,parent->surf,0,0,30,30,40,40); //save this onto a back-surf
 
@@ -342,10 +347,12 @@ for (int i=0;i<3;i++) // rotate the pointer by 'ang'
    S[i].x=50 + TR[i].x*cos(ang)-TR[i].y*sin(ang);
    S[i].y=50 + TR[i].x*sin(ang)+TR[i].y*cos(ang);
 }
+/* TODO(jec)
 SelectObject(hDC,hBRUSH_Black);
 SelectObject(hDC,hPEN_NULL);
 
 Polygon(hDC,S,3);// then the pointer
+*/
 oapiReleaseDC(parent->surf,hDC);
  };
 //----------------------------------- HGAUGE ------------------------------------------
@@ -369,6 +376,7 @@ void HGauge::PaintMe()
 
  HDC hDC=oapiGetDC(parent->surf);
    //Put the texts where they're supposed to be*/
+ /* TODO(jec)
  SelectObject(hDC,hFNT_Panel);
  SetTextAlign(hDC,TA_CENTER);  SetBkMode(hDC,TRANSPARENT); 
  SetTextColor(hDC,RGB(140,49,49));
@@ -385,8 +393,8 @@ void HGauge::PaintMe()
       TextOut(hDC,(int)85/2,k-5,intst,sizeof(char)*strlen(intst));// write the numbers
       i++; 
       } while (i<NrFig+1);
- 
- 
+ */
+  
  oapiReleaseDC(parent->surf,hDC);
   
  oapiBlt(temps,parent->surf,0,0,12,0,9,190);	//save the two empty stripes
@@ -394,6 +402,7 @@ void HGauge::PaintMe()
 
  //draw the arrows
  hDC=oapiGetDC(temps);
+ /* TODO(jec)
  SelectObject(hDC,hBRUSH_White);
  Rectangle(hDC,19,0,31,21);
  POINT arrow1[3],arrow2[3];
@@ -403,6 +412,7 @@ void HGauge::PaintMe()
  SelectObject(hDC,hBRUSH_Black);SelectObject(hDC,hPEN_NULL);
  Polygon(hDC,arrow1,3);
  Polygon(hDC,arrow2,3);
+ */
  oapiReleaseDC(temps,hDC);
 
 
@@ -451,6 +461,7 @@ void Rotary::PaintMe()
   float ang;
 float Pi=3.1415;
 HDC hDC=oapiGetDC(parent->surf);
+/* TODO(jec)
 SelectObject(hDC,hPEN_NULL);
 SelectObject(hDC,hBRUSH_Background);
 Rectangle(hDC,0,0,0+162,0+142); 
@@ -464,6 +475,7 @@ for (int i=0; i<poznr;i++)					// now put all texts arround the circle
 { TextOut(hDC,85-cos(ang)*70,90-sin(ang)*70,names[i],sizeof(char)*strlen(names[i]));
   ang+=Pi/6;
 }
+*/
 
  oapiReleaseDC(parent->surf,hDC);
  oapiBlt(parent->surf,hRotarySRF,36,41,400+(set-(int)(poznr/2))*100,0,100,100); //copy the backgorund
@@ -528,11 +540,13 @@ void DigClock::RegisterMe(int index)
 void DigClock::PaintMe()
 {
 HDC hDC=oapiGetDC(local_srf);
+/* TODO(jec)
 SelectObject(hDC,hPEN_White);
 MoveTo(hDC,0,43);LineTo(hDC,len*22+1,43);
 LineTo(hDC,len*22+1,0);
 SelectObject(hDC,hPEN_Gray);
 LineTo(hDC,0,0);LineTo(hDC,0,43);
+*/
 
 oapiReleaseDC(local_srf,hDC);
 
@@ -585,14 +599,16 @@ CW::CW(int x,int y,const char *i_text,Panel *i_parent):instrument(x,y,i_parent)
 //
 HDC hDC2=oapiGetDC(temps);
 HDC hDC=oapiGetDC(hCwSRF);
+/* TODO(jec)
 BitBlt(hDC2,0,0,100,31,hDC,0,0,SRCCOPY);
-   //Put the texts where they're supposed to be*/
+   //Put the texts where they're supposed to be
  SelectObject(hDC2,hFNT_Panel);
  SetTextAlign(hDC2,TA_CENTER);  SetBkMode(hDC2,TRANSPARENT); 
  SetTextColor(hDC2,RGB(255,100,100));
  TextOut(hDC2,25,10,text,sizeof(char)*strlen(text)); 
  SetTextColor(hDC2,RGB(149,48,48));
  TextOut(hDC2,75,10,text,sizeof(char)*strlen(text)); 
+ */
  oapiReleaseDC(hCwSRF,hDC);
 oapiReleaseDC(temps,hDC2);
 
@@ -641,6 +657,7 @@ void inst_MFD::PaintMe()
 //oapiBlt(parent->surf,hMFDSRF,0,0,0,0,310,296); 
 HDC hDC=oapiGetDC(parent->surf);
 HDC hDC2=oapiGetDC(hMFDSRF);
+/* TODO(jec)
 BitBlt(hDC,0,0,350,296,hDC2,0,0,SRCCOPY);
 SelectObject(hDC, hFNT_Panel);
 SetTextColor (hDC, RGB(20, 20, 20));
@@ -654,6 +671,7 @@ const char *label;
 			else TextOut (hDC, 322, 58+34*(bt-6), label, strlen(label));}
 		else break;
 	}
+*/
 oapiReleaseDC(parent->surf,hDC);
 oapiReleaseDC(hMFDSRF,hDC2);
 
@@ -744,6 +762,7 @@ oapiBlt(parent->surf,hDockBSRF,0,0,0,0,202,179);
 cgofs=((Dragonfly*)(parent->v))->cgofs;
 SURFHANDLE temps=oapiCreateSurface(202,179);
 HDC hDC=oapiGetDC(temps);
+/* TODO(jec)
 SelectObject(hDC, hBRUSH_TotalBlack);
 Rectangle(hDC,0,0,202,179);
 SetTextColor(hDC,RGB(0,255,0));
@@ -756,35 +775,45 @@ TextOut (hDC, 140, 95, text, strlen (text));
 int loc = 102+min ((int)(cgofs*3.784), 74);
 SelectObject (hDC, hPEN_BYellow);
 MoveToEx (hDC, loc, 93, NULL); LineTo (hDC, loc-3, 86); LineTo (hDC, loc+3, 86); LineTo (hDC, loc, 93);
+*/
 
 VESSEL *vessel;
 int docked_port=0;
 if (sensormode) 
 	{vessel=oapiGetVesselInterface(vs->vs);
+     /* TODO(jed)
 	  strcpy(text,vessel->GetName());
 	 TextOut(hDC,130,137,text,strlen(text));
 	 sprintf(text,"PORT %i",vs->port);
 	 TextOut(hDC,130,147,text,strlen(text));
+     */
 	 if (vessel->GetDockStatus(vessel->GetDockHandle(vs->port)))
 		{docked_port=1;
+        /* TODO(jec)
 		strcpy(text,"ENG");
 		SetTextColor (hDC, 0);
 		SetBkColor (hDC, RGB(255,255,0));
 		SetBkMode (hDC, OPAQUE);
         TextOut(hDC,160,147,text,strlen(text));
+        */
 		}
 	}
-else {strcpy(text,"LOCAL");
+else {
+    /* TODO(jec)
+    strcpy(text,"LOCAL");
       TextOut(hDC,130,137,text,strlen(text));
 	 sprintf(text,"PORT %i",portnr);
 	 TextOut(hDC,130,147,text,strlen(text));
+     */
 	 if (parent->v->GetDockStatus(parent->v->GetDockHandle(portnr)))
 		{docked_port=1;
+        /* TODO(jec)
 		strcpy(text,"ENG");
 		SetTextColor (hDC, 0);
 		SetBkColor (hDC, RGB(255,255,0));
 		SetBkMode (hDC, OPAQUE);
         TextOut(hDC,160,147,text,strlen(text));
+        */
 		}
 	 }
 
@@ -944,6 +973,7 @@ if (frswitch)
 if (*(((Dragonfly*)parent->v)->DC_power)>0)  {
 SURFHANDLE temps=oapiCreateSurface(101,26);
 HDC hDC=oapiGetDC(temps);
+/* TODO(jec)
 SelectObject(hDC, hBRUSH_TotalBlack);
 Rectangle(hDC,0,0,100,25);
 
@@ -956,6 +986,7 @@ sprintf(text, "NAV1: %5.2f MHz", 108.0+(0.05*frq1));
 TextOut (hDC, 10, 2, text, strlen (text));
 sprintf(text, "NAV2: %5.2f MHz", 108.0+(0.05*frq2));
 TextOut (hDC, 10, 13, text, strlen (text));
+*/
 oapiReleaseDC(temps,hDC);
 oapiBlt(parent->surf,temps,80,20,0,0,80,25);
 oapiDestroySurface(temps);
@@ -1043,6 +1074,7 @@ void ADI::InitGL()
 {
 
 GLuint      PixelFormat;  
+/* TODO(jec)
 BITMAPINFOHEADER BIH;
 int iSize=sizeof(BITMAPINFOHEADER);
 BIH.biSize=iSize;
@@ -1052,7 +1084,9 @@ BIH.biPlanes=1;
 BIH.biBitCount=16;//default is 16.
 BIH.biCompression=BI_RGB;
 BIH.biSizeImage=0;
+*/
 void* m_pBits;
+/* TODO(jec)
 hDC2=CreateCompatibleDC(NULL);//we make a new DC and DIbitmap for OpenGL to draw onto
 static  PIXELFORMATDESCRIPTOR pfd2;
 DescribePixelFormat(hDC2,1,sizeof(PIXELFORMATDESCRIPTOR),&pfd2);//just get a random pixel format.. 
@@ -1091,6 +1125,7 @@ ret=SetPixelFormat(hDC2,PixelFormat,&pfd);
 code=GetLastError();
 hRC=wglCreateContext(hDC2);
 ret=wglMakeCurrent(hDC2,hRC);					//all standard OpenGL init so far
+*/
 
 //We load the texture
 int texture_index=LoadOGLBitmap("Textures\\adi.dds");
@@ -1143,12 +1178,16 @@ init=1;		//that's it. If we made it so far, we can use OpenGL
 
 ADI::~ADI()
 {
+/* TODO(jec)
 wglMakeCurrent(NULL,NULL);	//standard OpenGL release
 wglDeleteContext(hRC);
+*/
 hRC=NULL;
+/* TODO(jec)
 SelectObject(hDC2,hBMP_old);//remember to delete DC and bitmap memory we created
 DeleteObject(hBMP);
 DeleteDC(hDC2);
+*/
 
 };
 void ADI::RegisterMe(int index)
@@ -1337,7 +1376,9 @@ void ADI::PaintMe()
 
 HDC hDC=oapiGetDC(parent->surf);
 
+/* TODO(jec)
 BitBlt(hDC,5,5,130,130,hDC2,15,15,SRCCOPY);//then we bitblt onto the panel. wish there
+*/
 oapiReleaseDC(parent->surf,hDC);		// was a faster way ...
 
 oapiBlt(parent->surf,hADIBorder,0,0,0,0,140,140,0x0);
@@ -1370,9 +1411,12 @@ void Radar::PaintMe()
 {
 HDC hDC=oapiGetDC(parent->surf);
 HDC hDC2=oapiGetDC(hRadSrfSRF);
+/* TODO(jec)
 BitBlt(hDC,0,0,350,296,hDC2,0,0,SRCCOPY);
+*/
 
 char label[5];
+/* TODO(jec)
 SelectObject(hDC, hFNT_Panel);
 SetBkMode(hDC,TRANSPARENT); 
 SetTextColor(hDC,RGB(0,0,0));
@@ -1383,6 +1427,7 @@ strcpy(label,"R-");TextOut(hDC,31,92,label,strlen(label));
 strcpy(label,"VS");TextOut(hDC,31,129,label,strlen(label));
 strcpy(label,"AT1");TextOut(hDC,322,58,label,strlen(label));
 strcpy(label,"AT2");TextOut(hDC,322,92,label,strlen(label));
+*/
 
 oapiReleaseDC(parent->surf,hDC);
 oapiReleaseDC(hRadSrfSRF,hDC2);
@@ -1405,6 +1450,7 @@ if (*(((Dragonfly*)parent->v)->DC_power)>0)
 		hDC=oapiGetDC(parent->surf);
 		char label[10];
 		sprintf(label,"R:%im",range);
+        /* TODO(jec)
 		SelectObject(hDC,hBRUSH_TotalBlack);
 		Rectangle(hDC,220,20,270,31);
 		SelectObject(hDC, hFNT_Panel);
@@ -1412,14 +1458,17 @@ if (*(((Dragonfly*)parent->v)->DC_power)>0)
 		SetTextColor(hDC,RGB(0,255,0));
 		SetTextAlign(hDC,TA_CENTER);
 		TextOut(hDC,255,20,label,strlen(label));
+        */
 		oapiReleaseDC(parent->surf,hDC);
 	};	//draw a new range 
 	if (((Dragonfly*)parent->v)->UY_pos!=last_antena_yaw) {
 		hDC=oapiGetDC(radar_background);
+        /* TODO(jec)
 		SelectObject(hDC,hBRUSH_TotalBlack);
 		SelectObject(hDC,hPEN_NULL);
 
 		Rectangle(hDC,0,0,101,101);
+        */
 		last_antena_yaw=((Dragonfly*)parent->v)->UY_pos;
 		float yaw=150.0 - ((Dragonfly*)parent->v)->UY_pos*300+15.0;
 		yaw=yaw/180.0*acos(-1.0);
@@ -1430,8 +1479,10 @@ if (*(((Dragonfly*)parent->v)->DC_power)>0)
 		float py2=cos(yaw1)*45;
 		float  px2=sin(yaw1)*45;
 
+        /* TODO(jec)
 		SelectObject(hDC,hBRUSH_FYellow);
 		Pie(hDC,0,0,100,100,50+px1,50-py1,50+px2,50-py2);
+        */
 		oapiReleaseDC(radar_background,hDC);
 		oapiBlt(radar_background,hRadBkSRF,0,0,0,0,100,100,0x0);
 	};//new yawed background
@@ -1519,6 +1570,7 @@ if ((old_fuel>0)||(parent->v->GetPropellantFlowrate (((Dragonfly*)(parent->v))->
 //	sprintf(oapiDebugString(),"%f %f",fuel,old_fuel);
 
 	HDC hDC=oapiGetDC(parent->surf);
+    /* TODO(jec)
 	SelectObject(hDC, hFNT_Panel);
 	SetBkMode(hDC,TRANSPARENT); 
 	SetTextColor(hDC,RGB(0,255,0));
@@ -1528,13 +1580,14 @@ if ((old_fuel>0)||(parent->v->GetPropellantFlowrate (((Dragonfly*)(parent->v))->
 
 	Rectangle(hDC,22,35,44,45);
 	Rectangle(hDC,22,56,44,66);
-
+    */
 
 	char cbuf[10];
 	int i;
 
 	i = (int)(143.0*fuel);
 
+    /* TODO(jec)
 	Rectangle (hDC, 23, 84, 39, 228-i);
 	SelectObject(hDC,hBRUSH_Green);
 	Rectangle (hDC, 23, 228-i, 39, 228);
@@ -1543,6 +1596,7 @@ if ((old_fuel>0)||(parent->v->GetPropellantFlowrate (((Dragonfly*)(parent->v))->
 	TextOut (hDC, 32, 35, cbuf, strlen(cbuf));
 	sprintf (cbuf, "%3.2f",old_fuel=parent->v->GetPropellantFlowrate (((Dragonfly*)(parent->v))->ph_main));
 	TextOut (hDC, 32, 56, cbuf, strlen(cbuf));
+    */
 	oapiReleaseDC(parent->surf,hDC);
 	}
 }

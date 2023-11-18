@@ -10,8 +10,25 @@
 //   Base class for panel and VC instrument visualisations
 // ==============================================================
 
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "Instrument.h"
 #include "Orbitersdk.h"
+
+static bool caseInsensitiveStartsWith(const std::string_view& str,
+                                      const std::string_view& start) {
+
+    return (str.size() >= start.size()) &&
+        std::equal(str.begin(), str.begin() + start.size(),
+                   start.begin(), start.end(),
+                   [](char c1, char c2) {
+                        return std::tolower(static_cast<unsigned char>(c1)) ==
+                               std::tolower(static_cast<unsigned char>(c2));
+                   });
+}
+
 
 PanelElement::PanelElement (VESSEL3 *v)
 {
@@ -250,7 +267,7 @@ void AnimState2::SaveState (FILEHANDLE scn, const char *label)
 
 bool AnimState2::ParseScenarioLine (const char *line, const char *label)
 {
-	if (!_strnicmp (line, label, strlen(label))) {
+	if (caseInsensitiveStartsWith(line, label)) {
 		sscanf (line+strlen(label), "%lf%lf", &state, &speed);
 		return true;
 	}

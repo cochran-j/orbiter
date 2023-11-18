@@ -11,9 +11,26 @@
 #define STRICT
 #define ORBITER_MODULE
 
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "ShuttleA_pl.h"
 #include <math.h>
 #include <stdio.h>
+
+
+static bool caseInsensitiveStartsWith(const std::string_view& str,
+                                      const std::string_view& start) {
+
+    return (str.size() >= start.size()) &&
+        std::equal(str.begin(), str.begin() + start.size(),
+                   start.begin(), start.end(),
+                   [](char c1, char c2) {
+                       return std::tolower(static_cast<unsigned char>(c1)) ==
+                              std::tolower(static_cast<unsigned char>(c2));
+                   });
+}
 
 
 //Payload parachute airfoil definitions
@@ -136,9 +153,9 @@ void ShuttleA_PL::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 	char *line;
 
 	while (oapiReadScenario_nextline (scn, line)) {
-		if (!_strnicmp (line, "PARACHUTE", 9)) {
+		if (caseInsensitiveStartsWith(line, "PARACHUTE")) {
 			sscanf (line+9, "%d", &Parachute_mode);
-		} else if (!_strnicmp (line, "TIMER", 5)) {
+		} else if (caseInsensitiveStartsWith(line, "TIMER")) {
 			sscanf (line+5, "%lf", &timer);
 		
 		} else {

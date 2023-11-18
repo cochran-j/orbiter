@@ -11,13 +11,31 @@
 // ET separation using engine gimballing of SSME and SRB engines
 // ==============================================================
 
+#include <filesystem>
+#include <algorithm>
+#include <string_view>
+
 #include "Atlantis.h"
 #include "AscentAP.h"
 #include "resource.h"
-#include "Common\Dialog\Graph.h"
+#include "Common/Dialog/Graph.h"
 
 using std::min;
 using std::max;
+
+
+static bool caseInsensitiveStartsWith(const std::string_view& str,
+                                      const std::string_view& start) {
+
+    return (str.size() >= start.size()) &&
+        std::equal(str.begin(), str.begin() + start.size(),
+                   start.begin(), start.end(),
+                   [](char c1, char c2) {
+                       return std::tolower(static_cast<unsigned char>(c1)) ==
+                              std::tolower(static_cast<unsigned char>(c2));
+                   });
+}
+
 
 extern GDIParams g_Param;
 
@@ -516,11 +534,11 @@ void AscentAP::SaveState (FILEHANDLE scn)
 
 bool AscentAP::ParseScenarioLine (const char *line)
 {
-	if (!_strnicmp(line, "MET ", 4)) {
+	if (caseInsensitiveStartsWith(line, "MET ")) {
 		sscanf(line+4, "%lf%lf%lf%lf", &met, &met_meco, &met_oms_start, &met_oms_end);
 		t_launch = oapiGetSimTime()-met;
 		return true;
-	} else if (!_strnicmp(line, "ASCENTAP", 8)) {
+	} else if (caseInsensitiveStartsWith(line, "ASCENTAP")) {
 		int i1, i2, i3;
 		sscanf(line+9, "%d%d%d%lf%lf%lf%lf", &i1, &i2, &i3, &tgt_alt, &launch_azimuth, &launch_lng, &launch_lat);
 		active = (bool)i1;
@@ -1019,10 +1037,12 @@ void AscentApMfd::ToggleOMS2Schedule ()
 
 OAPI_MSGTYPE AscentApMfd::MsgProc (UINT msg, UINT mfd, WPARAM wparam, LPARAM lparam)
 {
+    /* TODO(jec)
 	switch (msg) {
 	case OAPI_MSG_MFD_OPENED:
 		return (OAPI_MSGTYPE)(new AscentApMfd (LOWORD(wparam), HIWORD(wparam), (VESSEL*)lparam));
 	}
+    */
 	return 0;
 }
 
@@ -1050,7 +1070,9 @@ void AscentAPDlg::Update (double simt)
 	if (DlgHandle()) {
 		static char title[64] = "Atlantis Ascent Autopilot | MET ";
 		strcpy (title+32, MetStr (ap->met)); 
+        /* TODO(jec)
 		SetWindowText (DlgHandle(), title);
+        */
 		for (int i = 0; i < TabCount(); i++)
 			Tab(i)->Update (simt);
 	}
@@ -1101,6 +1123,7 @@ AscentAPDlgTabControl::AscentAPDlgTabControl (AscentAPDlg *frame)
 int AscentAPDlgTabControl::OnInitTab (WPARAM wParam)
 {
 	char cbuf[256];
+    /* TODO(jec)
 	sprintf (cbuf, "%0.1f", ap->GetLaunchAzimuth()*DEG);
 	SetWindowText (GetDlgItem (TabHandle(), IDC_AZIMUTH), cbuf);
 	sprintf (cbuf, "%0.1f", ap->GetOrbitAltitude()*1e-3);
@@ -1111,6 +1134,7 @@ int AscentAPDlgTabControl::OnInitTab (WPARAM wParam)
 		SetWindowText (GetDlgItem (TabHandle(), IDC_LAUNCH), "Launch");
 	else
 		SetWindowText (GetDlgItem (TabHandle(), IDC_LAUNCH), "Engage AP");
+    */
 
 	return TRUE;
 }
@@ -1123,12 +1147,14 @@ int AscentAPDlgTabControl::OnLaunch ()
 		if (ap->GetVessel()->status == 0) {
 			char cbuf[256];
 			double azimuth, alt;
+            /* TODO(jec)
 			GetWindowText (GetDlgItem (TabHandle(), IDC_AZIMUTH), cbuf, 256);
 			sscanf (cbuf, "%lf", &azimuth);
 			azimuth *= RAD;
 			GetWindowText (GetDlgItem (TabHandle(), IDC_ALT), cbuf, 256);
 			EnableWindow(GetDlgItem (TabHandle(), IDC_AZIMUTH), FALSE);
 			EnableWindow(GetDlgItem (TabHandle(), IDC_ALT), FALSE);
+            */
 			sscanf (cbuf, "%lf", &alt);
 			alt *= 1e3;
 			ap->SetLaunchAzimuth(azimuth);
@@ -1137,10 +1163,14 @@ int AscentAPDlgTabControl::OnLaunch ()
 		} else {
 			ap->Engage();
 		}
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (TabHandle(), IDC_LAUNCH), "Disengage AP");
+        */
 	} else {
 		ap->Disengage();
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (TabHandle(), IDC_LAUNCH), "Engage AP");
+        */
 	}
 	return TRUE;
 }
@@ -1149,10 +1179,12 @@ int AscentAPDlgTabControl::OnLaunch ()
 
 int AscentAPDlgTabControl::OnCommand (WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (LOWORD(wParam)) {
 	case IDC_LAUNCH:
 		return OnLaunch();
 	}
+    */
 	return TabPage::OnCommand (wParam, lParam);
 }
 
@@ -1164,22 +1196,27 @@ int AscentAPDlgTabControl::OnCommand (WPARAM wParam, LPARAM lParam)
 AscentAPDlgTabGimbal::AscentAPDlgTabGimbal (AscentAPDlg *frame)
 : AscentAPDlgTab (frame, IDD_ASCENTAP_GIMBAL)
 {
+    /* TODO(jec)
 	pen1 = CreatePen (PS_SOLID, 0, 0xB0B0B0);
 	pen2 = CreatePen (PS_SOLID, 0, 0x0000FF);
+    */
 }
 
 // --------------------------------------------------------------
 
 AscentAPDlgTabGimbal::~AscentAPDlgTabGimbal ()
 {
+    /* TODO(jec)
 	DeleteObject (pen1);
 	DeleteObject (pen2);
+    */
 }
 
 // --------------------------------------------------------------
 
 INT_PTR AscentAPDlgTabGimbal::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG: {
 		RECT rect;
@@ -1190,6 +1227,7 @@ INT_PTR AscentAPDlgTabGimbal::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 		RepaintAll (hWnd);
 		break;
 	}
+    */
 	return FALSE;
 }
 
@@ -1202,12 +1240,16 @@ void AscentAPDlgTabGimbal::Update (double simt)
 	int i;
 	int DlgId[5] = {IDC_SSME_L, IDC_SSME_R, IDC_SSME_U, IDC_SRB_L, IDC_SRB_R};
 	for (i = 0; i < 5; i++) {
+        /* TODO(jec)
 		HWND hCtrl = GetDlgItem (TabHandle(), DlgId[i]);
+        */
 		if (i < 3)
 			ap->GetVessel()->GetSSMEGimbalPos (i, pitch, yaw);
 		else
 			ap->GetVessel()->GetSRBGimbalPos (i-3, pitch, yaw);
+        /* TODO(jec)
 		UpdateGimbalCross (hCtrl, i, pitch, yaw);
+        */
 	}
 }
 
@@ -1220,6 +1262,7 @@ void AscentAPDlgTabGimbal::UpdateGimbalCross (HWND hCtrl, int idx, double pitch,
 	x = (int)(yaw/range * rad + 0.5);
 	y = (int)(pitch/range * rad + 0.5);
 	if (x != gimbalx[idx] || y != gimbaly[idx]) {
+        /* TODO(jec)
 		HDC hDC = GetDC (hCtrl);
 		RECT rect;
 		GetClientRect (hCtrl, &rect);
@@ -1238,6 +1281,7 @@ void AscentAPDlgTabGimbal::UpdateGimbalCross (HWND hCtrl, int idx, double pitch,
 		PaintGimbalCross (hDC, rect, gimbalx[idx]=x, gimbaly[idx]=y);
 		SelectObject (hDC, ppen);
 		ReleaseDC (hCtrl, hDC);
+        */
 	}
 }
 
@@ -1252,12 +1296,16 @@ void AscentAPDlgTabGimbal::PaintGimbalCross (HDC hDC, const RECT &rect, int x, i
 	cnty = (ymin+ymax)/2;
 	x += cntx, y += cnty;
 	if (x >= xmin && x < xmax) {
+        /* TODO(jec)
 		MoveToEx (hDC, x, max(y-10, ymin), NULL);
 		LineTo (hDC, x, min(y+11, ymax));
+        */
 	}
 	if (y >= ymin && y < ymax) {
+        /* TODO(jec)
 		MoveToEx (hDC, max(x-10, xmin), y, NULL);
 		LineTo (hDC, min(x+11,xmax), y);
+        */
 	}
 }
 
@@ -1267,10 +1315,12 @@ void AscentAPDlgTabGimbal::RepaintAll (HWND hWnd)
 {
 	int DlgId[5] = {IDC_SSME_L, IDC_SSME_R, IDC_SSME_U, IDC_SRB_L, IDC_SRB_R};
 	for (int i = 0; i < 5; i++) {
+        /* TODO(jec)
 		HWND hCtrl = GetDlgItem (hWnd, DlgId[i]);
 		InvalidateRect (hCtrl, NULL, FALSE);
 		UpdateWindow (hCtrl);
 		PaintGimbalBox (hCtrl);
+        */
 		gimbalx[i] = gimbaly[i] = 0;
 	}
 }
@@ -1281,6 +1331,7 @@ void AscentAPDlgTabGimbal::PaintGimbalBox (HWND hWnd)
 {
 	RECT rect;
 	int cntx, cnty;
+    /* TODO(jec)
 	HDC hDC = GetDC (hWnd);
 	GetClientRect (hWnd, &rect);
 	cntx = (rect.right+rect.left)/2;
@@ -1293,6 +1344,7 @@ void AscentAPDlgTabGimbal::PaintGimbalBox (HWND hWnd)
 	MoveToEx (hDC, cntx, rect.top, NULL); LineTo (hDC, cntx, rect.bottom);
 	SelectObject (hDC, GetStockObject (BLACK_PEN));
 	ReleaseDC (hWnd, hDC);
+    */
 }
 
 
@@ -1343,7 +1395,7 @@ void AscentAPDlgTabThrust::Update (double simt)
 
 void AscentAPDlgTabThrust::RefreshGraph (Graph *graph, int GraphId)
 {
-
+    /* TODO(jec)
 	HWND hCtrl = GetDlgItem (TabHandle(), GraphId);
 	InvalidateRect (hCtrl, NULL, TRUE);
 	UpdateWindow (hCtrl);
@@ -1352,6 +1404,7 @@ void AscentAPDlgTabThrust::RefreshGraph (Graph *graph, int GraphId)
 	GetClientRect (hCtrl, &rect);
 	graph->Refresh (hDC, rect.right-rect.left, rect.bottom-rect.top);
 	ReleaseDC (hCtrl, hDC);
+    */
 }
 
 // --------------------------------------------------------------
@@ -1367,10 +1420,12 @@ int AscentAPDlgTabThrust::OnPaint ()
 
 INT_PTR AscentAPDlgTabThrust::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_PAINT:
 		return OnPaint ();
 	}
+    */
 	return FALSE;
 }
 
@@ -1416,6 +1471,7 @@ void AscentAPDlgTabAltitude::Update (double simt)
 void AscentAPDlgTabAltitude::RefreshGraph (Graph *graph, int GraphId)
 {
 
+    /* TODO(jec)
 	HWND hCtrl = GetDlgItem (TabHandle(), GraphId);
 	InvalidateRect (hCtrl, NULL, TRUE);
 	UpdateWindow (hCtrl);
@@ -1424,6 +1480,7 @@ void AscentAPDlgTabAltitude::RefreshGraph (Graph *graph, int GraphId)
 	GetClientRect (hCtrl, &rect);
 	graph->Refresh (hDC, rect.right-rect.left, rect.bottom-rect.top);
 	ReleaseDC (hCtrl, hDC);
+    */
 }
 
 // --------------------------------------------------------------
@@ -1438,10 +1495,12 @@ int AscentAPDlgTabAltitude::OnPaint ()
 
 INT_PTR AscentAPDlgTabAltitude::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_PAINT:
 		return OnPaint ();
 	}
+    */
 	return FALSE;
 }
 

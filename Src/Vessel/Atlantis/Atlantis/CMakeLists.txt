@@ -30,13 +30,16 @@ target_include_directories(${VESSEL_NAME}
 	PUBLIC ${ORBITER_SOURCE_SDK_INCLUDE_DIR}
 	PUBLIC ${ORBITER_SOURCE_MODULE_DIR}
 	PUBLIC ${CMAKE_CURRENT_BINARY_DIR}                 # for the dynamically generated header files
+    PUBLIC ${WIN32_INCLUDE_DIR}
 )
 
 target_link_libraries(${VESSEL_NAME}
-	${ORBITER_LIB}
+    # TODO(jec)
+    # ${ORBITER_LIB}
 	${ORBITER_SDK_LIB}
 	${ORBITER_DLGCTRL_LIB}
-	UxTheme.lib
+    # TODO(jec)
+    #UxTheme.lib
 	$<TARGET_LINKER_FILE:Atlantis_Tank>
 )
 

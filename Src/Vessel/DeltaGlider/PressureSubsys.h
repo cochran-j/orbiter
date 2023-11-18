@@ -74,6 +74,10 @@ private:
 // Airlock controls
 // ==============================================================
 
+class PressureSubsystem;
+class OuterLockSwitch;
+class InnerLockSwitch;
+
 class AirlockCtrl: public DGSubsystem {
 	friend class PressureSubsystem;
 	friend class OuterLockSwitch;
@@ -142,6 +146,8 @@ private:
 // ==============================================================
 // Top hatch controls
 // ==============================================================
+
+class HatchCtrlSwitch;
 
 class TophatchCtrl: public DGSubsystem {
 	friend class PressureSubsystem;

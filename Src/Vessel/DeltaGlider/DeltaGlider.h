@@ -21,8 +21,8 @@
 
 #define STRICT 1
 
-#include "orbitersdk.h"
-#include "..\Common\Instrument.h"
+#include "Orbitersdk.h"
+#include "../Common/Instrument.h"
 
 // ==============================================================
 // Some vessel class caps

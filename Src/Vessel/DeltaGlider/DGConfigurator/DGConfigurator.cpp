@@ -3,16 +3,22 @@
 
 #define STRICT 1
 #define ORBITER_MODULE
-#include "orbitersdk.h"
+
+#include "Orbitersdk.h"
 #include "DGC_resource.h"
 #include <stdio.h>
+/* TODO(jec)
 #include <io.h>
+*/
+#include <filesystem>
 
 class VesselConfig;
 class DGConfig;
 
-static const char *hires_enabled = "Textures2\\DG";
-static const char *hires_disabled = "Textures2\\~DG";
+using std::filesystem::path;
+
+static const path hires_enabled = path{"Textures2"} / "DG";
+static const path hires_disabled = path{"Textures2"} / "~DG";
 
 struct {
 	HINSTANCE hInst;
@@ -29,7 +35,7 @@ public:
 	void EnableHires (bool enable);
 	void InitDialog (HWND hWnd);
 	void Apply (HWND hWnd);
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
 };
 
 char *DGConfig::Description()
@@ -46,7 +52,7 @@ bool DGConfig::clbkOpen (HWND hLaunchpad)
 bool DGConfig::HiresEnabled () const
 {
 	// check if the DG highres texture directory is present
-	return (_access (hires_enabled, 0) != -1);
+	return std::filesystem::exists(hires_enabled);
 }
 
 void DGConfig::EnableHires (bool enable)
@@ -54,29 +60,34 @@ void DGConfig::EnableHires (bool enable)
 	if (HiresEnabled() == enable) return; // nothing to do
 
 	if (enable) {
-		rename (hires_disabled, hires_enabled);
+        std::filesystem::rename (hires_disabled, hires_enabled);
 	} else {
 		// to disable the highres textures, we simply rename the directory
 		// so that orbiter's texture manager can't find it
-		rename (hires_enabled, hires_disabled);
+        std::filesystem::rename (hires_enabled, hires_disabled);
 	}
 }
 
 void DGConfig::InitDialog (HWND hWnd)
 {
 	bool hires = HiresEnabled();
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_RADIO1, BM_SETCHECK, hires?BST_CHECKED:BST_UNCHECKED, 0);
 	SendDlgItemMessage (hWnd, IDC_RADIO2, BM_SETCHECK, hires?BST_UNCHECKED:BST_CHECKED, 0);
+    */
 }
 
 void DGConfig::Apply (HWND hWnd)
 {
+    /* TODO(jec)
 	bool enable = (SendDlgItemMessage (hWnd, IDC_RADIO1, BM_GETCHECK, 0, 0) == BST_CHECKED);
 	EnableHires (enable);
+    */
 }
 
-INT_PTR CALLBACK DGConfig::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR DGConfig::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		((DGConfig*)lParam)->InitDialog (hWnd);
@@ -93,6 +104,7 @@ INT_PTR CALLBACK DGConfig::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		}
 		break;
 	}
+    */
 	return 0;
 }
 

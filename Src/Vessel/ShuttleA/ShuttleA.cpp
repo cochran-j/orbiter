@@ -12,6 +12,10 @@
 #define STRICT 1
 #define ORBITER_MODULE
 
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "ShuttleA.h"
 #include "ScnEditorAPI.h"
 #include "DlgCtrl.h"
@@ -34,6 +38,30 @@
 #include "meshres.h"
 #include <math.h>
 #include <stdio.h>
+
+static bool caseInsensitiveEquals(const std::string_view& str1,
+                                  const std::string_view& str2) {
+
+    return std::equal(str1.begin(), str1.end(),
+                      str2.begin(), str2.end(),
+                      [](char c1, char c2) {
+                          return std::tolower(static_cast<unsigned char>(c1)) ==
+                                 std::tolower(static_cast<unsigned char>(c2));
+                      });
+}
+
+static bool caseInsensitiveStartsWith(const std::string_view& str,
+                                      const std::string_view& start) {
+
+    return (str.size() >= start.size()) &&
+        std::equal(str.begin(), str.begin() + start.size(),
+                   start.begin(), start.end(),
+                   [](char c1, char c2) {
+                       return std::tolower(static_cast<unsigned char>(c1)) ==
+                              std::tolower(static_cast<unsigned char>(c2));
+                   });
+}
+
 
 using std::min;
 using std::max;
@@ -342,16 +370,20 @@ void ShuttleA::InitPanel (int panel)
 
 	switch (panel) {
 	case -1: //VC resources
+        /* TODO(jec)
 		srf[2] = oapiCreateSurface (LOADBMP (IDB_BUTTON1));
 		srf[3] = oapiCreateSurface (LOADBMP (IDB_INDICATOR1));
 		srf[4] = oapiCreateSurface (LOADBMP (IDB_INDICATOR2));
 		srf[5] = oapiCreateSurface (LOADBMP (IDB_BUTTON3)); 
+        */
 
 		break;
 	case 0:
+        /* TODO(jec)
 		srf[0] = oapiCreateSurface (LOADBMP (IDB_SLIDER1));
 		srf[1] = oapiCreateSurface (LOADBMP (IDB_SWITCH1));
 		srf[2] = oapiCreateSurface (LOADBMP (IDB_BUTTON1));
+        */
 		
 		for (i = 0; i < 2; i++) {
 			sliderpos_main[i] = sliderpos_hovr[i] =
@@ -361,12 +393,14 @@ void ShuttleA::InitPanel (int panel)
 		}
 		break;
 	case 1:
+        /* TODO(jec)
 		srf[0] = oapiCreateSurface (LOADBMP (IDB_SWITCH2));
 		srf[1] = oapiCreateSurface (LOADBMP (IDB_SWITCH3));
 		srf[2] = oapiCreateSurface (LOADBMP (IDB_SWITCH4));
 		srf[3] = oapiCreateSurface (LOADBMP (IDB_INDICATOR1));
 		srf[4] = oapiCreateSurface (LOADBMP (IDB_INDICATOR2));
 		srf[5] = oapiCreateSurface (LOADBMP (IDB_BUTTON3));
+        */
 		break;
 	}
 }
@@ -1327,25 +1361,25 @@ void ShuttleA::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 	char *line;
 
 	while (oapiReadScenario_nextline (scn, line)) {
-		if (!_strnicmp (line, "PODANGLE", 8)) {
+		if (caseInsensitiveStartsWith(line, "PODANGLE")) {
 			sscanf (line+8, "%lf%lf", pod_angle+0, pod_angle+1);
-		} else if (!_strnicmp (line, "DOCKSTATE", 9)) {
+		} else if (caseInsensitiveStartsWith(line, "DOCKSTATE")) {
 			sscanf (line+9, "%d%lf", &dock_status, &dock_proc);
-		} else if (!_strnicmp (line, "AIRLOCK", 7)) {
+		} else if (caseInsensitiveStartsWith(line, "AIRLOCK")) {
 			sscanf (line+7, "%d%lf", &lock_status[0], &lock_proc[0]);
-		} else if (!_strnicmp (line, "IAIRLOCK", 8)) {
+		} else if (caseInsensitiveStartsWith(line, "IAIRLOCK")) {
 			sscanf (line+8, "%d%lf", &lock_status[1], &lock_proc[1]);
-		} else if (!_strnicmp (line, "GEAR", 4)) {
+		} else if (caseInsensitiveStartsWith(line, "GEAR")) {
 			sscanf (line+4, "%d%lf", &gear_status, &gear_proc);
-		} else if (!_strnicmp (line, "PAYLOAD MASS", 12)) {
+		} else if (caseInsensitiveStartsWith(line, "PAYLOAD MASS")) {
 			sscanf (line+12, "%lf%d", &payload_mass,&cargo_arm_status);
-		} else if (!_strnicmp (line, "ATTREF", 6)) {
+		} else if (caseInsensitiveStartsWith(line, "ATTREF")) {
 			int mode, tgtmode, navid;
 			sscanf (line+6, "%d%d%d", &mode, &tgtmode, &navid);
 			attref->SetMode (mode);
 			attref->SetTgtmode (tgtmode);
 			attref->SetNavid (navid);
-		} else if (!_strnicmp (line, "ADI_LAYOUT", 10)) {
+		} else if (caseInsensitiveStartsWith(line, "ADI_LAYOUT")) {
 			int layout = 0;
 			if (sscanf (line+10, "%d", &layout) && layout >= 0 && layout <= 1)
 				adi_layout = layout;
@@ -1408,33 +1442,33 @@ void ShuttleA::clbkSaveState (FILEHANDLE scn)
 // --------------------------------------------------------------
 bool ShuttleA::clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event)
 {
-	if (!_stricmp (event_type, "DOCK")) {
-		ActivateDockingPort (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
+	if (caseInsensitiveEquals(event_type, "DOCK")) {
+		ActivateDockingPort (caseInsensitiveEquals(event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
 		return true;
-	} else if (!_stricmp (event_type, "AIRLOCK")) {
-		ActivateAirlock (0, !_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
+	} else if (caseInsensitiveEquals(event_type, "AIRLOCK")) {
+		ActivateAirlock (0, caseInsensitiveEquals(event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
 		return true;
-	} else if (!_stricmp (event_type, "IAIRLOCK")) {
-		ActivateAirlock (1, !_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
+	} else if (caseInsensitiveEquals(event_type, "IAIRLOCK")) {
+		ActivateAirlock (1, caseInsensitiveEquals(event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
 		return true;
-	} else if (!_stricmp (event_type, "GEAR")) {
-		ActivateLandingGear (!_stricmp (event, "UP") ? DOOR_CLOSING : DOOR_OPENING);
+	} else if (caseInsensitiveEquals(event_type, "GEAR")) {
+		ActivateLandingGear (caseInsensitiveEquals(event, "UP") ? DOOR_CLOSING : DOOR_OPENING);
 		return true;
-	} else if (!_stricmp (event_type, "POD")) {
+	} else if (caseInsensitiveEquals(event_type, "POD")) {
 		UINT which;
 		double angle;
 		char action[256];
 		sscanf (event, "%d %s %lf", &which, action, &angle);
-		if (!_stricmp (action, "SET")) CommandPodAngle (which, angle);
-		else if (!_stricmp (action, "FWD")) CommandPodAngle (which, PI);
-		else if (!_stricmp (action, "BACK")) CommandPodAngle (which, 0);
+		if (caseInsensitiveEquals(action, "SET")) CommandPodAngle (which, angle);
+		else if (caseInsensitiveEquals(action, "FWD")) CommandPodAngle (which, PI);
+		else if (caseInsensitiveEquals(action, "BACK")) CommandPodAngle (which, 0);
 		return true;
-	} else if (!_stricmp (event_type, "CARGO")) {
-		if (!_strnicmp (event, "ARM", 3))
+	} else if (caseInsensitiveEquals(event_type, "CARGO")) {
+		if (caseInsensitiveStartsWith(event, "ARM"))
 			ActivateCargo (1);
-		else if (!_strnicmp (event, "DISARM", 6))
+		else if (caseInsensitiveStartsWith(event, "DISARM"))
 			ActivateCargo (0);
-		else if (!_strnicmp (event, "GRAPPLE", 7)) {
+		else if (caseInsensitiveStartsWith(event, "GRAPPLE")) {
 			int grapple;
 			sscanf (event+7, "%d", &grapple);
 			ToggleGrapple (grapple);
@@ -2527,7 +2561,9 @@ ShuttleA *GetV (HWND hDlg)
 {
 	// retrieve DG interface from scenario editor
 	OBJHANDLE hVessel;
+    /* TODO(jec)
 	SendMessage (hDlg, WM_SCNEDITOR, SE_GETVESSEL, (LPARAM)&hVessel);
+    */
 	return (ShuttleA*)oapiGetVesselInterface (hVessel);
 }
 
@@ -2535,15 +2571,18 @@ void UpdatePodSliders (HWND hDlg, ShuttleA *v)
 {
 	int lpos = (int)(v->GetPodAngle(0)/PI*100.0+0.5);
 	int rpos = (int)(v->GetPodAngle(1)/PI*100.0+0.5);
+    /* TODO(jec)
 	oapiSetGaugePos (GetDlgItem (hDlg, IDC_LAUX_POS), lpos);
 	oapiSetGaugePos (GetDlgItem (hDlg, IDC_RAUX_POS), rpos);
 	oapiSetGaugePos (GetDlgItem (hDlg, IDC_AUX_POS), (lpos+rpos)/2);
+    */
 }
 
 void InitEdPg1 (HWND hDlg, OBJHANDLE hVessel)
 {
 	ShuttleA *v = (ShuttleA*)oapiGetVesselInterface (hVessel);
 	GAUGEPARAM gp = { 0, 100, GAUGEPARAM::LEFT, GAUGEPARAM::BLACK };
+    /* TODO(jec)
 	oapiSetGaugeParams (GetDlgItem (hDlg, IDC_LAUX_POS), &gp);
 	oapiSetGaugeParams (GetDlgItem (hDlg, IDC_RAUX_POS), &gp);
 	oapiSetGaugeParams (GetDlgItem (hDlg, IDC_AUX_POS), &gp);
@@ -2551,14 +2590,16 @@ void InitEdPg1 (HWND hDlg, OBJHANDLE hVessel)
 	ShowWindow (GetDlgItem (hDlg, IDC_RAUX_POS), SW_HIDE);
 	ShowWindow (GetDlgItem (hDlg, IDC_AUX_POS), SW_SHOW);
 	SendDlgItemMessage (hDlg, IDC_AUX_SYNC, BM_SETCHECK, BST_CHECKED, 0);
+    */
 	UpdatePodSliders (hDlg, v);
 }
 
 // --------------------------------------------------------------
 // Message procedure for editor page 1 (animation settings)
 // --------------------------------------------------------------
-INT_PTR CALLBACK EdPg1Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR EdPg1Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		InitEdPg1 (hTab, (OBJHANDLE)lParam);
@@ -2633,6 +2674,7 @@ INT_PTR CALLBACK EdPg1Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		} break;
 	}
+    */
 	return FALSE;
 }
 
@@ -2642,5 +2684,7 @@ INT_PTR CALLBACK EdPg1Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 DLLCLBK void secInit (HWND hEditor, OBJHANDLE hVessel)
 {
 	EditorPageSpec eps1 = {"Animations", g_Param.hDLL, IDD_EDITOR_PG1, EdPg1Proc};
+    /* TODO(jec)
 	SendMessage (hEditor, WM_SCNEDITOR, SE_ADDPAGEBUTTON, (LPARAM)&eps1);
+    */
 }

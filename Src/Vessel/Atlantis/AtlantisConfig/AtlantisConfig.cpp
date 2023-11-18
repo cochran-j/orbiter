@@ -3,20 +3,26 @@
 
 #define STRICT 1
 #define ORBITER_MODULE
-#include "orbitersdk.h"
+#include <filesystem>
+#include "Orbitersdk.h"
 #include "AC_resource.h"
 #include <stdio.h>
+/* TODO(jec)
 #include <io.h>
+*/
 
 class VesselConfig;
 class AtlantisConfig;
 
-static const char *tex_hires_enabled = "Textures2\\Atlantis";
-static const char *tex_hires_disabled = "Textures2\\~Atlantis";
+using std::filesystem::path;
 
-static const char *vcmsh_fname = "Meshes\\Atlantis\\AtlantisVC.msh";
-static const char *msh_hires_bkup = "Meshes\\Atlantis\\~AtlantisVC_hi.msh";
-static const char *msh_lores_bkup = "Meshes\\Atlantis\\~AtlantisVC_lo.msh";
+static const path tex_hires_enabled =
+    path{"Textures2"} / "Atlantis";
+static const path tex_hires_disabled = path{"Textures2"} / "~Atlantis";
+
+static const path vcmsh_fname = path{"Meshes"} / "Atlantis" / "AtlantisVC.msh";
+static const path msh_hires_bkup = path{"Meshes"} / "Atlantis" / "~AtlantisVC_hi.msh";
+static const path msh_lores_bkup = path{"Meshes"} / "Atlantis" / "~AtlantisVC_lo.msh";
 
 struct {
 	HINSTANCE hInst;
@@ -35,7 +41,7 @@ public:
 	bool MshEnableHires (bool enable);
 	void InitDialog (HWND hWnd);
 	void Apply (HWND hWnd);
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
 };
 
 char *AtlantisConfig::Description()
@@ -52,7 +58,7 @@ bool AtlantisConfig::clbkOpen (HWND hLaunchpad)
 bool AtlantisConfig::TexHiresEnabled () const
 {
 	// check if the Atlantis highres texture directory is present
-	return (_access (tex_hires_enabled, 0) != -1);
+	return std::filesystem::exists(tex_hires_enabled);
 }
 
 void AtlantisConfig::TexEnableHires (bool enable)
@@ -60,18 +66,18 @@ void AtlantisConfig::TexEnableHires (bool enable)
 	if (TexHiresEnabled() == enable) return; // nothing to do
 
 	if (enable) {
-		rename (tex_hires_disabled, tex_hires_enabled);
+        std::filesystem::rename (tex_hires_disabled, tex_hires_enabled);
 	} else {
 		// to disable the highres textures, we simply rename the directory
 		// so that orbiter's texture manager can't find it
-		rename (tex_hires_enabled, tex_hires_disabled);
+        std::filesystem::rename (tex_hires_enabled, tex_hires_disabled);
 	}
 }
 
 bool AtlantisConfig::MshHiresEnabled () const
 {
 	// check if backup of low-res mesh is present
-	return (_access (msh_lores_bkup, 0) != -1);
+	return (std::filesystem::exists(msh_lores_bkup));
 }
 
 bool AtlantisConfig::MshEnableHires (bool enable)
@@ -79,15 +85,19 @@ bool AtlantisConfig::MshEnableHires (bool enable)
 	if (MshHiresEnabled() == enable) return false; // nothing to do
 
 	if (enable) {
-		if (_access (msh_hires_bkup, 0) == -1) return false; // high-res backup not found
-		if (_access (vcmsh_fname, 0) != -1 && _access (msh_lores_bkup, 0) == -1)
-			rename (vcmsh_fname, msh_lores_bkup); // back up low-res mesh
-		rename (msh_hires_bkup, vcmsh_fname); // activate high-res mesh
+		if (!std::filesystem::exists(msh_hires_bkup)) return false; // high-res backup not found
+		if (std::filesystem::exists(vcmsh_fname) &&
+            !std::filesystem::exists(msh_lores_bkup)) {
+			std::filesystem::rename (vcmsh_fname, msh_lores_bkup); // back up low-res mesh
+        }
+        std::filesystem::rename (msh_hires_bkup, vcmsh_fname); // activate high-res mesh
 	} else {
-		if (_access (msh_lores_bkup, 0) == -1) return false; // low-res backup not found
-		if (_access(vcmsh_fname, 0) != -1 && _access (msh_hires_bkup, 0) == -1)
-			rename (vcmsh_fname, msh_hires_bkup); // back up high-res mesh
-		rename (msh_lores_bkup, vcmsh_fname); // activate low-res mesh
+		if (!std::filesystem::exists(msh_lores_bkup)) return false; // low-res backup not found
+		if (std::filesystem::exists(vcmsh_fname) &&
+            !std::filesystem::exists(msh_hires_bkup)) {
+            std::filesystem::rename (vcmsh_fname, msh_hires_bkup); // back up high-res mesh
+        }
+        std::filesystem::rename (msh_lores_bkup, vcmsh_fname); // activate low-res mesh
 	}
 	return true;
 }
@@ -96,22 +106,27 @@ void AtlantisConfig::InitDialog (HWND hWnd)
 {
 	bool texhires = TexHiresEnabled();
 	bool mshhires = MshHiresEnabled();
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_RADIO1, BM_SETCHECK, texhires?BST_CHECKED:BST_UNCHECKED, 0);
 	SendDlgItemMessage (hWnd, IDC_RADIO2, BM_SETCHECK, texhires?BST_UNCHECKED:BST_CHECKED, 0);
 	SendDlgItemMessage (hWnd, IDC_RADIO3, BM_SETCHECK, mshhires?BST_CHECKED:BST_UNCHECKED, 0);
 	SendDlgItemMessage (hWnd, IDC_RADIO4, BM_SETCHECK, mshhires?BST_UNCHECKED:BST_CHECKED, 0);
+    */
 }
 
 void AtlantisConfig::Apply (HWND hWnd)
 {
+    /* TODO(jec)
 	bool texhires = (SendDlgItemMessage (hWnd, IDC_RADIO1, BM_GETCHECK, 0, 0) == BST_CHECKED);
 	TexEnableHires (texhires);
 	bool mshhires = (SendDlgItemMessage (hWnd, IDC_RADIO3, BM_GETCHECK, 0, 0) == BST_CHECKED);
 	MshEnableHires (mshhires);
+    */
 }
 
-INT_PTR CALLBACK AtlantisConfig::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR AtlantisConfig::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		((AtlantisConfig*)lParam)->InitDialog (hWnd);
@@ -128,6 +143,7 @@ INT_PTR CALLBACK AtlantisConfig::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, L
 		}
 		break;
 	}
+    */
 	return 0;
 }
 

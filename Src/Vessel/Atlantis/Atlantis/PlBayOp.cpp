@@ -1,6 +1,10 @@
 // Copyright (c) Martin Schweiger
 // Licensed under the MIT License
 
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "PlBayOp.h"
 #include "resource.h"
 #include "meshres_vc.h"
@@ -10,11 +14,25 @@
 using std::min;
 using std::max;
 
+
+static bool caseInsensitiveStartsWith(const std::string_view& str,
+                                      const std::string_view& start) {
+
+    return (str.size() >= start.size()) &&
+        std::equal(str.begin(), str.begin() + start.size(),
+                   start.begin(), start.end(),
+                   [](char c1, char c2) {
+                       return std::tolower(static_cast<unsigned char>(c1)) ==
+                              std::tolower(static_cast<unsigned char>(c2));
+                   });
+}
+
+
 extern GDIParams g_Param;
 extern HELPCONTEXT g_hc;
 extern const char *ActionString[5];
 
-INT_PTR CALLBACK PlOp_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR PlOp_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static Atlantis *sts_dlg;
 
 // ==============================================================
@@ -242,16 +260,16 @@ void PayloadBayOp::RevertKuAntennaAction ()
 
 bool PayloadBayOp::ParseScenarioLine (char *line)
 {
-	if (!_strnicmp (line, "CARGODOOR", 9)) {
+	if (caseInsensitiveStartsWith(line, "CARGODOOR")) {
 		sscan_state (line+9, BayDoorStatus);
 		return true;
-	} else if (!_strnicmp (line, "RADIATOR", 8)) {
+	} else if (caseInsensitiveStartsWith(line, "RADIATOR")) {
 		sscan_state (line+8, RadiatorStatus);
 		return true;
-	} else if (!_strnicmp (line, "RADLATCH", 8)) {
+	} else if (caseInsensitiveStartsWith(line, "RADLATCH")) {
 		sscan_state (line+8, RadLatchStatus);
 		return true;
-	} else if (!_strnicmp (line, "KUBAND", 6)) {
+	} else if (caseInsensitiveStartsWith(line, "KUBAND")) {
 		sscan_state (line+6, KuAntennaStatus);
 		return true;
 	}
@@ -524,43 +542,63 @@ void PayloadBayOp::UpdateDialog (HWND hWnd)
 	char cbuf[256];
 	int i;
 	sprintf (cbuf, "Atlantis %s: Payload Bay Operation", sts->GetName());
+    /* TODO(jec)
 	SetWindowText (hWnd, cbuf);
+    */
 	for (i = 0; i < 2; i++) {
 		int plbd_ctrl[2] = {IDC_PLBD1, IDC_PLBD2};
 		bool enable = (BayDoor[i] == BD_ENABLE);
+        /* TODO(jec)
 		oapiSetSwitchState (GetDlgItem (hWnd, plbd_ctrl[i]), enable ? 0 : 1, true);
+        */
 	}
+    /* TODO(jec)
 	oapiSetSwitchState (GetDlgItem (hWnd, IDC_PLBD), BayDoorOp == BDO_OPEN ? 0 : BayDoorOp == BDO_CLOSE ? 1 : 2, true);
+    */
 
 	static const char *PLBDstr[5] = {"===","CL","OP","\\\\\\\\\\","\\\\\\\\\\"};
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hWnd, IDC_PLBD_TLKBK), PLBDstr[BayDoorStatus.action]);
+    */
 
 	for (i = 0; i < 2; i++) {
 		int mech_ctrl[2] = {IDC_MECH1, IDC_MECH2};
 		bool mon = (MechPwr[i] == MP_ON);
+        /* TODO(jec)
 		oapiSetSwitchState (GetDlgItem (hWnd, mech_ctrl[i]), mon ? 0 : 1, true);
+        */
 	}
 
 	for (i = 0; i < 2; i++) {
 		static const char *RDCTstr[5] = {"===","STO","DPL","\\\\\\\\\\","\\\\\\\\\\"};
 		int rad_ctrl[2] = {IDC_RADA, IDC_RADB};
 		int rad_tlkbk[2] = {IDC_RADS_TLKBK, IDC_RADP_TLKBK};
+        /* TODO(jec)
 		oapiSetSwitchState (GetDlgItem (hWnd, rad_ctrl[i]), RadiatorCtrl[i] == RC_DEPLOY ? 0 : RadiatorCtrl[i] == RC_OFF ? 2 : 1, true);
+        */
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (hWnd, rad_tlkbk[i]), RDCTstr[RadiatorStatus.action]);
+        */
 	}
 
 	for (i = 0; i < 2; i++) {
 		static const char *LTCTstr[5] = {"===","LAT","REL","\\\\\\\\\\","\\\\\\\\\\"};
 		int lat_ctrl[2] = {IDC_LATCHA, IDC_LATCHB};
 		int lat_tlkbk[2] = {IDC_LATCHS_TLKBK, IDC_LATCHP_TLKBK};
+        /* TODO(jec)
 		oapiSetSwitchState (GetDlgItem (hWnd, lat_ctrl[i]), RadLatchCtrl[i] == LC_RELEASE ? 0 : RadLatchCtrl[i] == LC_OFF ? 2 : 1, true);
 		SetWindowText (GetDlgItem (hWnd, lat_tlkbk[i]), LTCTstr[RadLatchStatus.action]);
+        */
 	}
 
+    /* TODO(jec)
 	oapiSetSwitchState (GetDlgItem (hWnd, IDC_KU), KuCtrl == KU_DEPLOY ? 0 : KuCtrl == KU_STOW ? 1 : 2, true);
 	oapiSetSwitchState (GetDlgItem (hWnd, IDC_KU_DIRECT), KuDirectCtrl == KU_DIRECT_ON ? 0 : 1, true);
+    */
 	static const char *KUstr[5] = {"===","STO","DPL","\\\\\\\\\\","\\\\\\\\\\"};
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hWnd, IDC_KU_TLKBK), KUstr[KuAntennaStatus.action]);
+    */
 }
 
 // ==============================================================
@@ -569,6 +607,7 @@ INT_PTR PayloadBayOp::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 {
 	bool action = false;
 
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG: {
 		SWITCHPARAM sp = {SWITCHPARAM::THREESTATE, SWITCHPARAM::VERTICAL};
@@ -735,13 +774,14 @@ INT_PTR PayloadBayOp::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		}
 		break;
 	}
+    */
 	return oapiDefDialogProc (hWnd, uMsg, wParam, lParam);
 }
 
 // ==============================================================
 // Dialog callback hook
 
-INT_PTR CALLBACK PlOp_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR PlOp_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return sts_dlg->plop->DlgProc (hWnd, uMsg, wParam, lParam);
 }
