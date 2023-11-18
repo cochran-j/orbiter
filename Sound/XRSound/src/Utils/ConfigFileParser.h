@@ -10,11 +10,12 @@
 
 #pragma once
 
-#include <Windows.h>
+#include <windows.h>
 #include <stdio.h>
 
-#include <atlstr.h>		// for CString
+#include <string>		// for std::string
 #include <fstream>      // for ifstream
+#include <filesystem>   // path
 
 const int MAX_LINE_LENGTH = 1024;
 const int MAX_NAME_LENGTH = 256;
@@ -26,16 +27,16 @@ public:
     ConfigFileParser(const char *pDefaultFilename, const char *pLogFilename);
     virtual ~ConfigFileParser();
     
-    virtual const CString &GetLogPrefix() const { return m_logPrefix; }
+    virtual const std::string &GetLogPrefix() const { return m_logPrefix; }
 
     virtual bool ParseFile(const char *pFilename = nullptr);  // main parse method; if null, parses the default filename (GetDefaultFilename())
     bool ParseFailed() const { return m_parseFailed; };
-    const char *GetDefaultFilename() const { return m_csDefaultFilename; }   // e.g,. "Foo\Bar.cfg"
-    const char *GetOverrideFilename() const { return m_csOverrideFilename; } // e.g,. "Config\XR2-foobar1.xrcfg"; may be empty
-    const char *GetConfigFilenames() const { return m_csConfigFilenames; };  // cosmetic string: "Config\XR2RavenstarPrefs.cfg + Config\XR2-foobar.xrcfg"
+    const std::string& GetDefaultFilename() const { return m_csDefaultFilename; }   // e.g,. "Foo\Bar.cfg"
+    const std::string& GetOverrideFilename() const { return m_csOverrideFilename; } // e.g,. "Config\XR2-foobar1.xrcfg"; may be empty
+    const std::string& GetConfigFilenames() const { return m_csConfigFilenames; };  // cosmetic string: "Config\XR2RavenstarPrefs.cfg + Config\XR2-foobar.xrcfg"
     
     // returns filename currently being parsed
-    const char *GetCurrentFilename(const bool bParsingOverrideFile) const
+    const std::string& GetCurrentFilename(const bool bParsingOverrideFile) const
     {
         if (bParsingOverrideFile)
             return GetOverrideFilename();
@@ -76,15 +77,15 @@ protected:
 
     bool m_parseFailed;     // true if parse failed, false if it succeeded
     FILE *m_pLogFile;
-    CString m_csDefaultFilename;          // e.g,. "Config\XR2RavenstarPrefs.cfg"
+    std::string m_csDefaultFilename;          // e.g,. "Config\XR2RavenstarPrefs.cfg"
     char m_buffer[MAX_LINE_LENGTH];
     char m_section[256];                  // value between brackets in [SECTION]; changes as each new section is encountered
     char m_parsedName[MAX_NAME_LENGTH];   // left of '='
     char m_parsedValue[MAX_VALUE_LENGTH]; // right of '='
 
-    CString m_csOverrideFilename;   // e.g,. "Config\XR2-foobar1.xrcfg"; may be empty
-    CString m_csConfigFilenames;    // cosmetic string: "Config\XR2RavenstarPrefs.cfg + Config\XR2-foobar.xrcfg"
+    std::filesystem::path m_csOverrideFilename;   // e.g,. "Config\XR2-foobar1.xrcfg"; may be empty
+    std::string m_csConfigFilenames;    // cosmetic string: "Config\XR2RavenstarPrefs.cfg + Config\XR2-foobar.xrcfg"
 
 private:
-    CString m_logPrefix;
+    std::string m_logPrefix;
 };

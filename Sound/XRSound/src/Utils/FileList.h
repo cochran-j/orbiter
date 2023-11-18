@@ -8,8 +8,9 @@
 
 #pragma once
 
-#include <atlstr.h>		// for CString
+#include <string>		// for std::string
 #include <vector>
+#include <filesystem>
 
 using namespace std;
 
@@ -18,14 +19,13 @@ class FileList
 public:
     FileList(const char *pRootPath, const bool bRecurseSubfolders);
     FileList(const char *pRootPath, const bool bRecurseSubfolders, const char *pFileTypeToAccept);
-    FileList(const char *pRootPath, const bool bRecurseSubfolders, const vector<CString> &fileTypesToAccept);
+    FileList(const char *pRootPath, const bool bRecurseSubfolders, const vector<std::string> &fileTypesToAccept);
     virtual ~FileList();
 
-    static bool DirectoryExists(const char *pPath)
+    static bool DirectoryExists(const std::filesystem::path& pPath)
     {
-        DWORD dwAttrib = GetFileAttributes(pPath);
-
-        return (dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+        return std::filesystem::exists(pPath) &&
+               std::filesystem::is_directory(pPath);
     }
 
     // Scan (or rescan) file tree.
@@ -41,32 +41,32 @@ public:
 
     // Invoked for each file or folder node found; should return true if file node should be included or folder should be
     // recursed into, or false if the node should be skipped.
-    virtual bool clbkFilterNode(const char *pPathOfNode, const WIN32_FIND_DATA &fd);
+    virtual bool clbkFilterNode(const std::filesystem::path& pPathOfNode);
 
     // Callback invoked for non-empty file nodes that passed the clbkFilterNode check; this is here for subclasses to hook.
-    virtual void clbkProcessFile(const char *pFilespec, const WIN32_FIND_DATA &fd);
+    virtual void clbkProcessFile(const std::filesystem::path& filePath);
 
     int GetScannedFileCount() const { return static_cast<int>(m_allFiles.size()); }
     bool IsEmpty() const { return m_allFiles.empty(); }
-    const vector<CString> &GetScannedFilesList() const { return m_allFiles;  }
-    const CString &GetRootPath() const { return m_rootPath; }
+    const vector<std::filesystem::path>& GetScannedFilesList() const { return m_allFiles;  }
+    const std::filesystem::path &GetRootPath() const { return m_rootPath; }
 
     // returns a random file entry from the list that is not a repeat of the previous one (provided there are at least two files in the list).
-    const CString GetRandomFile();
+    const std::filesystem::path GetRandomFile();
 
     // returns a file entry from the list at the specified index (0..GetScannedFileCount()-1)
-    const CString GetFile(const int index) const;
+    const std::filesystem::path GetFile(const int index) const;
 
     // Returns the first file in the list with the specified basename.
-    const CString *FindFileWithBasename(const char *pBasename) const;
+    const std::filesystem::path* FindFileWithBasename(const char *pBasename) const;
 
 protected:
-    void Scan(const char *pPath, const int recursionLevel);
+    void Scan(const std::filesystem::path& pPath, const int recursionLevel);
 
-    CString m_rootPath;
+    std::filesystem::path m_rootPath;
     bool m_bRecurseSubfolders;
-    vector<CString> m_fileTypesToAccept;
+    vector<std::filesystem::path> m_fileTypesToAccept;
     int m_previousRandomFileIndex;  // 0..GetScannedFileCount()-1
 
-    vector<CString> m_allFiles;     // full path of all files in the tree, starting with pRootPath.
+    vector<std::filesystem::path> m_allFiles;     // full path of all files in the tree, starting with pRootPath.
 };

@@ -6,8 +6,14 @@
 // Licensed under the MIT License
 // ==============================================================
 
+#include <string>
+#include <vector>
+#include <filesystem>
+#include <cassert>
+
 #include "FileList.h"
 #include "Orbitersdk.h"   // for oapiRand
+#include "ConfigFileParserMacros.h"
 
 // Convenience constructor for when you want to accept all file types
 FileList::FileList(const char *pRootPath, const bool bRecurseSubfolders) :
@@ -26,10 +32,13 @@ FileList::FileList(const char *pRootPath, const bool bRecurseSubfolders, const c
 //  pRootPath: base path to scan; may be relative or absolute path
 //  bRecurseSubfolders: true to recurse, false to not
 //  pFileTypesToAccept: vector of case-insensitive file extensions to accept (e.g., '.cfg', '.flac', etc).  If empty, all files are accepted.
-FileList::FileList(const char *pRootPath, const bool bRecurseSubfolders, const vector<CString> &fileTypesToAccept) :
+FileList::FileList(const char *pRootPath, const bool bRecurseSubfolders, const vector<std::string> &fileTypesToAccept) :
     FileList(pRootPath, bRecurseSubfolders)
 {
-    m_fileTypesToAccept = fileTypesToAccept;     // copied by value (i.e., it is cloned)
+    m_fileTypesToAccept.resize(fileTypesToAccept.size());
+    for (std::size_t i = 0; i < fileTypesToAccept.size(); ++i) {
+        m_fileTypesToAccept[i] = std::filesystem::path{fileTypesToAccept[i]};
+    }
 }
 
 // Destructor
@@ -46,63 +55,40 @@ FileList::~FileList()
 //      For files, *and* the file is not empty, the file node is added to m_allFiles, and
 //      For folders, that folder node is recursed into.
 // Note: recursionLevel is just here for debugging purposes
-void FileList::Scan(const char *pPath, const int recursionLevel)
+void FileList::Scan(const std::filesystem::path& pPath, const int recursionLevel)
 {
-    _ASSERTE(pPath);
-    _ASSERTE(*pPath);
+    assert(!pPath.empty());
 
     // This code was broken out from XRPayloadClassData::InitializeXRPayloadClassData().
+    std::filesystem::path basePath = pPath;
 
-    WIN32_FIND_DATA findFileData;
-    char pConfigFilespecWildcard[MAX_PATH];
-    sprintf_s(pConfigFilespecWildcard, "%s\\*", pPath);  // iterate through all files and directories
-
-    HANDLE hFind = ::FindFirstFile(pConfigFilespecWildcard, &findFileData);
-    if (hFind == INVALID_HANDLE_VALUE)
-        return;    // directory is empty (should really never happen because "." and ".." are always present)
-
-    // found at least one file
-    goto process_file;   // a little goofy, but that's Windows' goofy FindFirstFile/FindNextFile for you...
-
-    // now loop through all remaining files
-    for (;;)
-    {
-        if (::FindNextFile(hFind, &findFileData) != 0)
-        {
-        process_file:   // entry point from FirstFirstFile
-                        // build the new configdir-relative path
-            char pNodeFilespec[MAX_PATH];
-            sprintf_s(pNodeFilespec, "%s\\%s", pPath, findFileData.cFileName);  // e.g., "Vessels\XRParts.cfg"
-
-            if (!STARTSWITH_DOT(findFileData))   // file not "." or ".."?
-            {
-                if (clbkFilterNode(pNodeFilespec, findFileData))
-                {
-                    // node should be included
-                    if (IS_DIRECTORY(findFileData))
-                    {
-                        // this is a directory, so recurse down into it
-                        Scan(pNodeFilespec, recursionLevel + 1);
-                    }
-                    else if (!IS_EMPTY(findFileData))  // it's a file node; is it not empty?
-                    {
-                        // it's a file and it's not empty, so add it to our master list of nodes and invoke the callback for subclasses to hook
-                        m_allFiles.push_back(pNodeFilespec);
-                        clbkProcessFile(pNodeFilespec, findFileData);
+    if (m_bRecurseSubfolders) {
+        for (auto& dir_entry : std::filesystem::recursive_directory_iterator{basePath}) {
+            const auto& dir_path = dir_entry.path();
+            if (!dir_path.empty() &&        // Exclude ., .., and dot files.
+                !dir_path.string().front() == '.') {
+                if (clbkFilterNode(dir_path)) {
+                    if (!dir_entry.is_directory()) {
+                        m_allFiles.push_back(dir_path);
+                        clbkProcessFile(dir_path);
                     }
                 }
             }
-        }  // if (::FindNextFile(hFind, &findFileData) != 0)
-        else   // FindNextFile failed
-        {
-            // check the error; continue parsing next file unless "no more files" reached
-            DWORD dwError = GetLastError();
-            if (dwError == ERROR_NO_MORE_FILES)
-                break;      // all done
-                            // else skip this file: fall through and parse the next file
         }
-    }  // for (;;)
-    FindClose(hFind);
+    } else {
+        for (auto& dir_entry : std::filesystem::directory_iterator{basePath}) {
+            const auto& dir_path = dir_entry.path();
+            if (!dir_path.empty() &&        // Exclude ., .., and dot files.
+                !dir_path.string().front() == '.') {
+                if (clbkFilterNode(dir_path)) {
+                    if (!dir_entry.is_directory()) {
+                        m_allFiles.push_back(dir_path);
+                        clbkProcessFile(dir_path);
+                    }
+                }
+            }
+        }
+    }
 }
 
 // Invoked for each file or folder node found.  The default method here looks at bRecurseSubfolders (for folder nodes) and
@@ -110,44 +96,47 @@ void FileList::Scan(const char *pPath, const int recursionLevel)
 // Subclasses should override this method if they want more advanced filtering.
 //
 // Returns true if file node should be included or folder should be recursed into, or false if the node should be skipped.
-bool FileList::clbkFilterNode(const char *pPathOfNode, const WIN32_FIND_DATA &fd)
+bool FileList::clbkFilterNode(const std::filesystem::path& pathOfNode)
 {
+    /* NOTE(jec):  This check is moved to the root algorithm.  This function now
+     * only processes file nodes.
     if (IS_DIRECTORY(fd))
         return m_bRecurseSubfolders; 
+    */
 
     // it's a file node
     bool bAcceptFile = false;
     if (!m_fileTypesToAccept.empty())
     {
-        const char *pFileExtension = strrchr(fd.cFileName, '.');
-        if (pFileExtension)     // e.g., ".flac"
+        auto fileExtension = pathOfNode.extension();
+        if (!fileExtension.empty())     // e.g., ".flac"
         {
             // see if we have a case-insensitive match for this extension in our master list
-            for (vector<CString>::const_iterator it = m_fileTypesToAccept.begin(); it != m_fileTypesToAccept.end(); it++)
+            for (auto it = m_fileTypesToAccept.cbegin(); it != m_fileTypesToAccept.cend(); it++)
             {
-                if (_stricmp(pFileExtension, *it) == 0)
-                {
+                if (caseInsensitiveEquals(fileExtension.string(), it->string())) {
                     bAcceptFile = true;
                     break;
                 }
             }
         }
-    }
-    else
+    } else {
         bAcceptFile = true;     // accept all file types
+    }
 
     return bAcceptFile;
 }
 
 // Callback invoked for non-empty file nodes that passed the clbkFilterNode check; this is here for subclasses to hook.
-void FileList::clbkProcessFile(const char *pFilespec, const WIN32_FIND_DATA &fd)
+void FileList::clbkProcessFile(const std::filesystem::path& filePath)
 {
+    static_cast<void>(filePath);
     // no-op; this method is for subclasses to use
 }
 
 // Returns a random file entry from the list that is not a repeat of the previous one (provided there are at least two files in the list).
 // Returns empty string if the list is empty.
-const CString FileList::GetRandomFile()
+const std::filesystem::path FileList::GetRandomFile()
 {
     const int fileCount = GetScannedFileCount();
 
@@ -171,7 +160,7 @@ const CString FileList::GetRandomFile()
 // Returns a random file entry from the list that is not a repeat of the previous one (provided there are at least two files in the list).
 //   index: 0..GetScannedFileCount()-1
 // Returns empty string if the list is empty.
-const CString FileList::GetFile(const int index) const
+const std::filesystem::path FileList::GetFile(const int index) const
 {
     const int fileCount = GetScannedFileCount();
 
@@ -183,41 +172,25 @@ const CString FileList::GetFile(const int index) const
 }
 
 // Returns the first file in our file list with the specified basename (case-insensitive search), or nullptr if no file found.
-const CString *FileList::FindFileWithBasename(const char *pBasename) const
+const std::filesystem::path* FileList::FindFileWithBasename(const char *pBasename) const
 {
-    _ASSERTE(pBasename);
-    _ASSERTE(*pBasename);
+    assert(pBasename);
+    assert(*pBasename);
 
-    const CString *pRetVal = nullptr;
-    if (pBasename && *pBasename)
+    if (pBasename && *pBasename) /* NOTE(jec):  This is not a no-op with the asserts on NDEBUG builds */
     {
-        for (vector<CString>::const_iterator it = m_allFiles.begin(); it != m_allFiles.end(); it++)
+        for (vector<std::filesystem::path>::const_iterator it = m_allFiles.begin();
+             it != m_allFiles.end();
+             it++)
         {
-            const CString &filespec = *it;   // e.g., "foo\bar.flac", "C:\foo\bar.flac", etc.
-
-            // locate the filename portion of the string
-            int lastSeparatorIndex = filespec.ReverseFind('\\');
-            if (lastSeparatorIndex < 0)
-                lastSeparatorIndex = -1;     // we have just a filename ("bar.flac") -- no leading path; adjust so it will start at index 0 below
+            const auto& filespec_path = *it;   // e.g., "foo\bar.flac", "C:\foo\bar.flac", etc.
 
             // see if the basename part matches what we're looking for
             // Note: it would be faster for very large filelists to use a hashmap, but this is faster for lists of a few hundred files or less
-            const char *pCandidateFilename = static_cast<const char *>(filespec) + lastSeparatorIndex + 1;  // point to filename portion of string (skip over "\")
-            for (int i=0;; i++)
-            {
-                if (!pCandidateFilename[i] || (pCandidateFilename[i] == '.'))   // end of filespec string or end of filename portion (if any)?
-                {
-                    if (pBasename[i] == 0)   // also end of filename we're searching for (i.e., base names are same length)?
-                    {
-                        return &filespec;   // this resides in our immutable list, so it's safe to return a pointer to it
-                    }
-                    break;  // not a match (different lengths)
-                }
+            auto filestem = filespec_path.filename().stem();
 
-                if (!pBasename[i] || (tolower(pBasename[i]) != tolower(pCandidateFilename[i])))   // end of basename we're searching for OR characters don't match?
-                {
-                    break;  // not a match
-                }
+            if (caseInsensitiveEquals(filestem.string(), pBasename)) {
+                return &filespec_path;
             }
         }
     }

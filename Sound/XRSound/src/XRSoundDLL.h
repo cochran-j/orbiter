@@ -8,9 +8,11 @@
 
 #pragma once
 
-#include "OrbiterSDK.h"
+#include <string>
+#include <cassert>
+
+#include "Orbitersdk.h"
 #include "XRSoundEngine.h"
-#include "CStringHasher.h"
 
 // Defines the master map of all known Orbiter vessels (handles) -> XRSoundEngine * for it.
 // key = vessel handle (void *), value = XRSoundEngine * for that vessel (may be nullptr).
@@ -19,8 +21,8 @@ typedef pair<OBJHANDLE, VesselXRSoundEngine *> vesselHandle_XRSoundEnginePtr_Pai
 
 // Defines the master map of all known Orbiter vessels (handles) -> XRSoundEngine * for it.
 // key = vessel handle (void *), value = XRSoundEngine * for that vessel (may be nullptr).
-typedef unordered_map<CString, ModuleXRSoundEngine *, CStringHasher, CStringHasher> HASHMAP_CSTRING_XRSOUNDENGINEPTR;
-typedef pair<CString, ModuleXRSoundEngine *> CString_XRSoundEnginePtr_Pair;
+typedef unordered_map<std::string, ModuleXRSoundEngine *> HASHMAP_STRING_XRSOUNDENGINEPTR;
+typedef pair<std::string, ModuleXRSoundEngine *> String_XRSoundEnginePtr_Pair;
 
 
 // Orbiter module that maintains state data and methods for our DLL singleton object
@@ -38,7 +40,7 @@ public:
     HASHMAP_VESSELHANDLE_XRSOUNDENGINEPTR m_allVesselsMap;
 
     // key = CString (for unique module name), value = ModuleXRSoundEngine * for that vessel
-    HASHMAP_CSTRING_XRSOUNDENGINEPTR m_allModulesMap;
+    HASHMAP_STRING_XRSOUNDENGINEPTR m_allModulesMap;
 
     // Orbiter callbacks
     virtual void clbkSimulationStart(RenderMode mode) override;
@@ -50,7 +52,7 @@ public:
     // This is the same principle as oapiGetSimTime except that it always returns a value >= the previous frame's value.
     static double GetAbsoluteSimTime() 
     { 
-        _ASSERTE(s_pInstance);
+        assert(s_pInstance);
         return s_pInstance->m_absoluteSimTime; 
     }
 

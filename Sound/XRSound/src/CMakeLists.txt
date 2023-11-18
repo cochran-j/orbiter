@@ -23,10 +23,12 @@ target_include_directories(XRSound_dll PUBLIC
 	${ORBITER_SOURCE_SDK_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/Utils
 	${IRRKLANG_DIR}/include
+    ${WIN32_INCLUDE_DIR}
 )
 
 target_link_libraries(XRSound_dll
-	${ORBITER_LIB}
+    # TODO(jec)
+    # ${ORBITER_LIB}
 	${ORBITER_SDK_LIB}
 	${IRRKLANG_LIB}
 )
@@ -54,6 +56,7 @@ set_target_properties(XRSound_lib
 
 target_include_directories(XRSound_lib PUBLIC
 	${ORBITER_SOURCE_SDK_INCLUDE_DIR}
+    ${WIN32_INCLUDE_DIR}
 )
 
 install(TARGETS XRSound_lib

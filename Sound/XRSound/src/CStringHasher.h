@@ -7,6 +7,10 @@
 
 #pragma once
 
+
+/* TODO(jec):  This is un-needed after replacing all CStrings with std::string.
+ * std library provides a hash for std::string
+
 #include <atlstr.h>   // for CString
 #include <unordered_map>
 
@@ -33,3 +37,4 @@ public:
         return (s1 == s2);
     }
 };
+*/

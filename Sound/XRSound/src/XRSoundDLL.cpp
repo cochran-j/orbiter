@@ -6,7 +6,12 @@
 // ==============================================================
 
 #define ORBITER_MODULE
-#include "OrbiterSDK.h"
+
+#include <cassert>
+#include <string>
+#include <chrono>
+
+#include "Orbitersdk.h"
 #include "XRSoundDLL.h"
 #include "VesselXRSoundEngine.h"
 #include "ModuleXRSoundEngine.h"
@@ -42,18 +47,19 @@ DLLCLBK XRSoundEngine *GetModuleXRSoundEngineInstance(const char *pUniqueModuleN
 VesselXRSoundEngine *XRSoundDLL::GetXRSoundEngineInstance(const OBJHANDLE hVessel, const bool bInvokedByClientVessel)
 {
     const bool bIsValidVessel = oapiIsVessel(hVessel);
-    _ASSERTE(bIsValidVessel);
+    assert(bIsValidVessel);
     if (!bIsValidVessel)
     {
         // should never happen!
-        CString msg;
-        msg.Format("XRSoundDLL::GetXRSoundEngineInstance ERROR: vessel handle passed is invalid! bInvokedByClientVessel = %d", bInvokedByClientVessel);
-        WriteLog(msg);
+        std::string msg = "XRSoundDLL::GetXRSoundEngineInstance ERROR: vessel handle passed is invalid! bInvokedByClientVessel = ";
+        msg += std::to_string(bInvokedByClientVessel);
+
+        WriteLog(msg.c_str());
         return nullptr;
     }
 
     VESSEL *pVessel = oapiGetVesselInterface(hVessel);
-    _ASSERTE(pVessel);
+    assert(pVessel);
     
     // sanity check: bail out now if this is not a valid vessel for unknown reason
     if (!pVessel)
@@ -65,20 +71,27 @@ VesselXRSoundEngine *XRSoundDLL::GetXRSoundEngineInstance(const OBJHANDLE hVesse
         // if this ship has thrusters; it should have default sounds
         const DWORD dwThrusterCount = pVessel->GetThrusterCount();
         const bool bShouldHaveDefaultSounds = (dwThrusterCount > 0);
-        CString csVesselDesc;
-        csVesselDesc.Format("'%s' [class name '%s'], bInvokedByClientVessel = %d, dwThrusterCount = %u, bShouldHaveDefaultSounds = %d",
-            pVessel->GetName(), pVessel->GetClassName(), bInvokedByClientVessel, dwThrusterCount, bShouldHaveDefaultSounds);
+        std::string csVesselDesc = "'";
+        csVesselDesc += pVessel->GetName();
+        csVesselDesc += "' [class name '";
+        csVesselDesc += pVessel->GetClassName();
+        csVesselDesc += "'], bInvokedByClientVessel = " +
+            std::to_string(bInvokedByClientVessel) +
+            ", dwThrusterCount = " +
+            std::to_string(dwThrusterCount) +
+            ", bShouldHaveDefaultSounds = " +
+            std::to_string(bShouldHaveDefaultSounds);
 
         // if the request for an engine came from a vessel, it should *always* succeed, even if it would not normally have default sounds
         if (bInvokedByClientVessel || bShouldHaveDefaultSounds)
         {
-            CString msg;
-            msg.Format("XRSoundDLL::GetXRSoundEngineInstance: creating new XRSoundEngine instance for vessel %s", static_cast<const char *>(csVesselDesc));
+            std::string msg = "XRSoundDLL::GetXRSoundEngineInstance: creating new XRSoundEngine instance for vessel ";
+            msg += csVesselDesc;
 
             pEngine = VesselXRSoundEngine::CreateInstance(hVessel);
             if (pEngine)
                 s_pInstance->m_allVesselsMap.insert(vesselHandle_XRSoundEnginePtr_Pair(hVessel, pEngine));  // add the new engine to our master map for vessels
-            s_pInstance->WriteLog(msg);
+            s_pInstance->WriteLog(msg.c_str());
         }
     }
     return pEngine;   // may be nullptr
@@ -102,32 +115,32 @@ VesselXRSoundEngine *XRSoundDLL::GetXRSoundEngineInstance(const OBJHANDLE hVesse
 ModuleXRSoundEngine *XRSoundDLL::GetXRSoundEngineInstance(const char *pUniqueModuleName)
 {
     const bool bIsValidModuleID = (pUniqueModuleName && *pUniqueModuleName);
-    _ASSERTE(bIsValidModuleID);
+    assert(bIsValidModuleID);
     if (!bIsValidModuleID)
     {
         // should never happen!
-        CString msg;
-        msg.Format("XRSoundDLL::GetXRSoundEngineInstance ERROR: pUniqueModuleName passed is nullptr or empty!");
-        WriteLog(msg);
+        std::string msg = "XRSoundDLL::GetXRSoundEngineInstance ERROR: pUniqueModuleName passed is nullptr or empty!";
+        WriteLog(msg.c_str());
         return nullptr;
     }
 
     ModuleXRSoundEngine *pEngine = s_pInstance->FindXRSoundEngineForModule(pUniqueModuleName);
     if (!pEngine)   // no existing engine found for this module
     {
-        CString csMsg;
-        csMsg.Format("XRSoundDLL::GetXRSoundEngineInstance: creating new XRSoundEngine instance for module '%s'", pUniqueModuleName);
+        std::string csMsg = "XRSoundDLL::GetXRSoundEngineInstance: creating new XRSoundEngine instance for module '";
+        csMsg += pUniqueModuleName;
+
         pEngine = ModuleXRSoundEngine::CreateInstance(pUniqueModuleName);
         if (pEngine)
         {
             // add the new engine to our master map for modules
-            s_pInstance->m_allModulesMap.insert(CString_XRSoundEnginePtr_Pair(pUniqueModuleName, pEngine));  
+            s_pInstance->m_allModulesMap.insert(String_XRSoundEnginePtr_Pair(pUniqueModuleName, pEngine));  
         }
         else
         {
-            csMsg.Format("XRSoundDLL::GetXRSoundEngineInstance: WARNING: nullptr or empty module name supplied; returning nullptr.");
+            csMsg = "XRSoundDLL::GetXRSoundEngineInstance: WARNING: nullptr or empty module name supplied; returning nullptr.";
         }
-        s_pInstance->WriteLog(csMsg);
+        s_pInstance->WriteLog(csMsg.c_str());
     }
     
     return pEngine;   // may be nullptr
@@ -165,9 +178,11 @@ void XRSoundDLL::ParseGlobalConfigFile()
     globalConfig.ParseFile();
     if (globalConfig.ParseFailed())
     {
-        CString msg;
-        msg.Format("Error parsing configuration file '%s' -- see above error messages for details.", globalConfig.GetDefaultFilename());
-        globalConfig.WriteLog(msg);
+        std::string msg = "Error parsing configuration file '";
+        msg += globalConfig.GetDefaultFilename();
+        msg += "' -- see above error messages for details.";
+
+        globalConfig.WriteLog(msg.c_str());
     }
 }
 
@@ -196,9 +211,9 @@ XRSoundDLL::~XRSoundDLL()
     // Note: we already freed all XRSoundEngine objects in clbkSimulationEnd()
 #ifdef _DEBUG
     // sanity checks to make sure things were already cleaned up as expected
-    _ASSERTE(m_allVesselsMap.size() == 0);
-    _ASSERTE(m_allModulesMap.size() == 0);
-    _ASSERTE(!XRSoundEngine::IsKlangEngineInitialized());
+    assert(m_allVesselsMap.size() == 0);
+    assert(m_allModulesMap.size() == 0);
+    assert(!XRSoundEngine::IsKlangEngineInitialized());
 #endif
 }
 
@@ -318,7 +333,7 @@ void XRSoundDLL::UpdateAllVesselsMap()
 
         // Can't just use FindXRSoundEngineForVessel here because we need remove the VesselXRSoundEngine * pair in the map itself, too.
         auto it = m_allVesselsMap.find(hVessel);
-        _ASSERTE(it != m_allVesselsMap.end());  // sanity check
+        assert(it != m_allVesselsMap.end());  // sanity check
         if (it != m_allVesselsMap.end())
         {
             VesselXRSoundEngine *pEngine = it->second;  // may be nullptr, in which case it was already previously freed or never added in the first place
@@ -332,13 +347,13 @@ void XRSoundDLL::UpdateAllVesselsMap()
     for (unsigned int i = 0; i < allVesselHandles.size(); i++)
     {
         OBJHANDLE hVessel = allVesselHandles[i];
-        _ASSERTE(oapiIsVessel(hVessel));  // should always be a valid vessel handle
+        assert(oapiIsVessel(hVessel));  // should always be a valid vessel handle
 
         auto it = m_allVesselsMap.find(hVessel);
         if (it == m_allVesselsMap.end())
         {
             // this is a new vessel; create a new, default XRSoundEngine instance for it so we can play default sounds on it
-            _ASSERTE(oapiIsVessel(hVessel));
+            assert(oapiIsVessel(hVessel));
             VesselXRSoundEngine *pEngine = GetXRSoundEngineInstance(hVessel, false);  // Note: will be nullptr if this vessel should not have any default sounds AND if it wasn't created by a client API call
             if (pEngine)
             {
@@ -391,9 +406,9 @@ void XRSoundDLL::clbkPreStep(double simtDoNotUse, double simdt, double mjd)
         for (auto it = m_allVesselsMap.begin(); it != m_allVesselsMap.end(); it++)
         {
             const OBJHANDLE hVessel = it->first;
-            _ASSERTE(oapiIsVessel(hVessel));    // should still be a valid vessel, since UpdateAllVesselsMap() removes invalid (i.e., now-deleted) vessels
+            assert(oapiIsVessel(hVessel));    // should still be a valid vessel, since UpdateAllVesselsMap() removes invalid (i.e., now-deleted) vessels
             VesselXRSoundEngine *pEngine = it->second;
-            _ASSERTE(pEngine);
+            assert(pEngine);
             pEngine->clbkPreStep(simt, simdt, mjd);
         }
         m_nextSoundEnginesRefreshSimt = simt + GetGlobalConfig().UpdateInterval;
@@ -419,8 +434,16 @@ double XRSoundDLL::GetSystemUptime()
     // Even though we lose some precision going from 2^64 max down to 2^53 (53 bits mantissia in a double), that's still enough
     // precision to track 104,249,991.37 days, or 285,616 years of uptime right down to the millisecond.  
     // See https://stackoverflow.com/questions/1848700/biggest-integer-that-can-be-stored-in-a-double
+    const auto now = std::chrono::steady_clock::now();
+    const auto uptime = std::chrono::duration_cast<std::chrono::milliseconds>(
+            now - std::chrono::steady_clock::time_point{}
+    );
+
+    const double uptimeMilli = static_cast<double>(uptime.count());
+    /* TODO(jec):  Check that steady_clock is good replacement here
     const double uptimeMilli = static_cast<double>(GetTickCount64());  // GetTickCount64 requires Vista or higher, but that is our minimum target OS anyway
-    return (uptimeMilli / 1000);  // convert to seconds
+    */
+    return (uptimeMilli / 1000.0);  // convert to seconds
 }
 
 // Invoked when the pause/resume state of the simulation has changed.
@@ -433,7 +456,7 @@ void XRSoundDLL::clbkPause(bool paused)
         for (auto it = m_allVesselsMap.begin(); it != m_allVesselsMap.end(); it++)
         {
             XRSoundEngine *pEngine = it->second;   // will be nullptr if this vessel has already been freed
-            _ASSERTE(pEngine);
+            assert(pEngine);
             pEngine->SetAllWavPaused(true);
         }
     }
@@ -442,7 +465,7 @@ void XRSoundDLL::clbkPause(bool paused)
     for (auto it = m_allModulesMap.begin(); it != m_allModulesMap.end(); it++)
     {
         XRSoundEngine *pEngine = it->second;
-        _ASSERTE(pEngine);
+        assert(pEngine);
         pEngine->SetAllWavPaused(paused);
     }
 

@@ -10,6 +10,13 @@
 #include "XRSoundConfigFileParser.h"
 #include "ConfigFileParserMacros.h"
 
+#include <string>
+#include <sstream>
+#include <filesystem>
+#include <cassert>
+#include <cstdint>
+#include <limits>
+
 // Constructor
 XRSoundConfigFileParser::XRSoundConfigFileParser(const char *pConfigFile) :
     ConfigFileParser(pConfigFile, XRSOUND_LOG_FILE),
@@ -36,9 +43,11 @@ bool XRSoundConfigFileParser::ParseModuleSoundConfig(const char *pUniqueModuleNa
 {
     m_csConfigFilenames = GetDefaultFilename();
 
-    CString csTemp;
-    csTemp.Format("[%s] Using configuration file: %s", pUniqueModuleName, GetConfigFilenames());
-    WriteLog(csTemp);
+    std::ostringstream csTemp_os {};
+    csTemp_os << "[" << pUniqueModuleName << "] Using configuration file: "
+              << GetConfigFilenames();
+
+    WriteLog(csTemp_os.str().c_str());
 
     return ParseFile();  // ignore error here (any errors were already logged)
 }
@@ -50,41 +59,49 @@ bool XRSoundConfigFileParser::ParseModuleSoundConfig(const char *pUniqueModuleNa
 // Return: true on success, false if at least one warning or error exists in the .cfg file(s).
 bool XRSoundConfigFileParser::ParseVesselSoundConfig(VESSEL *pVessel)
 {
-    _ASSERTE(pVessel);
+    assert(pVessel);
 
     bool bOverrideFileExists = false;
     const char *pVesselClassName = pVessel->GetClassName();
 
     // NOTE: some vessel class names have slashes or other illegal filename characters, so we have to handle that here
-    static const CString s_csIllegalCharacters("\\/:? \"<>|");
-    CString csSanitizedClassName(pVesselClassName);
-    for (int i = 0; i < csSanitizedClassName.GetLength(); i++)
+    // NOTE(jec):  This is the Win32 list of illegal filename characers, but I
+    // think most other platforms are more permissive.
+    static const std::string s_csIllegalCharacters("\\/:? \"<>|");
+    std::string csSanitizedClassName(pVesselClassName);
+    for (std::string::size_type i = 0; i < csSanitizedClassName.size(); i++)
     {
-        if (s_csIllegalCharacters.Find(csSanitizedClassName[i]) >= 0)
-            csSanitizedClassName.SetAt(i, '_');   // replace invalid character
+        if (s_csIllegalCharacters.find(csSanitizedClassName[i]) != std::string::npos)
+            csSanitizedClassName.at(i) = '_';   // replace invalid character
     }
 
-    m_csOverrideFilename.Format("XRSound\\XRSound-%s.cfg", static_cast<const char *>(csSanitizedClassName));  // e.g., "XRSound\XRSound-XR2Ravenstar.cfg"
-    bOverrideFileExists = (PathFileExists(m_csOverrideFilename) != FALSE);
+    m_csOverrideFilename = std::filesystem::path{"XRSound"} / "XRSound-";
+    m_csOverrideFilename += csSanitizedClassName;
+    m_csOverrideFilename += ".cfg";
 
-    if (bOverrideFileExists)
-        m_csConfigFilenames.Format("%s + %s", GetDefaultFilename(), GetOverrideFilename());
-    else
-    {
-        m_csConfigFilenames.Format("%s (no override found [%s])", GetDefaultFilename(), GetOverrideFilename());
-        m_csOverrideFilename.Empty();  // empty the filename to indicate it does not exist
+    bOverrideFileExists = std::filesystem::exists(m_csOverrideFilename);
+
+    if (bOverrideFileExists) {
+        m_csConfigFilenames = GetDefaultFilename() + " + " + GetOverrideFilename();
+    } else {
+        m_csConfigFilenames =
+            GetDefaultFilename() + " (no override found [" +
+            GetOverrideFilename() + "])";
+        m_csOverrideFilename.clear();  // empty the filename to indicate it does not exist
     }
 
-    CString csTemp;
-    csTemp.Format("[%s][class %s] Using configuration file(s): %s", pVessel->GetName(), pVesselClassName, GetConfigFilenames());
-    WriteLog(csTemp);
+    std::ostringstream csTemp_os {};
+    csTemp_os << "[" << pVessel->GetName()
+              << "][class " << pVesselClassName
+              << "] Using configuration files(s): " << GetConfigFilenames();
+    WriteLog(csTemp_os.str().c_str());
 
     // parse the default config file first
     bool retVal = ParseFile();  // ignore error here (any errors were already logged)
 
     // now parse the override file if any exists
     if (bOverrideFileExists)
-        retVal &= ParseFile(GetOverrideFilename());  // clear flag if error occurs
+        retVal &= ParseFile(GetOverrideFilename().c_str());  // clear flag if error occurs
 
     return retVal;
 }
@@ -92,7 +109,7 @@ bool XRSoundConfigFileParser::ParseVesselSoundConfig(VESSEL *pVessel)
 #define PARSE_STRING_PROPERTY(propName)             \
 if (PNAME_MATCHES(TO_STR(propName)))                \
 {                                                   \
-    CSTRING_CPY(propName);                          \
+    STRING_CPY(propName);                           \
     return true;                                    \
 }
 
@@ -102,14 +119,14 @@ if (PNAME_MATCHES(TO_STR(propName)))                \
 bool XRSoundConfigFileParser::ParseLine(const char *pSection, const char *pPropertyName, const char *pValue, const bool bParsingOverrideFile)
 {
     // sanity checks; our base class should already validate that each of these values are not nullptr or empty.
-    _ASSERTE(pSection);
-    _ASSERTE(*pSection);
+    assert(pSection);
+    assert(*pSection);
 
-    _ASSERTE(pPropertyName);
-    _ASSERTE(*pPropertyName);
+    assert(pPropertyName);
+    assert(*pPropertyName);
 
-    _ASSERTE(pValue);
-    _ASSERTE(*pValue);
+    assert(pValue);
+    assert(*pValue);
 
     // TODO: if and when vessel-class-specific configuration overrides are implemented, look into caching the default 
     // config file's XRSoundConfigFileParser object (and copying its state via a copy constructor?)
@@ -119,7 +136,7 @@ bool XRSoundConfigFileParser::ParseLine(const char *pSection, const char *pPrope
     // TODO: once parser is complete, delete any of these that we d on't need
     int len;        // used by SECTION_STARTSWITH and PNAME_STARTSWITH macros
     bool processed = false;     // set to 'true' by macros if parameter processed; primarily used by subclasses, and the macros expect this variable to exist
-    CString csMsg;      // used for constructing log messages
+    std::string csMsg;      // used for constructing log messages
 
     // parse [SYSTEM] settings
     if (SECTION_MATCHES("SYSTEM"))
@@ -127,8 +144,11 @@ bool XRSoundConfigFileParser::ParseLine(const char *pSection, const char *pPrope
         // cannot override [SYSTEM] settings via vessel class override file, so check that here
         if (bParsingOverrideFile)
         {
-            csMsg.Format("WARNING parsing file [%s]: cannot override [SYSTEM] settings via a vessel class override file.", GetCurrentFilename(bParsingOverrideFile));
-            WriteLog(csMsg);
+            csMsg = "WARNING parsing file [";
+            csMsg += GetCurrentFilename(bParsingOverrideFile);
+            csMsg +="]: cannot override [SYSTEM] settings via a vessel class override file.";
+
+            WriteLog(csMsg.c_str());
             return false;
         }
 
@@ -175,12 +195,12 @@ bool XRSoundConfigFileParser::ParseLine(const char *pSection, const char *pPrope
         }
         else if (PNAME_MATCHES("MusicOrder"))
         {
-            if (_stricmp(pValue, "random") == 0)
+            if (caseInsensitiveEquals(pValue, "random") == 0)
             {
                 MusicOrder = SeqRandom::Random;
                 return true;
             }
-            else if (_stricmp(pValue, "sequential") == 0)
+            else if (caseInsensitiveEquals(pValue, "sequential") == 0)
             {
                 MusicOrder = SeqRandom::Sequential;
                 return true;
@@ -209,17 +229,17 @@ bool XRSoundConfigFileParser::ParseLine(const char *pSection, const char *pPrope
         else if (PNAME_MATCHES("MusicPlayInternal") || PNAME_MATCHES("MusicPlayExternal"))
         {
             MusicPlay &playVar = ((PNAME_MATCHES("MusicPlayInternal") ? MusicPlayInternal : MusicPlayExternal));
-            if (_stricmp(pValue, "off") == 0)
+            if (caseInsensitiveEquals(pValue, "off") == 0)
             {
                 playVar = MusicPlay::Off;
                 return true;
             }
-            else if (_stricmp(pValue, "space") == 0)
+            else if (caseInsensitiveEquals(pValue, "space") == 0)
             {
                 playVar = MusicPlay::Space;
                 return true;
             }
-            else if (_stricmp(pValue, "on") == 0)
+            else if (caseInsensitiveEquals(pValue, "on") == 0)
             {
                 playVar = MusicPlay::On;
                 return true;
@@ -308,7 +328,7 @@ bool XRSoundConfigFileParser::ParseLine(const char *pSection, const char *pPrope
     {
         if (PNAME_MATCHES("Folder"))
         {                                   
-            CSTRING_CPY(ATCFolder);
+            STRING_CPY(ATCFolder);
             return true;                    
         }
         else if (PNAME_MATCHES("Volume"))
@@ -358,8 +378,11 @@ bool XRSoundConfigFileParser::ParseLine(const char *pSection, const char *pPrope
         // cannot override [VESSEL] settings via the global XRSound.cfg; that makes no sense
         if (!bParsingOverrideFile)
         {
-            csMsg.Format("WARNING parsing file [%s]: [VESSEL] properties are inherently vessel class-specific and therefore have no meaning in the global .cfg file.", GetCurrentFilename(bParsingOverrideFile));
-            WriteLog(csMsg);
+            csMsg = "WARNING parsing file [";
+            csMsg += GetCurrentFilename(bParsingOverrideFile);
+            csMsg += "]: [VESSEL] properties are inherently vessel class-specific and therefore have no meaning in the global .cfg file.";
+
+            WriteLog(csMsg.c_str());
             return false;
         }
         
@@ -375,8 +398,11 @@ bool XRSoundConfigFileParser::ParseLine(const char *pSection, const char *pPrope
         // these are only valid for vessel override .cfg files, NOT the master file
         if (!bParsingOverrideFile)
         {
-            csMsg.Format("WARNING parsing file [%s]: [animation_*] properties are inherently vessel class-specific and therefore have no meaning in the global .cfg file.", GetCurrentFilename(bParsingOverrideFile));
-            WriteLog(csMsg);
+            csMsg = "WARNING parsing file [";
+            csMsg += GetCurrentFilename(bParsingOverrideFile);
+            csMsg += "]: [animation_*] properties are inherently vessel class-specific and therefore have no meaning in the global .cfg file.";
+
+            WriteLog(csMsg.c_str());
             return false;
         }
 
@@ -384,10 +410,12 @@ bool XRSoundConfigFileParser::ParseLine(const char *pSection, const char *pPrope
         int animationID = -1;
         sscanf(pSection + 10, "%d", &animationID); 
         if (animationID < 0)
-        { 
-            csMsg.Format("ERROR: Invalid [animation] section name ('%s'): missing or invalid animation ID.  Format should be [animation_#]; e.g., [animation_7].",
-                pSection);
-            WriteLog(csMsg);
+        {
+            csMsg = "ERROR: Invalid [animation] section name ('";
+            csMsg += pSection;
+            csMsg += "'): missing or invalid animation ID.  Format should be [animation_#]; e.g., [animation_7].";
+
+            WriteLog(csMsg.c_str());
             return false;
         }
 
@@ -405,20 +433,26 @@ bool XRSoundConfigFileParser::ParseLine(const char *pSection, const char *pPrope
     // invalid section handler
 invalid_section:
     // our base class will provide more details in the line following this one
-    if (*pSection == 0)
+    if (*pSection == 0) {
         csMsg = "Missing [section] line (e.g., '[GENERAL]')";
-    else
-    {
-        csMsg.Format("Invalid [section] value: '%s'", pSection);
+    } else {
+        csMsg = "Invalid [section value: '";
+        csMsg += pSection;
+        csMsg += "'";
     }
-    WriteLog(csMsg);
+    WriteLog(csMsg.c_str());
     return false;
 
     // invalid property name handler
 invalid_property_name:
     // our base class will provide more details in the line following this one
-    csMsg.Format("Invalid property name: '%s' in section [%s]", pPropertyName, pSection);
-    WriteLog(csMsg);
+    csMsg = "Invalid property name: '";
+    csMsg += pPropertyName;
+    csMsg += "' in section [";
+    csMsg += pSection;
+    csMsg += "]";
+
+    WriteLog(csMsg.c_str());
     return false;
 }
 
@@ -431,7 +465,7 @@ bool XRSoundConfigFileParser::AddOrUpdateAnimationState(const int animationID, c
 {
     bool processed = false;     // set to 'true' by macros if parameter processed; the macros expect this variable to exist
 
-    _ASSERTE(animationID >= 0);
+    assert(animationID >= 0);
     if (animationID < 0)
         return false;
 
@@ -450,10 +484,12 @@ bool XRSoundConfigFileParser::AddOrUpdateAnimationState(const int animationID, c
         pAnimationSounds = GetAnimationSounds(animationID); // will always succeed now.  
         bSuccess = true;
     }
-    _ASSERTE(pAnimationSounds);
+    assert(pAnimationSounds);
+
+    static constexpr std::int32_t MAXINT32 = std::numeric_limits<std::int32_t>::max();
 
     // parse non-wav file path paraemters
-    if (_stricmp(pName, "OpenCloseSoundID") == 0)
+    if (caseInsensitiveEquals(pName, "OpenCloseSoundID") == 0)
     {
         int soundID = -1;
         SSCANF1("%d", &soundID);
@@ -461,7 +497,7 @@ bool XRSoundConfigFileParser::AddOrUpdateAnimationState(const int animationID, c
         if (soundID >= -0)
             pAnimationSounds->SetOpenCloseSoundID(soundID);
     }
-    else if (_stricmp(pName, "MovingSoundID") == 0)
+    else if (caseInsensitiveEquals(pName, "MovingSoundID") == 0)
     {
         int soundID = -1;
         SSCANF1("%d", &soundID);
@@ -469,11 +505,11 @@ bool XRSoundConfigFileParser::AddOrUpdateAnimationState(const int animationID, c
         if (soundID >= -0)
             pAnimationSounds->SetMovingSoundID(soundID);
     }
-    else if (_stricmp(pName, "PlaybackType") == 0)
+    else if (caseInsensitiveEquals(pName, "PlaybackType") == 0)
     {
         // this sets the playbacktype for each default sound in this animation
         XRSound::PlaybackType type;
-#define PARSE_PLAYBACK_TYPE(pbt) else if (_stricmp(pValue, TO_STR(pbt)) == 0) type = XRSound::PlaybackType::pbt;
+#define PARSE_PLAYBACK_TYPE(pbt) else if (caseInsensitiveEquals(pValue, TO_STR(pbt)) == 0) type = XRSound::PlaybackType::pbt;
 
         if (false);   // deliberate empty statement here so the macro works
         PARSE_PLAYBACK_TYPE(InternalOnly)
@@ -484,25 +520,29 @@ bool XRSoundConfigFileParser::AddOrUpdateAnimationState(const int animationID, c
         PARSE_PLAYBACK_TYPE(Wind)
         else
         {
-            CString msg;
-            msg.Format("ERROR: Invalid playback type: '%s'.  Valid playback types are InternalOnly, BothViewFar, BothViewMedium, BothViewClose, Radio, and Wind.", pName);
-            WriteLog(msg);
+            std::string msg;
+            msg = "ERROR: Invalid playback type: '";
+            msg += pName;
+            msg += "'.  Valid playback types are InternalOnly, BothViewFar, BothViewMedium, BothViewClose, Radio, and Wind.";
+
+            WriteLog(msg.c_str());
             return false;
         }
 
         // playback type is valid!
         pAnimationSounds->SetPlaybackType(type);
     }
-    else if (_stricmp(pName, "IsLandingGear") == 0)
+    else if (caseInsensitiveEquals(pName, "IsLandingGear") == 0)
     { 
         bool bIsLandingGear = false;
         SSCANF_BOOL("%c", &bIsLandingGear);
         if (bIsLandingGear)
         {
             LandingGearAnimationID = animationID;
-            CString msg;
-            msg.Format("XRSoundConfigFileParser: using landing gear animation ID %d", animationID);
-            WriteLog(msg);
+            std::string msg;
+            msg = "XRSoundConfigFileParser: using landing gear animation ID " +
+                  std::to_string(animationID);
+            WriteLog(msg.c_str());
         }
     }
     else   // let's see if it's a door sound + wav file 
@@ -511,7 +551,7 @@ bool XRSoundConfigFileParser::AddOrUpdateAnimationState(const int animationID, c
         // if we reach here, parse it as an animation state + wav path
         AnimationState::StateType state;
 
-#define PARSE_STATE_TYPE(type) else if (_stricmp(pName, TO_STR(type)) == 0) state = AnimationState::StateType::type;
+#define PARSE_STATE_TYPE(type) else if (caseInsensitiveEquals(pName, TO_STR(type)) == 0) state = AnimationState::StateType::type;
 
         // Note: if a sound goes idle, then by definition it is silent, so you cannot specify a custom sound for the Idle state.
         if (false);   // deliberate empty statement here so the macro works
@@ -522,9 +562,11 @@ bool XRSoundConfigFileParser::AddOrUpdateAnimationState(const int animationID, c
         PARSE_STATE_TYPE(Closed)
         else
         {
-            CString msg;
-            msg.Format("ERROR: Invalid sound event type: '%s'.  Valid sound event types are Opening, Open, Moving, Closing, and Closed.", pName);
-            WriteLog(msg);
+            std::string msg;
+            msg = "ERROR: Invalid sound event type: '";
+            msg += pName;
+            msg += "'.  Valid sound event types are Opening, Open, Moving, Closing, and Closed.";
+            WriteLog(msg.c_str());
             return false;
         }
 
@@ -532,9 +574,12 @@ bool XRSoundConfigFileParser::AddOrUpdateAnimationState(const int animationID, c
         // the user knows immediately on simulation start if his vessel override .cfg file is wrong.
         if (!IsFileReadable(pValue))
         {
-            CString msg;
-            msg.Format("ERROR: Sound file does not exist or is not readable: '%s' (remember that sound paths are relative to $ORBITER_ROOT)", pValue);
-            WriteLog(msg);
+            std::string msg;
+            msg = "ERROR: Sound file does not exist or is not readable: '";
+            msg += pValue;
+            msg += "' (remember that sound paths are relative to $ORBITER_ROOT)";
+
+            WriteLog(msg.c_str());
             return false;
         }
 
@@ -542,7 +587,7 @@ bool XRSoundConfigFileParser::AddOrUpdateAnimationState(const int animationID, c
 
         // add or replace the wav file for this animation type (Opening, Closing, etc.).
         bSuccess = pAnimationSounds->SetWavForAnimationState(state, pValue);
-        _ASSERTE(bSuccess);     // if false, it means that state == Unknown, which you cannot assign a custom sound to (and we should have previously validated that)
+        assert(bSuccess);     // if false, it means that state == Unknown, which you cannot assign a custom sound to (and we should have previously validated that)
     }
 
     return bSuccess;
@@ -590,7 +635,7 @@ bool AnimationSounds::SetWavForAnimationState(AnimationState::StateType state, c
     if (state == AnimationState::StateType::Unknown)
     {
         // can't set a sound for "Unknown" state
-        _ASSERTE(false);
+        assert(false);
         return false;
     }
 
@@ -622,7 +667,7 @@ const char *AnimationSounds::GetWavForAnimationState(AnimationState::StateType s
         // verify that the required sound ID for this sound has also been set; if not, the sound cannot play.
         int soundID = GetSoundIDForAnimationState(state);
         if (soundID >= 0)
-            pcsSoundPath = it->second;   // CString lives in our map, so it's OK to return a pointer to it
+            pcsSoundPath = it->second.c_str();   // string lives in our map, so it's OK to return a pointer to it
     }
 
     return pcsSoundPath;

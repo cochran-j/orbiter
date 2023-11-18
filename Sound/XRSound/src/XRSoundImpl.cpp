@@ -8,7 +8,13 @@
 // ==============================================================
 
 #include "XRSoundImpl.h"
-#include <Strsafe.h> 
+/* TODO(jec)
+#include <Strsafe.h>
+*/
+#include "DllCompat.h"
+
+#include <cassert>
+#include <cstdio>
 
 // NOTE: In order to maximize compatibility with users using versions of Visual Studio other than VS 2019, do not call any MSVCRT methods in this code.
 // More information is at https://connect.microsoft.com/VisualStudio/feedback/details/1144980/error-lnk2001-unresolved-external-symbol-imp-iob-func.
@@ -51,7 +57,7 @@ bool XRSoundImpl::Initialize(VESSEL *pVessel)
             // Note: in order to maximize cross-compiler version linking compatibility, we don't want to use any msvcrt functions in this library, so we can't use sprintf here.
             // Also, Orbiter's oapiWriteLog takes a char * instead of const char *, which I presume is just a bug, so we can safely (?) assume that is just a typo in the method signature.
             const float dllVersion = GetVersion();
-            _ASSERTE(dllVersion > 0);
+            assert(dllVersion > 0);
             char messageBuf[512];
             if (dllVersion >= 2.0)
             {
@@ -59,7 +65,7 @@ bool XRSoundImpl::Initialize(VESSEL *pVessel)
                 const XRSoundEngine::EngineType engineType = GetEngineType();
                 const char *pEngineType = XRSoundImpl::EngineTypeToStr(engineType);  // "Vessel", "Module", etc.
 
-                StringCchPrintf(messageBuf, sizeof(messageBuf), "[XRSound INFO] %s '%s' built with XRSound API version %.2f", 
+                std::snprintf(messageBuf, sizeof(messageBuf), "[XRSound INFO] %s '%s' built with XRSound API version %.2f", 
                     pEngineType, pVesselOrModuleName, XRSOUND_ENGINE_VERSION);
                 oapiWriteLog(messageBuf);
             }
@@ -67,7 +73,7 @@ bool XRSoundImpl::Initialize(VESSEL *pVessel)
             if (dllVersion < XRSOUND_ENGINE_VERSION)
             {
                 // user is running with an older XRSound.dll version than this vessel was linked with
-                StringCchPrintf(messageBuf, sizeof(messageBuf), "[XRSOUND WARNING] XRSound.dll version %0.2f is installed, but an active Orbiter vessel or module was built with XRSound version %.2f.  Please install the latest XRSound version from https://www.alteaaerospace.com.",
+                std::snprintf(messageBuf, sizeof(messageBuf), "[XRSOUND WARNING] XRSound.dll version %0.2f is installed, but an active Orbiter vessel or module was built with XRSound version %.2f.  Please install the latest XRSound version from https://www.alteaaerospace.com.",
                     dllVersion, XRSOUND_ENGINE_VERSION);
                 oapiWriteLog(messageBuf);
             }
@@ -147,8 +153,8 @@ bool XRSoundImpl::LoadWav(const int soundID, const char *pSoundFilename, const P
     if (IsDefaultSoundGroup(soundID))
         return false;
 
-    _ASSERTE(pSoundFilename);
-    _ASSERTE(*pSoundFilename);
+    assert(pSoundFilename);
+    assert(*pSoundFilename);
     if (!pSoundFilename || !*pSoundFilename)
         return false;
 
@@ -257,8 +263,8 @@ bool XRSoundImpl::GetDefaultSoundEnabled(const DefaultSoundID soundID) const
 // Returns true on success, false if XRSound.dll not present.
 bool XRSoundImpl::SetDefaultSoundGroupFolder(const DefaultSoundID defaultSoundID, const char *pSubfolderPath)
 {
-    _ASSERTE(pSubfolderPath);
-    _ASSERTE(*pSubfolderPath);
+    assert(pSubfolderPath);
+    assert(*pSubfolderPath);
 
     // sanity-check the path
     if (!pSubfolderPath || !*pSubfolderPath)

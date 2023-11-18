@@ -5,6 +5,10 @@
 // Licensed under the MIT License
 // ==============================================================
 
+#include <string>
+#include <cassert>
+
+#include "Utils/ConfigFileParserMacros.h"
 #include "VesselXRSoundEngine.h"
 #include "SoundPreSteps.h"
 #include "DefaultSoundGroupPreSteps.h"
@@ -19,10 +23,12 @@
 // Only invoked by our base class's static DestroyInstance method
 void VesselXRSoundEngine::FreeResources()
 {
-    CString msg;
-    msg.Format("XRSoundEngine::FreeResources: freeing XRSound engine resources for vessel '%s'",
-        static_cast<const char *>(GetVesselName()));
-    s_globalConfig.WriteLog(msg);
+    std::string msg;
+    msg = "XRSoundEngine::FreeResources: freeing XRSound engine resources for vessel '";
+    msg += GetVesselName();
+    msg += "'";
+
+    s_globalConfig.WriteLog(msg.c_str());
 
     // stop all of this vessel's sounds and free all irrKlang resources for them
     StopAllWav();
@@ -37,7 +43,7 @@ void VesselXRSoundEngine::FreeResources()
 // This also handles static one-time initialization of our singleton irrKlang engine.
 VesselXRSoundEngine *VesselXRSoundEngine::CreateInstance(const OBJHANDLE hVessel)
 {
-    _ASSERTE(oapiIsVessel(hVessel));
+    assert(oapiIsVessel(hVessel));
     if (!oapiIsVessel(hVessel))
         return nullptr;
 
@@ -60,15 +66,17 @@ VesselXRSoundEngine::VesselXRSoundEngine(const OBJHANDLE hVessel) :
 {
     m_pConfig = new XRSoundConfigFileParser();
     VESSEL *pVessel = GetVessel();  // should never be nullptr at this point (XRSoundDLL::GetXRSoundEngineInstance already validated hVessel).
-    _ASSERTE(pVessel);
+    assert(pVessel);
 
     // parse XRSound.log + any vessel class-specific override file
     m_pConfig->ParseVesselSoundConfig(pVessel);
     if (m_pConfig->ParseFailed())
     {
-        CString msg;
-        msg.Format("Error parsing configuration file(s) '%s' -- see above error messages for details.", m_pConfig->GetConfigFilenames());
-        m_pConfig->WriteLog(msg);
+        std::string msg = "Error parsing configuration file(s) '";
+        msg += m_pConfig->GetConfigFilenames();
+        msg += "' -- see above error messages for details.";
+
+        m_pConfig->WriteLog(msg.c_str());
     }
 
     InitializeCachedData();
@@ -108,7 +116,7 @@ bool VesselXRSoundEngine::SetDefaultSoundEnabled(const XRSound::DefaultSoundID s
             pContext = FindWavContext(soundID);     // must get the persisted copy in our map; should always succeed now
         }
 
-        _ASSERTE(pContext);
+        assert(pContext);
 
         // TOO VERBOSE -- keeps alternating when two or more XR1s are in the scenario: VERBOSE_LOG(this, "XRSoundEngine::SetDefaultSoundEnabled: setting default sound %s bEnabled = %d", pContext->ToStr(), bEnabled);
 
@@ -275,7 +283,7 @@ void VesselXRSoundEngine::UpdateSoundState(WavContext &context)
                 break;      // not faded by distance or pressure, and does not require focus
 
             default:
-                _ASSERTE(false);    // unknown sound type -- should never happen!
+                assert(false);    // unknown sound type -- should never happen!
                 goto release_sound;
             }
 
@@ -344,7 +352,7 @@ void VesselXRSoundEngine::PollAllAnimationStates()
         else
             state = AnimationState::StateType::Moving;  // between 0.0 and 1.0: still moving, but neither fully open nor fully closed yet
 
-        _ASSERTE(state != AnimationState::StateType::Unknown);  // in case we screw up the above logic at some point
+        assert(state != AnimationState::StateType::Unknown);  // in case we screw up the above logic at some point
 
         // add to the map of all known animations for this vessel (we rebuild this every frame since they can change at any time).
         AnimationState animationState(state, thisFrameProc);
@@ -358,9 +366,15 @@ void VesselXRSoundEngine::PollAllAnimationStates()
 
         if (bStateTransitioned && GetConfig().LogVesselAnimations)
         {
-            CString csMsg;
-            csMsg.Format("  >> LogVesselAnimations: [%s][animation ID = %d, state = %s]", static_cast<const char *>(GetVesselClassName()), animID, animationState.ToStr());
-            WriteLog(csMsg);
+            std::string csMsg;
+            csMsg = "  >> LogVesselAnimations: [";
+            csMsg += GetVesselClassName();
+            csMsg += "][animation ID = " + std::to_string(animID) +
+                     ", state = ";
+            csMsg += animationState.ToStr();
+            csMsg += "]";
+
+            WriteLog(csMsg.c_str());
         }
     }
 }
@@ -566,7 +580,7 @@ bool VesselXRSoundEngine::IsOATValid()
 void VesselXRSoundEngine::LoadGlobalSounds()
 {
 #define LOAD_GLOBAL_SOUND(soundID, pbType)  \
-    if (*GetConfig().soundID) LoadWav(XRSound::soundID, GetConfig().soundID, XRSound::PlaybackType::pbType)
+    if (!GetConfig().soundID.empty()) LoadWav(XRSound::soundID, GetConfig().soundID, XRSound::PlaybackType::pbType)
 
     // load the global sounds: (these are used by multiple SoundPreSteps)
     LOAD_GLOBAL_SOUND(SwitchOn, InternalOnly);
@@ -628,7 +642,7 @@ void VesselXRSoundEngine::LoadDefaultSounds()
 // Returns true on success, false if the supplied pWavFilename is empty (i.e., sound is disabled) or could not be loaded.
 void VesselXRSoundEngine::AddSoundPreStep(SoundPreStep *pPreStep)
 {
-    _ASSERTE(pPreStep);
+    assert(pPreStep);
     m_allSoundPreSteps.push_back(pPreStep);
 }
 
@@ -638,12 +652,11 @@ void VesselXRSoundEngine::AddSoundPreStep(SoundPreStep *pPreStep)
 //   playbackType: type of sound (fade, etc.)
 //
 // Returns true on success, false if the supplied pWavFilename is empty (i.e., sound is disabled) or could not be loaded.
-bool VesselXRSoundEngine::AddDefaultSound(DefaultSoundPreStep *pPreStep, const int soundID, const char *pSoundFileOrFolderName, const XRSound::PlaybackType playbackType)
+bool VesselXRSoundEngine::AddDefaultSound(DefaultSoundPreStep *pPreStep, const int soundID, const std::string& pSoundFileOrFolderName, const XRSound::PlaybackType playbackType)
 {
-    _ASSERTE(pSoundFileOrFolderName);
 
     // see if this sound is disabled
-    if (!(*pSoundFileOrFolderName) || (_stricmp(pSoundFileOrFolderName, "none") == 0))
+    if (pSoundFileOrFolderName.empty() || (caseInsensitiveEquals(pSoundFileOrFolderName, "none")))
     {
         // no sound filename set, so sound was disabled by the user in XRSound.cfg (or vessel class .cfg override)
         VERBOSE_LOG(this, "XRSoundEngine::AddDefaultSound INFO: default sound ID %d disabled via config file.", soundID);

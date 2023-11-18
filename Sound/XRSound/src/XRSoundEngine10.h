@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "XRSound.h"   // for enum types; names should never change between versions anyway
 
 // NOTE: do not change the order of these methods!  We need to maintain compatibility with 
@@ -16,7 +18,7 @@ class XRSoundEngine10
 {
 public:
     virtual float GetVersion() const = 0;
-    virtual bool LoadWav(const int soundID, const char *pSoundFilename, const XRSound::PlaybackType playbackType) = 0;
+    virtual bool LoadWav(const int soundID, const std::string& pSoundFilename, const XRSound::PlaybackType playbackType) = 0;
     virtual bool PlayWav(const int soundID, const bool bLoop = false, const float volume = 1.0) = 0;
     virtual bool StopWav(const int soundID) = 0;
     virtual bool IsWavPlaying(const int soundID) = 0;   // can't be const

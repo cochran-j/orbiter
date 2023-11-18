@@ -18,10 +18,14 @@
 // ==============================================================
 
 #include "ConfigFileParser.h"
+#include "ConfigFileParserMacros.h"
 
-#include <Shlwapi.h>   // for PathFileExists
-#include <string.h>
-#include <atlstr.h>
+#include <filesystem>
+#include <cstring>
+#include <string>
+#include <sstream>
+#include <iomanip>
+#include <ctime>
 
 // Constructor
 // pDefaultFilename = path to default config file; may be relative to Orbiter root or absolute
@@ -39,7 +43,9 @@ ConfigFileParser::ConfigFileParser(const char *pDefaultFilename, const char *pLo
         {
             char temp[256];
             sprintf(temp, "Error opening log file '%s' for writing; attempting to continue", pLogFilename);
+            /* TODO(jec)
             MessageBox(nullptr, temp, "XR Framework Warning", MB_OK | MB_SETFOREGROUND);
+            */
         }
     }
 }
@@ -62,21 +68,25 @@ ConfigFileParser::~ConfigFileParser()
 bool ConfigFileParser::ParseFile(const char *pFilename)
 {
     if (pFilename == nullptr)
-        pFilename = GetDefaultFilename();
+        pFilename = GetDefaultFilename().c_str();
 
-    const bool bParsingOverrideFile = (_stricmp(pFilename, GetDefaultFilename()) != 0);  // true if we are parsing an override file
+    const bool bParsingOverrideFile =
+        !caseInsensitiveEquals(pFilename, GetDefaultFilename());  // true if we are parsing an override file
 
     static char temp[256]; // reused for messages
 
     // open the config file
-    sprintf(temp, "Parsing config file '%s'", pFilename);
+    std::snprintf(temp, 256, "Parsing config file '%s'", pFilename);
     WriteLog(temp);
 
     FILE *pFile = fopen(pFilename, "rt");
 
     if (pFile == nullptr)
     {
+        /* TODO(jec)
         sprintf(temp, "ERROR: fopen failed for '%s'; GetLastError=0x%X", pFilename, GetLastError());
+        */
+        std::snprintf(temp, 256, "ERROR: fopen failed for '%s'", pFilename);
         WriteLog(temp);
         m_parseFailed = true;
         return false;       // could not open file
@@ -267,22 +277,34 @@ void ConfigFileParser::WriteLog(const char *pMsg) const
     if ((pMsg == nullptr) || (m_pLogFile == nullptr)) 
         return;
 
-    CStringA csMsg;
+    std::ostringstream csMsg_os;
     // get and format the current time
-    SYSTEMTIME st;
-    GetLocalTime(&st);
-    CString csPrefix;
-    if (!GetLogPrefix().IsEmpty())
-        csPrefix.Format("[%s] ", static_cast<const char *>(GetLogPrefix()));
+    std::time_t local_timePoint {};
+    std::time(&local_timePoint);
+    auto lt = std::localtime(&local_timePoint);
 
-    csMsg.Format("%02d.%02d.%04d %02d:%02d:%02d.%03d - %s%s\n", 
-        st.wMonth, st.wDay, st.wYear, 
-        st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
-        static_cast<const char *>(csPrefix), pMsg);
+    std::string csPrefix {};
+    if (!GetLogPrefix().empty()) {
+        csPrefix = "[";
+        csPrefix += GetLogPrefix();
+        csPrefix += "] ";
+    }
+
+    csMsg_os << std::setw(2) << std::setfill('0') << lt->tm_mon
+             << "." << lt->tm_mday
+             << "." << std::setw(4) << lt->tm_year
+             << " " << std::setw(2) << lt->tm_hour
+             << ":" << lt->tm_min
+             << ":" << lt->tm_sec
+             << "." << std::setw(3) << 0 /* st.wMilliseconds */
+             << " - " << csPrefix << pMsg << "\n";
+    auto csMsg = csMsg_os.str();
 
     // no point in checking for error here
+    /* TODO(jec) - Win32 debugger support
     OutputDebugString(csMsg);   // send to debug console
-    fwrite(csMsg, 1, csMsg.GetLength(), m_pLogFile);
+    */
+    fwrite(csMsg.c_str(), 1, csMsg.size(), m_pLogFile);
 
     // flush to disk in case we crash or are terminated
     fflush(m_pLogFile);

@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "XRSoundEngine.h"
 #include "AnimationState.h"
 
@@ -33,7 +35,7 @@ public:
     static VesselXRSoundEngine *CreateInstance(OBJHANDLE hVessel);
 
     virtual EngineType GetEngineType() override { return EngineType::Vessel; }
-    virtual const char *GetLogID() override { return GetVesselName(); }
+    virtual const char *GetLogID() override { return GetVesselName().c_str(); }
 
     // Methods only invoked by XRSoundDLL (our Orbiter module class).  Because these are non-virtual, it is impossible for XRSoundLib to invoke them
     // because it cannot link with them when the Orbiter vessel using XRSoundLib tries to link.
@@ -62,14 +64,14 @@ public:
     virtual void FreeDefaultSounds();
 
     void AddSoundPreStep(SoundPreStep *pPreStep);
-    bool AddDefaultSound(DefaultSoundPreStep *pPreStep, const int soundID, const char *pSoundFileOrFolderName, const XRSound::PlaybackType playbackType);
+    bool AddDefaultSound(DefaultSoundPreStep *pPreStep, const int soundID, const std::string& pSoundFileOrFolderName, const XRSound::PlaybackType playbackType);
     DefaultSoundGroupPreStep *FindDefaultSoundGroupPreStep(const int soundID) const;  // NOTE: can't use this for DefaultSound objects in general b/c many PreSteps have more than one sound slot (but groups only have one slot, so that is fine).
     
     // These are only here for debugging multi-vessel scenarios.
     // TODO: #ifdef out these methods once we no longer need them for debugging.
     bool IsXR1() { return (GetVesselName() == "XR1-01"); }
     bool IsXR2() { return (GetVesselName() == "XR2-01"); }
-    bool IsDG() { return (GetVesselClassName().Left(11) == "DeltaGlider"); }
+    bool IsDG() { return (GetVesselClassName().substr(0, 11) == "DeltaGlider"); }
     bool IsISS() { return (GetVesselName() == "ISS"); }
 
     // Returns a vessel's animation ("door") state for the supplied animation ID; 
@@ -95,27 +97,27 @@ public:
 
     OBJHANDLE GetVesselHandle() const { return m_hVessel; }
 
-    const CString &GetVesselName()
+    const std::string& GetVesselName()
     {
         VESSEL *pVessel = GetVessel();
         if (pVessel)
             m_csCachedVesselName = pVessel->GetName();
         else
         {
-            if (m_csCachedVesselName.IsEmpty())
+            if (m_csCachedVesselName.empty())
                 m_csCachedVesselName = "<deleted>";   // could only happen if vessel is created and deleted within a few frames
         }
         return m_csCachedVesselName;
     }
 
-    const CString &GetVesselClassName()
+    const std::string& GetVesselClassName()
     {
         VESSEL *pVessel = GetVessel();
         if (pVessel)
             m_csCachedVesselClass = pVessel->GetClassName();
         else
         {
-            if (m_csCachedVesselClass.IsEmpty())
+            if (m_csCachedVesselClass.empty())
                 m_csCachedVesselClass = "<deleted>";   // could only happen if vessel is created and deleted within a few frames
         }
         return m_csCachedVesselClass;
@@ -158,6 +160,6 @@ private:
     VesselXRSoundEngine(const OBJHANDLE hVessel);
     virtual ~VesselXRSoundEngine() override;
 
-    CString m_csCachedVesselName;  // used by GetVesselName
-    CString m_csCachedVesselClass;
+    std::string m_csCachedVesselName;  // used by GetVesselName
+    std::string m_csCachedVesselClass;
 };

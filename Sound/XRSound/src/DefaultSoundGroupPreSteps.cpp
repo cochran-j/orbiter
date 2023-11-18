@@ -5,6 +5,11 @@
 // Licensed under the MIT License
 // ==============================================================
 
+#include <cassert>
+#include <string>
+#include <filesystem>
+#include <limits>
+
 #include "XRSoundDLL.h"
 #include "DefaultSoundGroupPreSteps.h"
 
@@ -26,7 +31,7 @@ DefaultSoundGroupPreStep::~DefaultSoundGroupPreStep()
 }
 
 // Returns true if initialization successful, false if sound is disabled or folder parse failed (the sound will not play)
-bool DefaultSoundGroupPreStep::Initialize(const int soundID, const char *pFolderSubpath, const XRSound::PlaybackType playbackType)
+bool DefaultSoundGroupPreStep::Initialize(const int soundID, const std::string& pFolderSubpath, const XRSound::PlaybackType playbackType)
 {
     m_soundID = soundID;
     m_playbackType = playbackType;
@@ -37,39 +42,44 @@ bool DefaultSoundGroupPreStep::Initialize(const int soundID, const char *pFolder
 // Set the active folder and recursively (re)scan its contents.
 //
 // Returns true on success, or false if folder parse failed (i.e., folder does not exist or is empty)
-bool DefaultSoundGroupPreStep::SetFolder(const char *pFolderSubpath)
+bool DefaultSoundGroupPreStep::SetFolder(const std::string& pFolderSubpath)
 {
     // Note: we never reset m_bWavPresent = false here: if this call fails, the *previous* folder remains set
 
-    _ASSERTE(pFolderSubpath);
-    if (!*pFolderSubpath)
+    if (pFolderSubpath.empty())
         return false;       // empty
 
     delete m_pSoundFilesList;       // in case we are calling this multiple times
 
     // do not recurse subfolders
-    m_pSoundFilesList = new FileList(pFolderSubpath, false, m_pEngine->GetValidSoundFileExtensions());
+    m_pSoundFilesList = new FileList(pFolderSubpath.c_str(), false, m_pEngine->GetValidSoundFileExtensions());
     const bool bSuccess = m_pSoundFilesList->Scan();
-    CString msg;
+    std::string msg {};
     if (!bSuccess)
     {
-        msg.Format("DefaultSoundGroupPreStep::SetFolder ERROR: folder path '%s' set for soundID %d does not exist.",
-            pFolderSubpath, m_soundID);
-        WriteLog(msg);
+        msg = "DefaultSoundGroupPreStep::SetFolder ERROR: folder path '";
+        msg += pFolderSubpath;
+        msg += "' set for soundID " + std::to_string(m_soundID) + " does not exist.";
+
+        WriteLog(msg.c_str());
         return false;
     }
 
     if (m_pSoundFilesList->IsEmpty())
     {
-        msg.Format("DefaultSoundGroupPreStep::SetFolder ERROR: folder path '%s' set for soundID %d exists, but no supported sound file types found.",
-            pFolderSubpath, m_soundID);
-        WriteLog(msg);
+        msg = "DefaultSoundGroupPreStep::SetFolder ERROR: folder path '";
+        msg += pFolderSubpath;
+        msg += "' set for soundID ";
+        msg += std::to_string(m_soundID);
+        msg += " exists, but no supported sound file types found.",
+
+        WriteLog(msg.c_str());
         return false;
     }
 
     // if we reach here, folder is valid and contains at least one valid sound file
     VERBOSE_LOG(m_pEngine, "DefaultSoundGroupPreStep::SetFolder: successfully scanned folder path '%s' for soundID %d: %d sound file(s) found with extensions [%s].",
-        pFolderSubpath, m_soundID, m_pSoundFilesList->GetScannedFileCount(), static_cast<const char *>(GetConfig().SupportedSoundFileTypes));
+        pFolderSubpath.c_str(), m_soundID, m_pSoundFilesList->GetScannedFileCount(), GetConfig().SupportedSoundFileTypes.c_str());
     m_bWavPresent = true;
     m_csFolderSubpath = pFolderSubpath;  // success; e.g., "Default\Cabin Ambience"
 
@@ -77,33 +87,33 @@ bool DefaultSoundGroupPreStep::SetFolder(const char *pFolderSubpath)
 }
 
 // Returns a random sound file path, different from the previous call's value
-CString DefaultSoundGroupPreStep::GetRandomSoundFile()
+std::string DefaultSoundGroupPreStep::GetRandomSoundFile()
 {
-    _ASSERTE(m_pSoundFilesList);
-    CString file = m_pSoundFilesList->GetRandomFile();
-    if (file.IsEmpty())
+    assert(m_pSoundFilesList);
+    std::string file = m_pSoundFilesList->GetRandomFile();
+    if (file.empty())
     {
-        CString msg;
-        msg.Format("DefaultSoundGroupPreStep::GetRandomSoundFile WARNING: sound files list is empty for soundID %d", m_soundID);
-        WriteLog(msg);
+        std::string msg;
+        msg = "DefaultSoundGroupPreStep::GetRandomSoundFile WARNING: sound files list is empty for soundID" + std::to_string(m_soundID);
+        WriteLog(msg.c_str());
     }
     return file;
 }
 
 // Returns the next sound file in the list
-CString DefaultSoundGroupPreStep::GetNextSoundFile()
+std::string DefaultSoundGroupPreStep::GetNextSoundFile()
 {
-    _ASSERTE(m_pSoundFilesList);
-    CString file = m_pSoundFilesList->GetFile(m_currentSoundFileIndex);
+    assert(m_pSoundFilesList);
+    std::string file = m_pSoundFilesList->GetFile(m_currentSoundFileIndex);
     m_currentSoundFileIndex++;
     if (m_currentSoundFileIndex >= m_pSoundFilesList->GetScannedFileCount())
         m_currentSoundFileIndex = 0;  // wrapped around
 
-    if (file.IsEmpty())
+    if (file.empty())
     {
-        CString msg;
-        msg.Format("DefaultSoundGroupPreStep::GetNextSoundFile WARNING: sound files list is empty for soundID %d", m_soundID);
-        WriteLog(msg);
+        std::string msg;
+        msg = "DefaultSoundGroupPreStep::GetNextSoundFile WARNING: sound files list is empty for soundID" + std::to_string(m_soundID);
+        WriteLog(msg.c_str());
     }
     return file;
 }
@@ -112,9 +122,9 @@ CString DefaultSoundGroupPreStep::GetNextSoundFile()
 //   pBasename: e.g., "1000" to locate "1000.flac", "1000.mp3" etc.  May not be nullptr or empty.
 bool DefaultSoundGroupPreStep::LoadAndPlayWavWithBasename(const char *pBasename, const bool bLoop, const float volume)
 {
-    _ASSERTE(pBasename);
-    _ASSERTE(*pBasename);
-    _ASSERTE(m_pSoundFilesList);
+    assert(pBasename);
+    assert(*pBasename);
+    assert(m_pSoundFilesList);
 
     if (!pBasename || !*pBasename || !m_pSoundFilesList)
         return false;
@@ -130,18 +140,18 @@ bool DefaultSoundGroupPreStep::LoadAndPlayWavWithBasename(const char *pBasename,
 // Locate the first file in our file list with the specified basename.
 bool DefaultSoundGroupPreStep::LoadWavWithBasename(const char *pBasename)
 {
-    _ASSERTE(pBasename);
-    _ASSERTE(*pBasename);
-    _ASSERTE(m_pSoundFilesList);
+    assert(pBasename);
+    assert(*pBasename);
+    assert(m_pSoundFilesList);
 
     if (!pBasename || !*pBasename || !m_pSoundFilesList)
         return false;
 
     bool bSuccess = false;
 
-    const CString *pcsFilespec = m_pSoundFilesList->FindFileWithBasename(pBasename);
+    const std::filesystem::path  *pcsFilespec = m_pSoundFilesList->FindFileWithBasename(pBasename);
     if (pcsFilespec)
-        bSuccess = LoadWav(*pcsFilespec);
+        bSuccess = LoadWav(pcsFilespec->c_str());
 
     return bSuccess;
 }
@@ -173,8 +183,8 @@ void RandomDefaultSoundGroupPreStep::ResetTimer()
     const double range = maxDelay - minDelay;
     const double delay = ((oapiRand() * range)) + minDelay;
 
-    _ASSERTE(delay >= minDelay);
-    _ASSERTE(delay <= maxDelay);
+    assert(delay >= minDelay);
+    assert(delay <= maxDelay);
     m_nextPlayTime = XRSoundDLL::GetSystemUptime() + delay;  // this is *realtime*, not simt (we don't time ACC to affect this).
 }
 
@@ -201,10 +211,10 @@ void RandomDefaultSoundGroupPreStep::PlayRandom()
 {
     if (!IsWavPlaying())    // wait until next step if the previous (long) wav is still playing
     {
-        const CString csSoundFile = GetRandomSoundFile();  // never repeats from the previous value (unless only one file exists in the list).
-        if (!csSoundFile.IsEmpty())       // sanity check; should never be empty here
+        const std::filesystem::path& csSoundFile = GetRandomSoundFile();  // never repeats from the previous value (unless only one file exists in the list).
+        if (!csSoundFile.empty())       // sanity check; should never be empty here
         {
-            LoadWav(csSoundFile);
+            LoadWav(csSoundFile.c_str());
             PlayWav(false);
         }
     }
@@ -260,9 +270,10 @@ bool ATCDefaultSoundGroupPreStep::ShouldPlayNow(const double simt, const double 
 // returns next minimum and maximum delay times in seconds
 RandomDefaultSoundGroupPreStep::MinMaxDelay ATCDefaultSoundGroupPreStep::GetMinMaxDelay()
 {
+    static constexpr int MAXINT = std::numeric_limits<int>::max();
     double min = GetConfig().ATCMinDelay;
     double max = GetConfig().ATCMaxDelay;
-    
+   
     // see if the user disabled these sounds by setting min or max to zero
     if ((min <= 0) || (max <= 0))
         return RandomDefaultSoundGroupPreStep::MinMaxDelay(MAXINT, MAXINT);  // sounds will never play
@@ -322,7 +333,7 @@ void AltitudeCalloutsDefaultSoundGroupPreStep::clbkPreStep(const double simt, co
                 (currentDescentRate <= -0.25) && (altitude > 0))
             {
                 // NOTE: we do not just use LoadAndPlayWav here because we need to load this into the correct slot in case the user disabled it via code!
-                LoadAndPlayWavUsingID(XRSound::WarningGearIsUp, GetConfig().WarningGearIsUp, false, XRSound::PlaybackType::Radio);
+                LoadAndPlayWavUsingID(XRSound::WarningGearIsUp, GetConfig().WarningGearIsUp.c_str(), false, XRSound::PlaybackType::Radio);
                 goto exit;
             }
         }
@@ -339,7 +350,7 @@ void AltitudeCalloutsDefaultSoundGroupPreStep::clbkPreStep(const double simt, co
                 if (currentDescentRate > -150)   // vertical speed is in NEGATIVE m/s
                 {
                     // NOTE: we do not just use LoadAndPlayWav here because we need to load this into the correct slot in case the user disabled it via code!
-                    if (LoadAndPlayWavUsingID(XRSound::YouAreClearedToLand, GetConfig().YouAreClearedToLand, false, XRSound::PlaybackType::Radio))
+                    if (LoadAndPlayWavUsingID(XRSound::YouAreClearedToLand, GetConfig().YouAreClearedToLand.c_str(), false, XRSound::PlaybackType::Radio))
                         SetNextMinimumCalloutTime(simt);
                 }
                     
@@ -361,11 +372,9 @@ void AltitudeCalloutsDefaultSoundGroupPreStep::clbkPreStep(const double simt, co
                         const double a = altitudeCallouts[i];
 
                         // play on descent only
-                        if ((m_previousFrameAltitude > a) && (altitude <= a))   // descent
-                        {
-                            CString csBasename;
-                            csBasename.Format("%d", static_cast<int>(a));
-                            if (LoadAndPlayWavWithBasename(csBasename))
+                        if ((m_previousFrameAltitude > a) && (altitude <= a)) {
+                            std::string csBasename = std::to_string(a);
+                            if (LoadAndPlayWavWithBasename(csBasename.c_str()))
                                 SetNextMinimumCalloutTime(simt);
                             break;
                         }
@@ -405,8 +414,8 @@ void DockingCalloutsDefaultSoundGroupPreStep::clbkPreStep(const double simt, con
         {
             m_bJustDocked = true;       // so we play our follow-up callout shortly
             // NOTE: we do not just use LoadAndPlayWav here because we need to load this into the correct slot in case the user disabled it via code!
-            LoadAndPlayWavUsingID(XRSound::DockingCallout, GetConfig().DockingCallout, false, XRSound::PlaybackType::Radio);     // e.g., "Contact!" voice callout
-            LoadAndPlayWavUsingID(XRSound::Docking, GetConfig().Docking, false, XRSound::PlaybackType::InternalOnly);
+            LoadAndPlayWavUsingID(XRSound::DockingCallout, GetConfig().DockingCallout.c_str(), false, XRSound::PlaybackType::Radio);     // e.g., "Contact!" voice callout
+            LoadAndPlayWavUsingID(XRSound::Docking, GetConfig().Docking.c_str(), false, XRSound::PlaybackType::InternalOnly);
 
             m_previousFrameDistance = -1;    // reset
         }
@@ -421,13 +430,12 @@ void DockingCalloutsDefaultSoundGroupPreStep::clbkPreStep(const double simt, con
         if ((m_previousSimt >= 0) && m_previousWasDocked)
         {
             // NOTE: we do not just use LoadAndPlayWav here because we need to load this into the correct slot in case the user disabled it via code!
-            LoadAndPlayWavUsingID(XRSound::Undocking, GetConfig().Undocking, false, XRSound::PlaybackType::InternalOnly);
-            m_undockingMsgTime = simt + 0.667;    // wait 2/3-second before playing confirmation
-        }
+            LoadAndPlayWavUsingID(XRSound::Undocking, GetConfig().Undocking.c_str(), false, XRSound::PlaybackType::InternalOnly); m_undockingMsgTime = simt + 0.667;    // wait 2/3-second before playing confirmation 
+                                                                                                                                                                        }
         else if ((m_undockingMsgTime > 0) && (simt >= m_undockingMsgTime))
         {
             // NOTE: we do not just use LoadAndPlayWav here because we need to load this into the correct slot in case the user disabled it via code!
-            LoadAndPlayWavUsingID(XRSound::UndockingCallout, GetConfig().UndockingCallout, false, XRSound::PlaybackType::Radio);   // e.g., "Undocking confirmed" voice callout
+            LoadAndPlayWavUsingID(XRSound::UndockingCallout, GetConfig().UndockingCallout.c_str(), false, XRSound::PlaybackType::Radio);   // e.g., "Undocking confirmed" voice callout
             m_undockingMsgTime = -1;    // reset
         }
 
@@ -454,8 +462,8 @@ void DockingCalloutsDefaultSoundGroupPreStep::clbkPreStep(const double simt, con
 
     if ((distance >= 0) && (m_previousFrameDistance >= 0))  // no callouts if not in range OR if we just entered range but haven't updated previous distance yet.
     {
-        _ASSERTE(m_intervalStartTime >= 0);
-        _ASSERTE(m_intervalStartDistance >= 0);
+        assert(m_intervalStartTime >= 0);
+        assert(m_intervalStartDistance >= 0);
 
         // Note: in order to support UCD (Universal Cargo Deck), only play callouts for the other vessel's docking port if the ship has closed at least 0.1 meter over the last second (0.1 m/s)
         // Vessel distance "jitters" even when a vessel is attached to UCD which is attached in the XR payload bay.
@@ -494,9 +502,8 @@ void DockingCalloutsDefaultSoundGroupPreStep::clbkPreStep(const double simt, con
                     // play on approach only
                     if ((m_previousFrameDistance > dist) && (distance <= dist))   // closing
                     {
-                        CString csBasename;
-                        csBasename.Format("%d", static_cast<int>(dist));
-                        if (LoadAndPlayWavWithBasename(csBasename))
+                        std::string csBasename = std::to_string(dist);
+                        if (LoadAndPlayWavWithBasename(csBasename.c_str()))
                             SetNextMinimumCalloutTime(simt);
                         break;
                     }
@@ -518,13 +525,15 @@ MachCalloutsDefaultSoundGroupPreStep::MachCalloutsDefaultSoundGroupPreStep(Vesse
     m_previousMach(-1), m_nextMinimumCalloutTime(-1)
 {
     // load our two custom sounds handled by this prestep
-    m_pEngine->LoadWav(XRSound::SonicBoom, GetConfig().SonicBoom, XRSound::PlaybackType::BothViewFar);
-    m_pEngine->LoadWav(XRSound::SubsonicCallout, GetConfig().SubsonicCallout, XRSound::PlaybackType::Radio);
+    m_pEngine->LoadWav(XRSound::SonicBoom, GetConfig().SonicBoom.c_str(), XRSound::PlaybackType::BothViewFar);
+    m_pEngine->LoadWav(XRSound::SubsonicCallout, GetConfig().SubsonicCallout.c_str(), XRSound::PlaybackType::Radio);
 }
 
 // This is based on the XR vessels' MachCalloutsPreStep method
 void MachCalloutsDefaultSoundGroupPreStep::clbkPreStep(const double simt, const double simdt, const double mjd)
 {
+    static constexpr long MAXLONG = std::numeric_limits<long>::max();
+
     VESSEL *pVessel = GetVessel();
     if (!pVessel)
         return;     // sanity check
@@ -576,9 +585,8 @@ void MachCalloutsDefaultSoundGroupPreStep::clbkPreStep(const double simt, const 
                 if (((m_previousMach < m) && (mach >= m)) ||  // acceleration
                     ((m_previousMach > m) && (mach <= m)))    // deceleration
                 {
-                    CString csBasename;
-                    csBasename.Format("Mach %d", static_cast<int>(m));
-                    LoadAndPlayWavWithBasename(csBasename);
+                    std::string csBasename = "Mach " + std::to_string(m);
+                    LoadAndPlayWavWithBasename(csBasename.c_str());
                     break;
                 }
             }
@@ -659,10 +667,10 @@ void MusicDefaultSoundGroupPreStep::clbkPreStep(const double simt, const double 
             {
                 // time to start the next song
                 m_startNextSongRealtime = -1;        // reset
-                CString csMusicFile = ((GetConfig().MusicOrder == XRSoundConfigFileParser::SeqRandom::Sequential) ? GetNextSoundFile() : GetRandomSoundFile());
+                auto csMusicFile = ((GetConfig().MusicOrder == XRSoundConfigFileParser::SeqRandom::Sequential) ? GetNextSoundFile() : GetRandomSoundFile());
 
-                if (!csMusicFile.IsEmpty())
-                    LoadAndPlayWav(csMusicFile, GetConfig().MusicVolume);
+                if (!csMusicFile.empty())
+                    LoadAndPlayWav(csMusicFile.c_str(), GetConfig().MusicVolume);
                 // else list is empty or file could not be played, so we will restart the timer to try the next song, if any, in the next frame since the sound is not playing
             }
         }

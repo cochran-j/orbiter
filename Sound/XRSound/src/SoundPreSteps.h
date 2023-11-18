@@ -7,10 +7,11 @@
 
 #pragma once
 
-#include <atlstr.h>             // for CString
+#include <string>               // for std::string
 #include <unordered_map>
+#include <cassert>
 
-#include "OrbiterSDK.h"
+#include "Orbitersdk.h"
 #include "XRSound.h"            // for enums
 #include "VesselXRSoundEngine.h"
 
@@ -22,36 +23,36 @@ class SoundPreStep
 public:
     SoundPreStep(VesselXRSoundEngine *pEngine) : m_pEngine(pEngine)
     { 
-        _ASSERTE(pEngine); 
+        assert(pEngine); 
     }
 
     XRSoundConfigFileParser &GetConfig()
     {
-        _ASSERTE(m_pEngine);
+        assert(m_pEngine);
         return m_pEngine->GetConfig();
     }
 
     bool HasFocus() const
     {
-        _ASSERTE(m_pEngine);
+        assert(m_pEngine);
         return m_pEngine->HasFocus();
     }
 
     bool InCockpitView() const
     {
-        _ASSERTE(m_pEngine);
+        assert(m_pEngine);
         return m_pEngine->InCockpitView();
     }
 
     void WriteLog(const char *pMsg)
     {
-        _ASSERTE(m_pEngine);
+        assert(m_pEngine);
         m_pEngine->WriteLog(pMsg);
     }
     
     VESSEL *GetVessel()
     {
-        _ASSERTE(m_pEngine);
+        assert(m_pEngine);
         return m_pEngine->GetVessel();
     }
 
@@ -60,9 +61,9 @@ public:
 
 protected:
     bool PlaySwitch(const bool bOn, const float volume = 1.0);
-    bool LoadWav(const int soundID, const char *pSoundFilename, const XRSound::PlaybackType playbackType);
+    bool LoadWav(const int soundID, const std::string& pSoundFilename, const XRSound::PlaybackType playbackType);
     bool PlayWav(const int soundID, const bool bLoop = false, const float volume = 1.0);
-    bool LoadAndPlayWavUsingID(const int soundID, const char *pWavFile, const bool bLoop, const XRSound::PlaybackType playbackType, const float volume = 1.0);
+    bool LoadAndPlayWavUsingID(const int soundID, const std::string& pWavFile, const bool bLoop, const XRSound::PlaybackType playbackType, const float volume = 1.0);
     bool StopWav(const int soundID);
 
     VesselXRSoundEngine *m_pEngine;
@@ -80,7 +81,7 @@ public:
 
     // Default implementation; if you override this, make sure to set m_soundID from soundID.
     // Returns true if initialization successful, false if sound is disabled or file load failed (the sound will not play)
-    virtual bool Initialize(const int soundID, const char *pSoundFilename, const XRSound::PlaybackType playbackType);
+    virtual bool Initialize(const int soundID, const std::string& pSoundFilename, const XRSound::PlaybackType playbackType);
 
 protected:
     int m_soundID;
@@ -91,7 +92,7 @@ protected:
     virtual void clbkPreStep(const double simt, const double simdt, const double mjd) = 0;
 
     // methods that act on our m_soundID
-    bool LoadWav(const char *pSoundFilename);
+    bool LoadWav(const std::string& pSoundFilename);
     bool LoadAndPlayWav(const char *pSoundFilename, float volume = 1.0); // plays non-looped
     virtual bool PlayWav(const bool bLoop = false, float volume = 1.0);  // virtual so child subclasses can hook it and override the volume set by superclass call
     bool StopWav();
@@ -145,7 +146,7 @@ public:
     virtual ~RCSDefaultSoundPreStep();
 
     // Returns true if initialization successful, false if sound is disabled or file load failed (the sound will not play)
-    virtual bool Initialize(const int soundID, const char *pSoundFilename, const XRSound::PlaybackType playbackType) override;
+    virtual bool Initialize(const int soundID, const std::string& pSoundFilename, const XRSound::PlaybackType playbackType) override;
 
     // this is invoked at every timestep; subclasses should decide when to play or stop their sound
     virtual void clbkPreStep(const double simt, const double simdt, const double mjd);
@@ -155,7 +156,7 @@ protected:
     class RCSAttackForAxisSound
     {
     public:
-        RCSAttackForAxisSound(const double &axisThrustLevel, const int soundID, VesselXRSoundEngine *pEngine, const bool bNegativeAxis, const char *pWavFilePath);
+        RCSAttackForAxisSound(const double &axisThrustLevel, const int soundID, VesselXRSoundEngine *pEngine, const bool bNegativeAxis, const std::string& pWavFilePath);
         ~RCSAttackForAxisSound();
         void clbkPreStep();
 

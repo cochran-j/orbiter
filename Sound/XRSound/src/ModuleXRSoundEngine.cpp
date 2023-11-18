@@ -5,6 +5,9 @@
 // Licensed under the MIT License
 // ==============================================================
 
+#include <string>
+#include <cassert>
+
 #include "ModuleXRSoundEngine.h"
 #include "XRSoundConfigFileParser.h"
 #include "XRSoundDLL.h"   // for XRSoundDLL::GetAbsoluteSimTime()
@@ -15,8 +18,8 @@
 // This also handles static one-time initialization of our singleton irrKlang engine.
 ModuleXRSoundEngine *ModuleXRSoundEngine::CreateInstance(const char *pUniqueModuleName)
 {
-    _ASSERTE(pUniqueModuleName);
-    _ASSERTE(*pUniqueModuleName);
+    assert(pUniqueModuleName);
+    assert(*pUniqueModuleName);
 
     if (!pUniqueModuleName || !*pUniqueModuleName)
         return nullptr;
@@ -37,8 +40,8 @@ ModuleXRSoundEngine::ModuleXRSoundEngine(const char *pUniqueModuleName) :
     XRSoundEngine(),
     m_csModuleName(pUniqueModuleName)
 {
-    _ASSERTE(pUniqueModuleName);
-    _ASSERTE(*pUniqueModuleName);
+    assert(pUniqueModuleName);
+    assert(*pUniqueModuleName);
 
     // Note: there are no "overrides" applicable to modules, so there is no need to parse module configuration override .cfg files
     m_pConfig = new XRSoundConfigFileParser();  // for [SYSTEM] settings and logging
@@ -54,10 +57,9 @@ ModuleXRSoundEngine::~ModuleXRSoundEngine()
 // Only invoked by our base class's static DestroyInstance method
 void ModuleXRSoundEngine::FreeResources()
 {
-    CString msg;
-    msg.Format("ModuleXRSoundEngine::FreeResources: freeing XRSound engine resources for module '%s'",
-        static_cast<const char *>(m_csModuleName));
-    s_globalConfig.WriteLog(msg);
+    std::string msg;
+    msg = "ModuleXRSoundEngine::FreeResources: freeing XRSound engine resources for module '" + m_csModuleName + "'";
+    s_globalConfig.WriteLog(msg.c_str());
 
     // stop all of this module's sounds and free all irrKlang resources for them
     StopAllWav();

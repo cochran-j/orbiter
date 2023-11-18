@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <atlstr.h>             // for CString
+#include <string>               // for std::string
 #include <unordered_map>
 
-#include "OrbiterSDK.h"
+#include "Orbitersdk.h"
 #include "XRSound.h"            // for enums
 #include "VesselXRSoundEngine.h"
 #include "SoundPreSteps.h"
@@ -24,17 +24,17 @@ class DefaultSoundGroupPreStep : public DefaultSoundPreStep
 public:
     DefaultSoundGroupPreStep(VesselXRSoundEngine *pEngine);
     virtual ~DefaultSoundGroupPreStep();
-    virtual bool Initialize(const int soundID, const char *pFolderSubpath, const XRSound::PlaybackType playbackType) override;
-    bool SetFolder(const char *pFolderSubpath);
-    const char *GetFolder() const { return m_csFolderSubpath; }
-    CString GetRandomSoundFile();
-    CString GetNextSoundFile();
+    virtual bool Initialize(const int soundID, const std::string& pFolderSubpath, const XRSound::PlaybackType playbackType) override;
+    bool SetFolder(const std::string& pFolderSubpath);
+    const char *GetFolder() const { return m_csFolderSubpath.c_str(); }
+    std::string GetRandomSoundFile();
+    std::string GetNextSoundFile();
     bool LoadWavWithBasename(const char *pBasename);
     bool LoadAndPlayWavWithBasename(const char *pBasename, const bool bLoop = false, const float volume = 1.0f);
 
 protected:
     FileList *m_pSoundFilesList;      // contains list of all files for this group of sounds
-    CString m_csFolderSubpath;        // Relative to $ORBITER_ROOT; e.g., "XRSound\Default\Cabin Ambience"
+    std::string m_csFolderSubpath;        // Relative to $ORBITER_ROOT; e.g., "XRSound\Default\Cabin Ambience"
     int m_currentSoundFileIndex;      // used by GetNextSoundFile
 };
 
