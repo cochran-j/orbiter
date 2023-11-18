@@ -2,7 +2,14 @@
 # Licensed under the MIT License
 
 # SAFESEH linker flag must be turned off because the DX7 libraries don't support it'
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -SAFESEH:NO")
+if(MSVC)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -SAFESEH:NO")
+endif()
+# On UNIX-like, use -r to build relocatable executables.  This allows us to
+# link the plugin DLLs to the executable.
+if (UNIX)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -r")
+endif()
 
 # Sources for all Orbiter executable targets
 set(common_src
@@ -15,7 +22,8 @@ set(common_src
 	Element.cpp
 	elevmgr.cpp
 	Help.cpp
-	Input.cpp
+    DInput.cpp
+    SDLInput.cpp
 	Keymap.cpp
 	LightEmitter.cpp
 	Mesh.cpp
@@ -110,12 +118,14 @@ set(common_src
 	D3dmath.cpp
 	Di7frame.cpp
 # Graphics interface base class for GDI clients
-	${GDICLIENT_DIR}/GDIClient.cpp
+# TODO(jec):  Why "client" getting compiled into main orbiter?
+#   ${GDICLIENT_DIR}/GDIClient.cpp
 # Utils
 	Log.cpp
 	Memstat.cpp
 	Util.cpp
 	ZTreeMgr.cpp
+    DllCompat.cpp
 # Resources
 	Orbiter.rc
 	Orbiter.ico
@@ -155,33 +165,49 @@ set(Orbiter_includes
 	${CMAKE_CURRENT_BINARY_DIR}
 	${HTMLHELP_INCLUDE_DIR}
 	${DX7SDK_INCLUDE_DIR}
+    ${DXVK_INCLUDE_DIR}/directx
+    ${WIN32_INCLUDE_DIR}
 )
 
 set(Orbiter_common_libs
-	Winmm.dll
-	comctl32.lib
-	UxTheme.lib
-	${HTML_HELP_LIBRARY}
-	zlib
-	${HTMLHELP_LIB}
+    # TODO(jec) libraries
+    #Winmm.dll
+    #comctl32.lib
+    #UxTheme.lib
+    #${HTML_HELP_LIBRARY}
+    zlibstatic
+    #${HTMLHELP_LIB}
 	$<TARGET_FILE:Orbitersdk>
 	$<TARGET_FILE:DlgCtrl>
 )
 set(Orbiter_dx7_libs
-	dxguid.lib
-	dinput8.lib
 	${DX7SDK_LIB_DIR}/d3dim.lib
 	${DX7SDK_LIB_DIR}/ddraw.lib
 )
 set(Orbiter_server_libs
-	dxguid.lib
-	dinput8.lib
 )
 
 set(Orbiter_depends
 	Orbitersdk
 	DlgCtrl
 )
+
+if(ORBITER_SDL_INPUT)
+    set(Orbiter_defines
+        CONFIG_SDL_INPUT=1
+        CONFIG_DIRECT_INPUT=0
+    )
+    set(Orbiter_dinput_libs)
+else()
+    set(Orbiter_defines
+        CONFIG_SDL_INPUT=0
+        CONFIG_DIRECT_INPUT=1
+    )
+    set(Orbiter_dinput_libs
+        dxguid.lib
+        dinput8.lib
+    )
+endif()
 
 # Orbiter executable (DX7 inline graphics version)
 if(BUILD_ORBITER_DX7)
@@ -191,9 +217,15 @@ if(BUILD_ORBITER_DX7)
 		${graphics_src}
 	)
 
+    if (MSVC)
+        set_target_properties(Orbiter
+            PROPERTIES
+            LINK_FLAGS "/SUBSYSTEM:WINDOWS"
+        )
+    endif()
+
 	set_target_properties(Orbiter
 		PROPERTIES
-		LINK_FLAGS "/SUBSYSTEM:WINDOWS"
 		RUNTIME_OUTPUT_DIRECTORY ${ORBITER_BINARY_ROOT_DIR}
 		COMPILE_DEFINITIONS "INLINEGRAPHICS;DIRECTINPUT_VERSION=0x0800"
 		ENABLE_EXPORTS 1
@@ -203,10 +235,15 @@ if(BUILD_ORBITER_DX7)
 	target_include_directories(Orbiter PUBLIC
 		${Orbiter_includes}
 	)
+
+    target_compile_definitions(Orbiter PUBLIC
+        ${Orbiter_defines}
+    )
 	
 	target_link_libraries(Orbiter
 		${Orbiter_common_libs}
 		${Orbiter_dx7_libs}
+        ${Orbiter_dinput_libs}
 	)
 
 	add_dependencies(Orbiter
@@ -243,9 +280,15 @@ if(BUILD_ORBITER_SERVER)
 		${common_src}
 	 )
 
+    if(MSVC)
+        set_target_properties(Orbiter_server
+            PROPERTIES
+            LINK_FLAGS "/SUBSYSTEM:CONSOLE /ENTRY:WinMainCRTStartup"
+        )
+    endif()
+
 	set_target_properties(Orbiter_server
 		PROPERTIES
-		LINK_FLAGS "/SUBSYSTEM:CONSOLE /ENTRY:WinMainCRTStartup"
 		RUNTIME_OUTPUT_DIRECTORY ${ORBITER_BINARY_MODULE_DIR}/Server
 		OUTPUT_NAME Orbiter
 		VS_DEBUGGER_WORKING_DIRECTORY ${ORBITER_BINARY_ROOT_DIR}
@@ -257,9 +300,14 @@ if(BUILD_ORBITER_SERVER)
 		${Orbiter_includes}
 	)
 
+    target_compile_definitions(Orbiter_server PUBLIC
+        ${Orbiter_defines}
+    )
+
 	target_link_libraries(Orbiter_server
 		${Orbiter_common_libs}
 		${Orbiter_server_libs}
+        ${Orbiter_dinput_libs}
 	)
 
 	add_dependencies(Orbiter_server

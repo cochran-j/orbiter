@@ -6,6 +6,7 @@ function(add_test_file test_name)
 
 	target_include_directories(${test_name}
 		PRIVATE ${ORBITER_SOURCE_SDK_INCLUDE_DIR}
+        PRIVATE ${WIN32_INCLUDE_DIR}
 		PRIVATE ${MODULE_COMMON_DIR}
 		PRIVATE ${ORBITER_SOURCE_ROOT_DIR}/Src/Module/LuaScript/LuaInterpreter
 	)

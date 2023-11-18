@@ -1,9 +1,12 @@
 # Copyright (c) Martin Schweiger
 # Licensed under the MIT License
 
-add_subdirectory(GDIClient)
+if(ORBITER_BUILD_GDICLIENT)
+    add_subdirectory(GDIClient)
+endif()
 
-if(NOT BUILD64)
+# TODO(jec): BUILD64 unset ORBITER_BUILD option.
+if(ORBITER_BUILD_D3D7CLIENT AND NOT BUILD64)
 	add_subdirectory(D3D7Client)
 endif()
 

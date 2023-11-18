@@ -42,7 +42,7 @@ else()
 	set(PLATFORM_STRING "Win32")
 endif()
 
-if (NOT ${CMAKE_GENERATOR} STREQUAL "Ninja")
+if (MSVC)
 	add_compile_options(/MP)
 endif()
 
@@ -192,10 +192,10 @@ endif()
 
 if(BUILD_ORBITER_DX7)
 	set(OrbiterTgt Orbiter)
-	set(ORBITER_LIB $<TARGET_LINKER_FILE:Orbiter>)
+    set(ORBITER_LIB $<TARGET_LINKER_FILE:Orbiter>)
 else()
 	set(OrbiterTgt Orbiter_server)
-	set(ORBITER_LIB $<TARGET_LINKER_FILE:Orbiter_server>)
+    set(ORBITER_LIB $<TARGET_LINKER_FILE:Orbiter_server>)
 endif()
 
 # =====================================================================================
@@ -246,6 +246,18 @@ option(
 )
 
 option(
+    ORBITER_BUILD_GDICLIENT
+    "Build the GDI graphics client"
+    ON
+)
+
+option(
+    ORBITER_BUILD_D3D7CLIENT
+    "BUild the D3D7 graphics client"
+    ON
+)
+
+option(
 	ORBITER_BUILD_XRSOUND
 	"Build XRSound module to enable sound in Orbiter"
 	ON
@@ -271,21 +283,56 @@ option(ORBITER_SANITIZER
 	OFF
 )
 
+option(ORBITER_DXVK
+    "Use DXVK native libraries as substitute for DirectX"
+    OFF
+)
+
+option(ORBITER_SDL_INPUT
+    "Use SDL for input instead of DirectInput"
+    OFF
+)
+
+
 if(ORBITER_BUILD_XRSOUND)
 	set(IRRKLANG_DIR "" CACHE PATH "Path to the irrKlang library")
 endif()
 
+if(ORBITER_DXVK)
+    find_package(DXVK REQUIRED)
+    set(DXVK_LIB_DIR
+        ${DXVK_LIB_DIR}
+        CACHE
+        PATH
+        "DXVK native libraries"
+    )
+    message(INFO "DXVK_LIB_DIR ${DXVK_LIB_DIR}")
+    set(DXVK_INCLUDE_DIR
+        ${DXVK_INCLUDE_DIR}
+        CACHE
+        PATH
+        "DXVK header files"
+    )
+    message(INFO "DXVK_INCLUDE_DIR ${DXVK_INCLUDE_DIR}")
+    set(WIN32_INCLUDE_DIR
+        ${DXVK_INCLUDE_DIR}/windows
+    )
+    message(INFO "WIN32_INCLUDE_DIR ${WIN32_INCLUDE_DIR}")
+endif()
+
 if(ORBITER_BUILD_D3D9CLIENT)
-	find_package(DXSDK REQUIRED)
-	set(DXSDK_DIR
-		${DXSDK_DIR}
-		CACHE
-		PATH
-		"Installation directory of DirectX SDK (June 2010)"
-	)
-	if(${DXSDK_DIR} STREQUAL "DXSDK_DIR-NOTFOUND")
-		message(FATAL_ERROR "DirectX SDK not found. The D3D9 graphics client will not be built.")
-	endif()
+    if(NOT ORBITER_DXVK)
+        find_package(DXSDK REQUIRED)
+        set(DXSDK_DIR
+            ${DXSDK_DIR}
+            CACHE
+            PATH
+            "Installation directory of DirectX SDK (June 2010)"
+        )
+        if(${DXSDK_DIR} STREQUAL "DXSDK_DIR-NOTFOUND")
+            message(FATAL_ERROR "DirectX SDK not found. The D3D9 graphics client will not be built.")
+        endif()
+    endif()
 endif()
 
 if (ORBITER_MAKE_DOC)

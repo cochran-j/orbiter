@@ -13,7 +13,13 @@ set(D3D9_SOURCE_DIR ${CMAKE_SOURCE_DIR}/OVP/D3D9Client)
 set(ShaderDir ${D3D9_SOURCE_DIR}/shaders)
 set(INCLUDE_TARGET_DIR ${ORBITER_BINARY_SDK_DIR}/include)
 
-set(InterfaceBuilder ${D3D9_SOURCE_DIR}/samples/InterfaceBuilder/InterfaceBuilder.exe)
+if(WIN32)
+    set(InterfaceBuilder ${D3D9_SOURCE_DIR}/samples/InterfaceBuilder/InterfaceBuilder.exe)
+else()
+    set(InterfaceBuilder
+        ${D3D9_SOURCE_DIR}/samples/InterfaceBuilder/InterfaceBuilder
+    )
+endif()
 
 set(SourceFiles
 	AABBUtil.cpp
@@ -170,34 +176,55 @@ add_library(D3D9Client MODULE
 target_include_directories(D3D9Client PUBLIC
 	${ORBITER_SOURCE_SDK_INCLUDE_DIR}
 	${DXSDK_DIR}/Include
+    ${DXVK_INCLUDE_DIR}/directx
+    ${WIN32_INCLUDE_DIR}
 )
 
 target_link_directories(D3D9Client PUBLIC
 	${ORBITER_BINARY_SDK_DIR}/lib
 	${DXSDK_LIB_DIR}
+    ${DXVK_LIB_DIR}
 )
 
 target_link_libraries(D3D9Client
-	orbiter.lib
-	orbitersdk.lib
-	d3d9.lib
-	debug d3dx9d.lib
-	optimized d3dx9.lib
-	kernel32.lib
-	user32.lib
-	gdi32.lib
-	winspool.lib
-	comdlg32.lib
-	advapi32.lib
-	shell32.lib
-	ole32.lib
-	oleaut32.lib
-	uuid.lib
-	odbc32.lib
-	odbccp32.lib
-	version.lib
-	msimg32.lib
+    # TODO(jec)
+    # ${ORBITER_LIB}
+    ${ORBITER_SDK_LIB}
+    # TODO(jec) if not DXVK mode
+    # d3d9.lib
+    # debug d3dx9d.lib
+    # optimized d3dx9.lib
+
+    # TODO(jec):  Should delete most of these
+    #             Replace some of the codlg and commctl stuff with Widgets.
+    # kernel32.lib
+    # user32.lib
+    # gdi32.lib
+    # winspool.lib comdlg32.lib advapi32.lib
+    # shell32.lib
+    # ole32.lib
+    # oleaut32.lib
+    # uuid.lib
+    # odbc32.lib
+    # odbccp32.lib
+    # version.lib
+    # msimg32.lib
 )
+
+if(ORBITER_DXVK)
+    target_link_libraries(D3D9Client
+        dxvk_d3d9
+        # TODO(jec)
+        # d3dx9
+    )
+else()
+    target_link_libraries(D3D9Client
+        d3d9.lib
+        debug d3dx9d.lib
+        d3dx9.lib
+        uuid.lib
+    )
+endif()
 
 set_target_properties(D3D9Client
 	PROPERTIES
@@ -233,10 +260,11 @@ install(TARGETS D3D9Client
 	DESTINATION ${ORBITER_INSTALL_PLUGIN_DIR}
 )
 
-add_subdirectory(samples/DrawOrbits)
+# TODO(jec)
+# add_subdirectory(samples/DrawOrbits)
 add_subdirectory(samples/DX9ExtMFD)
-add_subdirectory(samples/GenericCamera)
-add_subdirectory(samples/TerrainToolBox)
+# add_subdirectory(samples/GenericCamera)
+ #add_subdirectory(samples/TerrainToolBox)
 
 install(DIRECTORY ${D3D9_SOURCE_DIR}/shaders/ DESTINATION ${ORBITER_INSTALL_ROOT_DIR}/Modules/D3D9Client)
 install(DIRECTORY ${D3D9_SOURCE_DIR}/samples/DrawOrbits/ DESTINATION ${ORBITER_INSTALL_ROOT_DIR}/Orbitersdk/samples/DrawOrbits)

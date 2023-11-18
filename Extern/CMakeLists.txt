@@ -6,7 +6,9 @@ project(Extern)
 file(GLOB LUA_FILES "Lua/*.c" "Lua/*.h")
 
 add_library(lua SHARED ${LUA_FILES})
-target_compile_definitions(lua PUBLIC LUA_BUILD_AS_DLL)
+if(WIN32)
+    target_compile_definitions(lua PUBLIC LUA_BUILD_AS_DLL)
+endif()
 
 # for tests and running Orbiter from inside the build dir
 set_target_properties(lua PROPERTIES
@@ -23,6 +25,12 @@ install(TARGETS lua DESTINATION ${ORBITER_INSTALL_SDK_DIR}/lib/Lua)
 
 set(SKIP_INSTALL_ALL ON)
 add_subdirectory(zlib)
+
+# Set option for POSIX compatibility to get fileno() in
+# stdio.h
+if(UNIX)
+    target_compile_definitions(zlib PUBLIC _POSIX_SOURCE)
+endif()
 
 target_include_directories(zlib INTERFACE ${zlib_SOURCE_DIR})
 target_include_directories(zlib INTERFACE ${zlib_BINARY_DIR}) # for zconf.h
