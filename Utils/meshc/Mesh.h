@@ -9,6 +9,11 @@
 #ifndef __MESH_H
 #define __MESH_H
 
+/* TODO(jec):  Compatibility definition */
+#ifndef CALLBACK
+#define CALLBACK
+#endif
+
 #include <d3d.h>
 #include <d3dtypes.h>
 #include <iostream>

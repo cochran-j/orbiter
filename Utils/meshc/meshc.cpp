@@ -1,6 +1,10 @@
 // Copyright (c) Martin Schweiger
 // Licensed under the MIT License
 
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+#include <filesystem>
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
@@ -66,6 +70,17 @@ void ParseArgs(int argc, char *argv[], Param *param)
 	}
 }
 
+static bool caseInsensitiveStartsWith(const std::string_view& str,
+                                      const std::string_view& start) {
+
+    return (str.size() >= start.size()) &&
+        std::equal(str.begin(), str.begin() + start.size(),
+                   start.begin(), start.end(),
+                   [](char c1, char c2) {
+                       return std::tolower(static_cast<unsigned char>(c1)) ==
+                              std::tolower(static_cast<unsigned char>(c2));
+                   });
+}
 
 
 int main (int argc, char *argv[])
@@ -104,9 +119,7 @@ int main (int argc, char *argv[])
 	}
 	if (!strcmp(param.outname, "-")) strcpy(param.outname, "meshres.h");
 
-	char pwd[1024];
-	_fullpath(pwd, ".\\", 1024);
-	cout << "Current directory is " << pwd << endl;
+	cout << "Current directory is " << std::filesystem::current_path() << endl;
 
 	cout << "Reading mesh from " << param.meshname << endl;
 	ifstream ifs (param.meshname);
@@ -142,9 +155,9 @@ int main (int argc, char *argv[])
 	int grp = 0;
 	bool havelabel = false;
 	while (ifs.getline (cbuf, 256)) {
-		if (!_strnicmp (cbuf, "GEOM", 4))
+		if (caseInsensitiveStartsWith(cbuf, "GEOM"))
 			grp++;
-		else if (!_strnicmp (cbuf, "LABEL", 5)) {
+		else if (caseInsensitiveStartsWith(cbuf, "LABEL")) {
 			if (!havelabel) {
 				ofs << "\n// Named mesh groups:\n";
 				havelabel = true;

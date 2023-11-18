@@ -1,6 +1,10 @@
 // Copyright (c) Martin Schweiger
 // Licensed under the MIT License
 
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "Mesh.h"
 #include <stdio.h>
 #include "D3dmath.h"
@@ -598,6 +602,19 @@ DWORD Mesh::Render (LPDIRECT3DDEVICE7 dev)
 	return gcount;
 }
 
+static bool caseInsensitiveStartsWith(const std::string_view& str,
+                                      const std::string_view& start) {
+
+    return (str.size() >= start.size()) &&
+        std::equal(str.begin(), str.begin() + start.size(),
+                   start.begin(), start.end(),
+                   [](char c1, char c2) {
+                       return std::tolower(static_cast<unsigned char>(c1)) ==
+                              std::tolower(static_cast<unsigned char>(c2));
+                   });
+}
+
+
 istream &operator>> (istream &is, Mesh &mesh)
 {
 	char cbuf[256], comment[256];
@@ -629,22 +646,22 @@ istream &operator>> (istream &is, Mesh &mesh)
 
 		for (;;) {
 			if (!is.getline (cbuf, 256)) { term = true; break; }
-			if (!_strnicmp (cbuf, "MATERIAL", 8)) {       // read material index
+			if (caseInsensitiveStartsWith(cbuf, "MATERIAL")) {       // read material index
 				sscanf (cbuf+8, "%d", &mtrl_idx);
 				mtrl_idx--;
-			} else if (!_strnicmp (cbuf, "TEXTURE", 7)) { // read texture index
+			} else if (caseInsensitiveStartsWith(cbuf, "TEXTURE")) { // read texture index
 				sscanf (cbuf+7, "%d", &tex_idx);
 				tex_idx--;
-			} else if (!_strnicmp (cbuf, "ZBIAS", 5)) {   // read z-bias
+			} else if (caseInsensitiveStartsWith(cbuf, "ZBIAS")) {   // read z-bias
 				sscanf (cbuf+5, "%hu", &zbias);
-			} else if (!_strnicmp (cbuf, "TEXWRAP", 7)) { // read wrap flags
+			} else if (caseInsensitiveStartsWith(cbuf, "TEXWRAP")) { // read wrap flags
 				char uvstr[10] = "";
 				sscanf (cbuf+7, "%9s", uvstr);
 				if (uvstr[0] == 'U' || uvstr[1] == 'U') flag |= 0x01;
 				if (uvstr[0] == 'V' || uvstr[1] == 'V') flag |= 0x02;
-			} else if (!_strnicmp (cbuf, "NONORMAL", 8)) {
+			} else if (caseInsensitiveStartsWith(cbuf, "NONORMAL")) {
 				bnormal = false; calcnml = true;
-			} else if (!_strnicmp (cbuf, "GEOM", 4)) {    // read geometry
+			} else if (caseInsensitiveStartsWith(cbuf, "GEOM")) {    // read geometry
 				if (sscanf (cbuf+4, "%d%d", &nvtx, &ntri) != 2) break; // parse error - skip group
 				for (i = 4; cbuf[i]; i++)           // read comment (preceeded by ';')
 					if (cbuf[i] == ';') { strcpy (comment, cbuf+i+1); break; }
