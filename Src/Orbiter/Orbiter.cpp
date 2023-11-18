@@ -305,8 +305,11 @@ int main(int argv, char* argc[]) {
 
 
     /* TODO(jec):  hInstance--what do we need it for? What does it need to be? */
+    /* NOTE(jec):  It appears that the cmdLine processor does not want to look
+     * at the program name (argv[0])
+     */
     std::string cmdLine {};
-    for (int i = 0; i < argv; ++i) {
+    for (int i = 1; i < argv; ++i) {
         cmdLine += argc[i];
         cmdLine += " ";
     }
