@@ -25,7 +25,9 @@
 #include <fstream>
 #include <strstream>
 #include <iomanip>
+#include <iostream>
 #include <vector>
+#include <stdexcept>
 
 /* FPE signal handling */
 #include <cmath>
@@ -245,48 +247,54 @@ int xplat_main(HINSTANCE hInstance, const char* strCmdLine)
 # endif
 #endif
 
-    // If we're not running from actual console, hide the window
-    if (ConsoleManager::IsConsoleExclusive())
-        ConsoleManager::ShowConsole(false);
+    try {
+        // If we're not running from actual console, hide the window
+        if (ConsoleManager::IsConsoleExclusive())
+            ConsoleManager::ShowConsole(false);
 
-    SetEnvironmentVars();
-	g_pOrbiter = new Orbiter; // application instance
+        SetEnvironmentVars();
+        g_pOrbiter = new Orbiter; // application instance
 
-	// Parse command line
-	orbiter::CommandLine::Parse(g_pOrbiter, strCmdLine);
+        // Parse command line
+        orbiter::CommandLine::Parse(g_pOrbiter, strCmdLine);
 
-	// Initialise the log
-	INITLOG("Orbiter.log", g_pOrbiter->Cfg()->CfgCmdlinePrm.bAppendLog); // init log file
+        // Initialise the log
+        INITLOG("Orbiter.log", g_pOrbiter->Cfg()->CfgCmdlinePrm.bAppendLog); // init log file
 #ifdef ISBETA
-	LOGOUT("Build %s BETA [v.%06d]", __DATE__, g_pOrbiter->GetVersion());
+        LOGOUT("Build %s BETA [v.%06d]", __DATE__, g_pOrbiter->GetVersion());
 #else
-	LOGOUT("Build %s [v.%06d]", __DATE__, g_pOrbiter->GetVersion());
+        LOGOUT("Build %s [v.%06d]", __DATE__, g_pOrbiter->GetVersion());
 #endif
 
-	// Initialise random number generator
-	//srand ((unsigned)time (NULL));
-	srand(12345);
-	LOGOUT("Timer precision: %g sec", fine_counter_step);
+        // Initialise random number generator
+        //srand ((unsigned)time (NULL));
+        srand(12345);
+        LOGOUT("Timer precision: %g sec", fine_counter_step);
 
-	oapiRegisterCustomControls(hInstance);
+        oapiRegisterCustomControls(hInstance);
 
-	HRESULT hr;
-	// Create application
-	if (FAILED (hr = g_pOrbiter->Create (hInstance))) {
-		LOGOUT("Application creation failed");
+        HRESULT hr;
+        // Create application
+        if (FAILED (hr = g_pOrbiter->Create (hInstance))) {
+            LOGOUT("Application creation failed");
 
-        /* TODO(jec):  Cross-platform message boxes with widget toolkit */
-        /*
-		MessageBox (NULL, "Application creation failed!\nTerminating.",
-			"Orbiter Error", MB_OK | MB_ICONERROR);
-        */
-		return 0;
-	}
+            /* TODO(jec):  Cross-platform message boxes with widget toolkit */
+            /*
+            MessageBox (NULL, "Application creation failed!\nTerminating.",
+                "Orbiter Error", MB_OK | MB_ICONERROR);
+            */
+            return 0;
+        }
 
-	setlocale (LC_CTYPE, "");
+        setlocale (LC_CTYPE, "");
 
-	g_pOrbiter->Run ();
-	delete g_pOrbiter;
+        g_pOrbiter->Run ();
+        delete g_pOrbiter;
+    } catch (const std::exception& e) {
+         LOGOUT("FATAL Unhandled exception: %s", e.what());
+         std::cerr << "FATAL Unhandled exception: " << e.what() << std::endl;
+    }
+
 	return 0;
 }
 
@@ -550,10 +558,11 @@ HRESULT Orbiter::Create (HINSTANCE hInstance)
 	script = new ScriptInterface(this); TRACENEW
 
 	// preload modules from command line requests
-	LoadModules("Modules\\Plugin", pConfig->CfgCmdlinePrm.LoadPlugins);
+    auto pluginPath = std::filesystem::path{"Modules"} / "Plugin";
+	LoadModules(pluginPath, pConfig->CfgCmdlinePrm.LoadPlugins);
 
 	// preload active plugin modules
-	LoadModules("Modules\\Plugin", pConfig->GetActiveModules());
+	LoadModules(pluginPath, pConfig->GetActiveModules());
 
 	// preload startup plugin modules
 	LoadStartupModules();
@@ -670,7 +679,8 @@ void Orbiter::LoadModules(const std::string& path)
 //-----------------------------------------------------------------------------
 void Orbiter::LoadStartupModules()
 {
-	LoadModules("Modules\\Startup");
+    auto startupPath = std::filesystem::path{"Modules"} / "Startup";
+	LoadModules(startupPath);
 }
 
 //-----------------------------------------------------------------------------
