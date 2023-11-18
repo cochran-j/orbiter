@@ -10,7 +10,12 @@
 #include "OapiExtension.h"
 #include "D3D9Config.h"
 #include "OrbiterAPI.h"
+/* TODO(jec)
 #include <psapi.h>
+*/
+
+#include <string>
+#include <filesystem>
 
 
 // ===========================================================================
@@ -18,11 +23,11 @@
 
 DWORD OapiExtension::elevationMode = 0;
 // Orbiters default directories
-std::string OapiExtension::configDir(".\\Config\\");
-std::string OapiExtension::meshDir(".\\Meshes\\");
-std::string OapiExtension::textureDir(".\\Textures\\");
-std::string OapiExtension::hightexDir(".\\Textures2\\");
-std::string OapiExtension::scenarioDir(".\\Scenarios\\");
+std::filesystem::path OapiExtension::configDir("Config");
+std::filesystem::path OapiExtension::meshDir("Meshes");
+std::filesystem::path OapiExtension::textureDir("Textures");
+std::filesystem::path OapiExtension::hightexDir("Textures2");
+std::filesystem::path OapiExtension::scenarioDir("Scenarios");
 
 std::string OapiExtension::startupScenario = OapiExtension::ScanCommandLine();
 
@@ -89,6 +94,8 @@ const void *OapiExtension::GetConfigParam (DWORD paramtype)
 // ===========================================================================
 // Logs loaded D3D9 DLLs and their versions to Orbiter.log
 //
+#ifdef _WIN32
+
 void OapiExtension::LogD3D9Modules(void)
 {
 	HMODULE hMods[1024];
@@ -173,7 +180,15 @@ void OapiExtension::LogD3D9Modules(void)
 	CloseHandle( hProcess );
 }
 
+#else /* _WIN32 */
 
+void OapiExtension::LogD3D9Modules(void)
+{
+    /* TODO(jec) */
+
+}
+
+#endif /* _WIN32 */
 
 // ===========================================================================
 // Tries to get the initial settings from Orbiter_NG.cfg file
@@ -185,7 +200,9 @@ bool OapiExtension::GetConfigParameter(void)
 
 	FILEHANDLE f = oapiOpenFile("Orbiter_NG.cfg", FILE_IN_ZEROONFAIL, ROOT);
 	if (f) {
-		char  string[MAX_PATH];
+        std::string string_ {};
+        string_.resize(256);
+
 		DWORD flags;
 		float scale, opacity;
 
@@ -197,8 +214,8 @@ bool OapiExtension::GetConfigParameter(void)
 			}
 		}
 
-		if (oapiReadItem_string(f, (char*)"ElevationMode", string)) {
-			if (1 == sscanf_s(string, "%lu", &flags)) {
+		if (oapiReadItem_string(f, (char*)"ElevationMode", string_.data())) {
+			if (1 == std::sscanf(string_.c_str(), "%lu", &flags)) {
 				elevationMode = flags;
 			}
 		}
@@ -207,35 +224,34 @@ bool OapiExtension::GetConfigParameter(void)
 		oapiReadItem_bool(f, (char*)"TileLoadThread", tileLoadThread);
 
 		// Get directory config
-		if (oapiReadItem_string(f, (char*)"ConfigDir", string)) {
-			configDir = string;
+		if (oapiReadItem_string(f, (char*)"ConfigDir", string_.data())) {
+			configDir = string_;
 		}
-		if (oapiReadItem_string(f, (char*)"MeshDir", string)) {
-			meshDir = string;
+		if (oapiReadItem_string(f, (char*)"MeshDir", string_.data())) {
+			meshDir = string_;
 		}
-		if (oapiReadItem_string(f, (char*)"TextureDir", string)) {
-			textureDir = string;
+		if (oapiReadItem_string(f, (char*)"TextureDir", string_.data())) {
+			textureDir = string_;
 		}
-		if (oapiReadItem_string(f, (char*)"HightexDir", string)) {
-			hightexDir = string;
+		if (oapiReadItem_string(f, (char*)"HightexDir", string_.data())) {
+			hightexDir = string_;
 		}
-		if (oapiReadItem_string(f, (char*)"ScenarioDir", string)) {
-			scenarioDir = string;
+		if (oapiReadItem_string(f, (char*)"ScenarioDir", string_.data())) {
+			scenarioDir = string_;
 		}
 
 		oapiCloseFile(f, FILE_IN_ZEROONFAIL);
 
 		// Log directory config
-		auto logPath = [](const char *name, const std::string &path) {
-			TCHAR buff[MAX_PATH];
-			if (GetFullPathName(path.c_str(), MAX_PATH, buff, NULL)) {
-				DWORD ftyp = GetFileAttributes(buff);
-				auto result = (ftyp == INVALID_FILE_ATTRIBUTES || !(ftyp & FILE_ATTRIBUTE_DIRECTORY) ? " [[DIR NOT FOUND!]]" : "");
-				oapiWriteLogV("%-11s: %s%s", name, buff, result);
-			}
+		auto logPath = [](const char *name, const std::filesystem::path &path_) {
+            auto fullPath = std::filesystem::absolute(path_);
+            auto result = (!std::filesystem::exists(fullPath) ||
+                           !std::filesystem::is_directory(fullPath)) ?
+                " [[DIR NOT FOUND!]]" : "";
+            oapiWriteLogV("%-11s: %s%s", name, fullPath.c_str(), result);
 		};
 		oapiWriteLog((char*)"---------------------------------------------------------------");
-		logPath("BaseDir"    , ".\\");
+		logPath("BaseDir"    , ".");
 		logPath("ConfigDir"  , configDir);
 		logPath("MeshDir"    , meshDir);
 		logPath("TextureDir" , textureDir);
@@ -251,7 +267,7 @@ bool OapiExtension::GetConfigParameter(void)
 	if (orbiterSoundModuleEnabled)  {
 		orbiterSound40 = false;
 
-		f = oapiOpenFile("Sound\\version.txt", FILE_IN_ZEROONFAIL, ROOT);
+		f = oapiOpenFile("Sound/version.txt", FILE_IN_ZEROONFAIL, ROOT);
 		while (f && oapiReadScenario_nextline(f, pLine)) {
 			if (NULL != strstr(pLine, "OrbiterSound 4.0 (3D)")) {
 				orbiterSound40 = true;
@@ -262,6 +278,7 @@ bool OapiExtension::GetConfigParameter(void)
 	}
 
 	// Check for WINE environment
+    /* TODO(jec):  Get WINE stuff??
 	HMODULE hntdll = GetModuleHandle("ntdll.dll");
 	if (NULL != hntdll)
 	{
@@ -271,6 +288,7 @@ bool OapiExtension::GetConfigParameter(void)
 			runsUnderWINE = true;
 		} // else { Not running WINE }
 	} // else { Not running on NT ?! }
+    */
 
 	return true;
 }
@@ -280,7 +298,12 @@ bool OapiExtension::GetConfigParameter(void)
 //
 std::string OapiExtension::ScanCommandLine (void)
 {
+#ifdef _WIN32
 	std::string commandLine(GetCommandLine());
+#else
+    /* TODO(jec) NOTE:  This function appears to be unused */
+    std::string commandLine {};
+#endif
 
 	// Is there a "-s <scenario_name>" option at all?
 	size_t pos = rfind_ci(commandLine, "-s");

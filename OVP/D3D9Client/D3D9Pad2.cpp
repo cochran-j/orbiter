@@ -89,7 +89,7 @@ void D3D9Pad::AddRectIdx(WORD aV)
 //
 RECT D3D9Pad::GetFullRect(SURFHANDLE hSrc)
 {
-	return {0, 0, static_cast<long>(SURFACE(hSrc)->GetWidth()), static_cast<long>(SURFACE(hSrc)->GetHeight())};
+	return {0, 0, static_cast<LONG>(SURFACE(hSrc)->GetWidth()), static_cast<LONG>(SURFACE(hSrc)->GetHeight())};
 }
 
 
@@ -486,7 +486,9 @@ void D3D9Pad::TextEx(float x, float y, const char *str, float scale, float angle
 
 	pText->SetRotation(angle);
 	pText->SetScaling(scale);
+    /* TODO(jec)
 	pText->PrintSkp(this, x - 1.0f, y - 1.0f, str, -1, (bkmode == OPAQUE));
+    */
 }
 
 
@@ -817,7 +819,7 @@ RECT D3D9Pad::GetFullRectNative(LPDIRECT3DTEXTURE9 hSrc)
 {
 	D3DSURFACE_DESC desc;
 	hSrc->GetLevelDesc(0, &desc);
-	return {0, 0, static_cast<long>(desc.Width), static_cast<long>(desc.Height)};
+	return {0, 0, static_cast<LONG>(desc.Width), static_cast<LONG>(desc.Height)};
 }
 
 

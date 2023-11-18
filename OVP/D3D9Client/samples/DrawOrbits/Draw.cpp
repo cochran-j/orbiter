@@ -11,7 +11,9 @@
 #include "VesselAPI.h"
 #include "ModuleAPI.h"
 #include "DrawAPI.h"
+/* TODO(jec)
 #include <windowsx.h>
+*/
 #include "gcCoreAPI.h"
 #include "Orbit.h"
 #include "Reference.h"

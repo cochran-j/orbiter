@@ -19,6 +19,8 @@
 #include "VectorHelpers.h"
 #include "IProcess.h"
 
+#include <cstdio>
+
 using namespace oapi;
 
 const float invalid_val = -1e12;
@@ -946,10 +948,10 @@ bool vPlanet::LoadAtmoConfig()
 
 	auto it = Config->AtmoCfg.find(name);
 	if (it != Config->AtmoCfg.end()) {
-		sprintf_s(path, 256, "GC/%s", it->second.c_str());
+        std::snprintf(path, 256, "GC/%s", it->second.c_str());
 	}
 	else {
-		sprintf_s(path, "GC/%s.atm.cfg", name);
+        std::snprintf(path, 256, "GC/%s.atm.cfg", name);
 		Config->AtmoCfg[name] = string(name) + ".atm.cfg";
 	}
 	
@@ -959,8 +961,8 @@ bool vPlanet::LoadAtmoConfig()
 
 	LogAlw("Loading Atmospheric Configuration file [%s] Handle=%s", path, _PTR(hFile));
 
-	if (oapiReadItem_string(hFile, (char*)"Shader", ShaderName) == false) strcpy_s(ShaderName, 32, "Auto");
-	if (oapiReadItem_string(hFile, (char*)"ConfigName", AtmoConfigName) == false) strcpy_s(AtmoConfigName, 32, "Custom");
+	if (oapiReadItem_string(hFile, (char*)"Shader", ShaderName) == false) std::strncpy(ShaderName, "Auto", 32);
+	if (oapiReadItem_string(hFile, (char*)"ConfigName", AtmoConfigName) == false) std::strncpy(AtmoConfigName, "Custom", 32);
 
 	LoadStruct(hFile, &SPrm, 0);
 	LoadStruct(hFile, &OPrm, 1);
@@ -979,9 +981,9 @@ bool vPlanet::LoadAtmoConfig()
 char* vPlanet::Label(const char* x)
 {
 	static char lbl[32];
-	if (iConfig == 0) sprintf_s(lbl, 32, "Srf_%s", x);
-	if (iConfig == 1) sprintf_s(lbl, 32, "Low_%s", x);
-	if (iConfig == 2) sprintf_s(lbl, 32, "Hig_%s", x);
+	if (iConfig == 0) std::snprintf(lbl, 32, "Srf_%s", x);
+	if (iConfig == 1) std::snprintf(lbl, 32, "Low_%s", x);
+	if (iConfig == 2) std::snprintf(lbl, 32, "Hig_%s", x);
 	return lbl;
 }
 
@@ -1073,10 +1075,10 @@ void vPlanet::SaveAtmoConfig()
 
 	auto it = Config->AtmoCfg.find(name);
 	if (it != Config->AtmoCfg.end()) {
-		sprintf_s(path, 256, "GC/%s", it->second.c_str());
+        std::snprintf(path, 256, "GC/%s", it->second.c_str());
 	}
 	else {
-		sprintf_s(path, "GC/%s.atm.cfg", name);
+        std::snprintf(path, 256, "GC/%s.atm.cfg", name);
 		Config->AtmoCfg[name] = string(name) + ".atm.cfg";
 	}
 

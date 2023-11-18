@@ -19,7 +19,21 @@
 #include <windows.h>
 #include <stdio.h>
 #include <time.h>
-#include <d3d9.h> 
+#include <d3d9.h>
+
+/* TODO(jec): Compatibility definitions for d3dx9.h--it's not well supported by
+ * DXVK.
+ */
+#define LF_FACESIZE 32
+struct TEXTMETRICA;
+struct TEXTMETRICW;
+#define STDAPI
+#define DECLARE_INTERFACE_IID_(type, base, iid) DECLARE_INTERFACE_(type, base)
+using LPGUID = void*;
+struct IStream;
+struct GLYPHMETRICSFLOAT;
+using DOUBLE = double;
+
 #include <d3dx9.h>
 #include "D3D9TextMgr.h"
 #include "Log.h"
@@ -48,7 +62,7 @@ D3D9Text::D3D9Text(LPDIRECT3DDEVICE9 pDevice) :
 	max_len    (),
 	rotation   (),
 	scaling    (1.0f),
-	charset    (ANSI_CHARSET),
+/* TODO(jec)	charset    (ANSI_CHARSET), */
 	first      (32),
 	halign     (),
 	valign     (),
@@ -57,8 +71,10 @@ D3D9Text::D3D9Text(LPDIRECT3DDEVICE9 pDevice) :
 	FontData   (NULL),
 	wfont      (NULL)
 {
+    /* TODO(jec)
 	ZeroMemory(&tm, sizeof(TEXTMETRIC));
-	ZeroMemory(&lf, sizeof(LOGFONT));	
+	ZeroMemory(&lf, sizeof(LOGFONT));
+    */
 }
 
 
@@ -74,10 +90,12 @@ D3D9Text::~D3D9Text()
 
 // ----------------------------------------------------------------------------------------
 //
+/* TODO(jec)
 void D3D9Text::SetCharSet(int set)
 {
 	charset=set;
 }
+*/
 
 
 // ----------------------------------------------------------------------------------------
@@ -105,7 +123,9 @@ void D3D9Text::SetTextVAlign(int x)
 //
 void D3D9Text::SetTextShare(int share)
 {
+    /* TODO(jec)
 	sharing = (tm.tmHeight*share)/100;
+    */
 }
 
 
@@ -113,7 +133,9 @@ void D3D9Text::SetTextShare(int share)
 //
 void D3D9Text::SetLineSpace(int line)
 {
+    /* TODO(jec)
 	linespacing = tm.tmHeight + (tm.tmHeight*line)/100;
+    */
 }
 
 
@@ -135,7 +157,9 @@ bool D3D9Text::Init(HFONT hFont)
 	}
 
 	// Receive font attributes
+    /* TODO(jec)
 	GetObject(hFont, sizeof(LOGFONT), &lf);
+    */
 
 	tex_w = 2048;	// Texture Width
 	tex_h = 32;
@@ -144,7 +168,9 @@ bool D3D9Text::Init(HFONT hFont)
 	//
 	FontData = new D3D9FontData[256]();	// zero-initialized
 	
+    /* TODO(jec)
 	LogAlw("[NEW FONT] (%31s), Size=%d, Weight=%d Pitch&Family=%x", lf.lfFaceName, lf.lfHeight, lf.lfWeight, lf.lfPitchAndFamily);
+    */
 
 	bool bFirst = true;
 
@@ -172,20 +198,24 @@ restart:
 		return false;
 	}
 	
+    /* TODO(jec)
 	HFONT hOld = (HFONT)SelectObject(hDC, hFont);
 
 	if (hOld == NULL) { LogErr("SelectObject(hFont) FAIL"); return false; }
+    */
 
 	if (bFirst) {
 
 		// Get Text Metrics information
 		// 
+        /* TODO(jec)
 		memset((void *)&tm, 0, sizeof(TEXTMETRIC));
 		
 		if (GetTextMetrics(hDC, &tm)==false) {
 			LogErr("GetTextMetrics() FAIL");
 			return false;
 		}
+        */
 		bFirst = false;
 	}
 
@@ -194,21 +224,27 @@ restart:
 	
 	char text[] = "c";
 
+    /* TODO(jec)
 	int s = tm.tmMaxCharWidth;
 	int a = tm.tmAscent + 1;
 	int d = tm.tmDescent + 1;
 	int h = a+d;
+    */
 	int x = 5;
+    /* TODO(jec)
 	int y = 5 + h;
+    */
 	int c = first; // ANSI code of the First Charter
 	D3D9FontData *pData;
 
 	SIZE fnts;
 
+    /* TODO(jec)
 	SetTextAlign(hDC, TA_BASELINE | TA_LEFT);
 	SetTextColor(hDC, 0xFFFFFF);
 	SetBkColor(hDC, 0);
 	SetBkMode(hDC, TRANSPARENT);
+    */
 
 	float tw = 1.0f / float(tex_w);
 	float th = 1.0f / float(tex_h);
@@ -217,19 +253,25 @@ restart:
 		pData = Data(c);
 
 		text[0] = c;
-	
+
+        /* TODO(jec)
 		TextOutA(hDC, x, y, text, 1);
 		GetTextExtentPoint32(hDC, text, 1, &fnts);
+        */
 		
 		pData->sp  = float(fnts.cx);		// Char spacing
 		pData->w   = float(fnts.cx+3);		// Char Width
+        /* TODO(jec)
 		pData->h   = float(h);				// Char Height
+        */
 
 		pData->tx0 = float(x-1);
 		pData->tx1 = float(x-1 + fnts.cx+3);
-		
+	
+        /*TODO(jec)
 		pData->ty0 = float(y - a);
 		pData->ty1 = float(y + d);
+        */
 		
 		pData->tx0 *= tw;
 		pData->tx1 *= tw;
@@ -240,12 +282,14 @@ restart:
 
 		x += (fnts.cx + 4);		// --!!-- In order to increase spacing between charters increase this --!!--
 
+        /* TODO(jec)
 		if ((x+s) >= tex_w) {	// Start a New Line
 			x = 5;
 			y+= (h+5);
 		}
+        */
 
-		if ((y+h) >= tex_h) {
+		if (/* TODO(jec) (y+h) >= tex_h*/ true) {
 			pSurf->ReleaseDC(hDC);
 			pSurf->Release();
 			pSrcTex->Release();
@@ -254,12 +298,16 @@ restart:
 		}
 	}
 
+    /* TODO(jec)
 	SelectObject(hDC, hOld);
+    */
 
 	pSurf->ReleaseDC(hDC);
 	pSurf->Release();
 
+    /* TODO(jec)
 	DeleteObject(hFont);
+    */
 
 	HR(pDev->CreateTexture(tex_w, tex_h, 0, D3DUSAGE_AUTOGENMIPMAP, D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &pTex, NULL));
 
@@ -281,6 +329,7 @@ restart:
 	pSrcTex->Release();
 
 	// Init WCHAR font
+    /* TODO(jec)
 	HR(D3DXCreateFont(
 		pDev,                 // D3D Device
 		lf.lfHeight,          // Font height
@@ -295,6 +344,7 @@ restart:
 		lf.lfFaceName,        // pFacename,
 		&wfont                // ppFont
 	));
+    */
 
 	SetLineSpace(0);
 	SetTextShare(0);
@@ -420,8 +470,10 @@ float D3D9Text::PrintSkp(D3D9Pad *pSkp, float xpos, float ypos, const char *_str
 
 	if (halign == 1) xpos -= Length2(_str, len) * 0.5f;
 	if (halign == 2) xpos -= Length2(_str, len);
+    /* TODO(jec)
 	if (valign == 1) ypos -= tm.tmAscent;
 	if (valign == 2) ypos -= tm.tmHeight;
+    */
 
 	const BYTE *str = (const BYTE *)_str;
 
@@ -544,7 +596,7 @@ float D3D9Text::PrintSkp (D3D9Pad *pSkp, float xpos, float ypos, LPCWSTR str, in
 		str,                      // pString
 		len,                      // Count
 		&rect,                    // pRect
-		DT_CALCRECT | DT_NOCLIP,  // Format
+		/* TODO(jec) DT_CALCRECT | DT_NOCLIP*/0,  // Format
 		pSkp->textcolor.dclr      // Color
 	);
 
@@ -561,7 +613,7 @@ float D3D9Text::PrintSkp (D3D9Pad *pSkp, float xpos, float ypos, LPCWSTR str, in
 		str,                               // pString
 		len,                               // Count
 		&rect,                             // pRect
-		DT_VCENTER | DT_LEFT | DT_NOCLIP,  // Format
+		/* TODO(jec) DT_VCENTER | DT_LEFT | DT_NOCLIP*/0,  // Format
 		pSkp->textcolor.dclr               // Color
 	);
 

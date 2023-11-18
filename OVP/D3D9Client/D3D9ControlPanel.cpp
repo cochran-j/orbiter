@@ -13,8 +13,16 @@
 #include "D3D9Surface.h"
 #include "D3D9Catalog.h"
 #include "Mesh.h"
-#include "psapi.h"
+
+#ifdef _WIN32
+#include <psapi.h>
+#else
+#include <malloc.h>
+#endif
+
 #include "DebugControls.h"
+
+#include <cstring>
 
 using namespace oapi;
 
@@ -43,11 +51,11 @@ void D3D9Client::Label(const char *format, ...)
 	va_list args;
 	va_start(args, format);
 			
-	_vsnprintf_s(buffer, 255, 255, format, args);
+    std::vsnprintf(buffer, 255, format, args);
 
 	va_end(args);
 
-	int len = lstrlen(buffer);
+	int len = std::strlen(buffer) - 1;
 	pItemsSkp->Text(20, LabelPos, buffer, len);
 	LabelPos += 22;
 }
@@ -74,7 +82,7 @@ void D3D9Client::DrawTimeBar(double t, double s, double f, DWORD color, const ch
 		return;
 	}
 
-	sprintf_s(legend, 256, "%.64s, %0.2fms (%.2f%%)", label, (t/f)*0.001, t*0.0001);
+    std::snprintf(legend, 256, "%.64s, %0.2fms (%.2f%%)", label, (t/f)*0.001, t*0.0001);
 
 	D3D9PadBrush brush(color);
 	int y = viewH - 20;
@@ -97,12 +105,21 @@ void D3D9Client::RenderControlPanel()
 
 	LPDIRECT3DDEVICE9 dev = pDevice;
 
+#ifdef _WIN32
 	PROCESS_MEMORY_COUNTERS_EX memstats;
 	memstats.cb = sizeof(PROCESS_MEMORY_COUNTERS_EX);
 	GetProcessMemoryInfo(GetCurrentProcess(), (PPROCESS_MEMORY_COUNTERS)&memstats, sizeof(memstats));
 
+    std::size_t appSize = memstats.PrivateUsage >> 20;
 
-	
+#else /* TODO(jec) More cross-platform support */
+    struct mallinfo2 info = mallinfo2();
+    std::size_t appSize = info.arena >> 20;
+    /* NOTE(jec):  This is not actually the same number as win32 above, and
+     * excludes the application text (code segment).
+     */
+#endif
+
 	pItemsSkp = oapiGetSketchpad(GetBackBufferHandle());
 
 	oapi::Pen * pen    = oapiCreatePen(1, 10, 0xFFFF00);
@@ -157,7 +174,7 @@ void D3D9Client::RenderControlPanel()
 		}
 	}
 
-	Label("Application Size.....: %lu MB", memstats.PrivateUsage >> 20);
+	Label("Application Size.....: %lu MB", appSize);
 	Label("Available video mem..: %u MB", dev->GetAvailableTextureMem()>>20);
 	Label("Surface Handles......: %lu", nSurf);
 	Label("SystemMem Surfaces...: %u (%u MB)", sysme_count, sysme_size>>20);

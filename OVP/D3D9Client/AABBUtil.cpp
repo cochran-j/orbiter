@@ -21,10 +21,12 @@
 #include "VectorHelpers.h"
 #include "Log.h"
 
+/* TODO(jec)
 #pragma warning(push)
 #pragma warning(disable : 4838)
 #include <xnamath.h>
 #pragma warning(pop)
+*/
 
 using std::min;
 
@@ -79,6 +81,7 @@ void D9InitAABB(D9BBox *box)
 }
 
 
+/* TODO(jec)
 void D9AddPointAABB(D9BBox *box, LPD3DXVECTOR3 point)
 {
 	XMVECTOR q = XMLoadFloat4((const XMFLOAT4*)&box->min);
@@ -87,6 +90,7 @@ void D9AddPointAABB(D9BBox *box, LPD3DXVECTOR3 point)
 	XMStoreFloat4((XMFLOAT4*)&box->min, XMVectorMin(q,p));
 	XMStoreFloat4((XMFLOAT4*)&box->max, XMVectorMax(w,p));	
 }
+*/
 
 
 D3DXVECTOR4 D9LinearFieldOfView(const D3DXMATRIX *pProj)
@@ -293,6 +297,7 @@ int D9ComputeMinMaxDistance(LPDIRECT3DDEVICE9 pDev, const D9BBox *in, const D3DX
 }
 
 
+/* TODO(jec)
 void D9UpdateAABB(D9BBox *box, const D3DXMATRIX *pFirst, const D3DXMATRIX *pSecond)
 {
 
@@ -329,11 +334,12 @@ void D9UpdateAABB(D9BBox *box, const D3DXMATRIX *pFirst, const D3DXMATRIX *pSeco
 
 	box->bs.w = XMVectorGetX(XMVector3Length(XMVectorSubtract(q,w))) * 0.5f;
 }
+*/
 
 
 
 	
-
+/* TODO(jec)
 void D9AddAABB(const D9BBox *in, const D3DXMATRIX *pM, D9BBox *out, bool bReset)
 {
 
@@ -384,6 +390,7 @@ void D9AddAABB(const D9BBox *in, const D3DXMATRIX *pM, D9BBox *out, bool bReset)
 	XMStoreFloat4((XMFLOAT4*)&out->min, mi);
 	XMStoreFloat4((XMFLOAT4*)&out->max, mx);
 }
+*/
 
 
 void EnvMapDirection(int dir, D3DXVECTOR3 *Dir, D3DXVECTOR3 *Up)

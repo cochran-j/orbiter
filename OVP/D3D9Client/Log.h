@@ -23,7 +23,7 @@
 #include <string>
 #include "DrawAPI.h"
 #define WIN32_LEAN_AND_MEAN
-#include <Windows.h> // DWORD, LPCSTR
+#include <windows.h> // DWORD, LPCSTR
 #undef WIN32_LEAN_AND_MEAN
 
 typedef struct {

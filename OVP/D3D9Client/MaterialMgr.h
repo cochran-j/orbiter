@@ -9,12 +9,23 @@
 #define __MATERIALMGR_H
 
 #include <d3d9.h>
+/* TODO(jec):  Compatibility definitions for d3dx9.h */
+#define LF_FACESIZE 32
+struct TEXTMETRICA;
+struct TEXTMETRICW;
+#define STDAPI
+#define DECLARE_INTERFACE_IID_(type, base, iid) DECLARE_INTERFACE_(type, base)
+using LPGUID = void*;
+struct IStream;
+struct GLYPHMETRICSFLOAT;
+using DOUBLE = double;
+
 #include <d3dx9.h>
 
 #include "Mesh.h"
 #include "D3D9Client.h"
 #include "D3D9Util.h"
-#include "vObject.h"
+#include "VObject.h"
 
 #define ENVCAM_OMIT_ATTC		0x0001
 #define ENVCAM_OMIT_DOCKS		0x0002

@@ -13,6 +13,9 @@
 #include "Mesh.h"
 #include "VectorHelpers.h"
 
+#include <cstring>
+
+
 D3D9Client  * D3D9Effect::gc = 0;
 ID3DXEffect * D3D9Effect::FX = 0;
 LPDIRECT3DVERTEXBUFFER9 D3D9Effect::VB = 0;
@@ -307,36 +310,35 @@ void D3D9Effect::D3D9TechInit(D3D9Client *_gc, LPDIRECT3DDEVICE9 _pDev, const ch
 	ID3DXBuffer* errors = 0;
 	D3DXMACRO macro[18]; memset(&macro, 0, 16*sizeof(D3DXMACRO));
 
-	sprintf_s(name,256,"Modules/D3D9Client/D3D9Client.fx");
-
+    std::snprintf(name,256,"Modules/D3D9Client/D3D9Client.fx");
 	if (Config->ShadowMapMode == 0) Config->ShadowFilter = -1;
 
 	// ------------------------------------------------------------------------------
 	macro[0].Name = "ANISOTROPY_MACRO";
 	macro[0].Definition = new char[32];
-	sprintf_s((char*)macro[0].Definition,32,"%d",max(2,Config->Anisotrophy));
+    std::snprintf((char*)macro[0].Definition,32,"%d",max(2,Config->Anisotrophy));
 	// ------------------------------------------------------------------------------
 	macro[1].Name = "LMODE";
 	macro[1].Definition = new char[32];
-	sprintf_s((char*)macro[1].Definition, 32, "%d", Config->LightConfig);
+    std::snprintf((char*)macro[1].Definition, 32, "%d", Config->LightConfig);
 	// ------------------------------------------------------------------------------
 	macro[2].Name = "MAX_LIGHTS";
 	macro[2].Definition = new char[32];
-	sprintf_s((char*)macro[2].Definition, 32, "%d", Config->MaxLights());
+    std::snprintf((char*)macro[2].Definition, 32, "%d", Config->MaxLights());
 	// ------------------------------------------------------------------------------
 	macro[3].Name = "SHDMAP";
 	macro[3].Definition = new char[32];
-	sprintf_s((char*)macro[3].Definition, 32, "%d", Config->ShadowFilter + 1);
+    std::snprintf((char*)macro[3].Definition, 32, "%d", Config->ShadowFilter + 1);
 	// ------------------------------------------------------------------------------
 	macro[4].Name = "KERNEL_SIZE";
 	macro[4].Definition = new char[32];
-	if (Config->ShadowFilter >= 3)  sprintf_s((char*)macro[4].Definition, 32, "%d", 35);
-	else							sprintf_s((char*)macro[4].Definition, 32, "%d", 27);
+	if (Config->ShadowFilter >= 3)  std::snprintf((char*)macro[4].Definition, 32, "%d", 35);
+	else							std::snprintf((char*)macro[4].Definition, 32, "%d", 27);
 	// ------------------------------------------------------------------------------
 	macro[5].Name = "KERNEL_WEIGHT";
 	macro[5].Definition = new char[32];
-	if (Config->ShadowFilter >= 3)  sprintf_s((char*)macro[5].Definition, 32, "%f", 0.0285f);
-	else							sprintf_s((char*)macro[5].Definition, 32, "%f", 1.0f / 27.0f); // 0.04634f);
+	if (Config->ShadowFilter >= 3)  std::snprintf((char*)macro[5].Definition, 32, "%f", 0.0285f);
+	else							std::snprintf((char*)macro[5].Definition, 32, "%f", 1.0f / 27.0f); // 0.04634f);
 	// ------------------------------------------------------------------------------
 
 	int m = 6;
@@ -364,8 +366,10 @@ void D3D9Effect::D3D9TechInit(D3D9Client *_gc, LPDIRECT3DDEVICE9 _pDev, const ch
 
 	if (errors) {
 		LogErr("Effect Error: %s",(char*)errors->GetBufferPointer());
+        /* TODO(jec)
 		MessageBoxA(0, (char*)errors->GetBufferPointer(), "D3D9Client.fx Error", 0);
 		FatalAppExitA(0,"Critical error has occured. See Orbiter.log for details");
+        */
 	}
 
 	if (FX==0) {
@@ -376,8 +380,8 @@ void D3D9Effect::D3D9TechInit(D3D9Client *_gc, LPDIRECT3DDEVICE9 _pDev, const ch
 	if (Config->ShaderDebug) {
 		LPD3DXBUFFER pBuffer = NULL;
 		if (D3DXDisassembleEffect(FX, true, &pBuffer) == S_OK) {
-			FILE *fp = NULL;
-			if (!fopen_s(&fp, "D9D9Effect_asm.html", "w")) {
+			FILE *fp = fopen("D9D9Effect_asm.html", "w");
+			if (fp) {
 				fwrite(pBuffer->GetBufferPointer(), 1, pBuffer->GetBufferSize(), fp);
 				fclose(fp);
 			}

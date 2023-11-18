@@ -10,7 +10,7 @@
 #define __D3D9CLIENT_H
 
 // must be defined before windows includes to fix warnins on VS 2003+
-#if defined(_MSC_VER) && (_MSC_VER >= 1300 ) // Microsoft Visual Studio Version 2003 and higher
+#if !defined(_MSC_VER) || (defined(_MSC_VER) && (_MSC_VER >= 1300)) // Microsoft Visual Studio Version 2003 and higher
 //#define _CRT_SECURE_NO_DEPRECATE
 //#define _CRT_NONSTDC_NO_WARNINGS
 #include <fstream>
@@ -19,7 +19,9 @@
 #endif
 
 #include <d3d9.h>
+/* TODO(jec)
 #include <d3dx9.h>
+*/
 #include "D3D9Catalog.h"
 #include "GraphicsAPI.h"
 #include "D3D9Util.h"
@@ -31,6 +33,8 @@
 #include <vector>
 #include <stack>
 #include <list>
+#include <thread>
+#include <string>
 #include "WindowMgr.h"
 
 #define PP_DEFAULT			0x1
@@ -1066,7 +1070,7 @@ public:
 	void				HackFriendlyHack();
 	void				PickTerrain(DWORD uMsg, int xpos, int ypos);
 	DEVMESHHANDLE		GetDevMesh(MESHHANDLE hMesh);
-	HANDLE				GetMainThread() const {	return hMainThread;	}
+    std::thread::id		GetMainThread() const {	return hMainThread;	}
 
 
 	// ==================================================================
@@ -1304,7 +1308,7 @@ private:
 	const D3DCAPS9 *		pCaps;
 	//FileParser *			parser;
 	std::string				scenarioName;
-	HANDLE					hMainThread;
+    std::thread::id 		hMainThread;
 	WindowManager *			pWM;
 
 	HWND hRenderWnd;        // render window handle
@@ -1342,8 +1346,8 @@ private:
 	HFONT hLblFont1;
 	HFONT hLblFont2;
 
-	char pLoadLabel[128];
-	char pLoadItem[128];
+    std::string pLoadLabel;
+    std::string pLoadItem;
 
 	// Control Panel
 	void RenderControlPanel();

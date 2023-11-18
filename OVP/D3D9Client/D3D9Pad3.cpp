@@ -39,7 +39,7 @@ void D3D9Pad::SetColorMatrix(const FMATRIX4 *pMatrix)
 	Log("SetColorMatrix(0x%X)", DWORD(pMatrix));
 #endif
 	if (pMatrix) {
-		memcpy_s(&ColorMatrix, sizeof(FMATRIX4), pMatrix, sizeof(FMATRIX4));
+        ColorMatrix = *pMatrix;
 		SetEnable(SKP3E_CMATR);
 	}
 	else {
@@ -141,7 +141,7 @@ void D3D9Pad::SetBlendState(BlendState dwState)
 FMATRIX4 D3D9Pad::GetWorldTransform() const
 { 
 	FMATRIX4 fm;
-	memcpy_s(&fm, sizeof(FMATRIX4), &mW, sizeof(D3DXMATRIX));
+    fm = mW;
 	return fm;
 }
 

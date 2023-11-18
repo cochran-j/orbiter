@@ -97,8 +97,8 @@ public:
 	int bIrradiance;
 	int bAtmoQuality;
 	int NoPlanetAA;					///< Disable planet surface anti-aliasing to prevent white pixels at horizon 
-	char *DebugFont;				///< Font face for debug lines (default="Fixed")
-	char *SolCfg;					///< Solar system to use (default="Sol")
+    std::string DebugFont;				///< Font face for debug lines (default="Fixed")
+    std::string SolCfg;					///< Solar system to use (default="Sol")
 	double GFXIntensity;			///< Post Processing | Light glow intensity (0.0...1.0, default=0.5)
 	double GFXDistance;				///< Post Processing | Light glow distance (0.0...1.0, default=0.8)
 	double GFXThreshold;			///< Post Processing | Glow threshold (0.5...2.0, default=1.1)

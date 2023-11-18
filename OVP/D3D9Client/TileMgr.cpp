@@ -13,6 +13,12 @@
 // LOD (level-of-detail) algorithm for surface patch resolution.
 // ==============================================================
 
+/* TODO(jec): Compatibility definitions for ddraw.h */
+#ifndef CALLBACK
+#define CALLBACK
+#endif
+#include <windows.h> // DEFINE_GUID() on dxvk
+
 #include <ddraw.h>
 #include "TileMgr.h"
 #include "VPlanet.h"
@@ -21,6 +27,15 @@
 #include "D3D9Catalog.h"
 #include "D3D9Client.h"
 #include "OapiExtension.h"
+
+#include <string>
+#include <cstring>
+#include <filesystem>
+#include <mutex>
+#include <thread>
+#include <future>
+#include <chrono>
+#include <atomic>
 
 using namespace oapi;
 
@@ -58,9 +73,8 @@ TileManager::TileManager (D3D9Client *gclient, const vPlanet *vplanet) : D3D9Eff
 	vp = vplanet;
 	obj = vp->Object();
 	char name[256];
-	oapiGetObjectName (obj, name, 256); int len = lstrlen(name) + 2;
-	objname = new char[len];
-	strcpy_s(objname, len, name);
+	oapiGetObjectName (obj, name, 256); int len = static_cast<int>(std::strlen(name)) + 2;
+    objname = name;
 	ntex = 0;
 	nhitex = 0;
 	nmask = 0;
@@ -84,9 +98,7 @@ TileManager::~TileManager ()
 	DWORD i;
 
 	if (ntex && texbuf) {
-		for (i = 0; i < ntex; ++i)
-			ReleaseTex(texbuf[i]);
-		delete []texbuf;
+		for (i = 0; i < ntex; ++i) ReleaseTex(texbuf[i]); delete []texbuf;
 		texbuf = NULL;
 	}
 	if (nmask && specbuf) {
@@ -100,10 +112,7 @@ TileManager::~TileManager ()
 		delete []tiledesc;
 		tiledesc = NULL;
 	}
-	if (objname) {
-		delete []objname;
-		objname = NULL;
-	}
+    objname.clear();
 }
 
 // =======================================================================
@@ -117,11 +126,10 @@ bool TileManager::LoadPatchData ()
 	BYTE minres, maxres, flag;
 	int i, idx, npatch;
 	nmask = 0;
-	char fname[128], path[MAX_PATH];
-	strcpy_s(fname, ARRAYSIZE(fname), objname);
-	strcat_s(fname, ARRAYSIZE(fname), "_lmask.bin");
+    std::filesystem::path path_ {};
+    std::string fname = objname + "_lmask.bin";
 
-	if (!(bGlobalSpecular || bGlobalLights) || !gc->TexturePath(fname, path) || fopen_s(&binf, path, "rb")) {
+	if (!(bGlobalSpecular || bGlobalLights) || !gc->TexturePath(fname.c_str(), path_) || !(binf = std::fopen(path_.c_str(), "rb"))) {
 
 		for (i = 0; i < patchidx[maxbaselvl]; i++)
 			tiledesc[i].flag = 1;
@@ -182,16 +190,15 @@ bool TileManager::LoadTileData ()
 	if (maxlvl <= 8) // no tile data required
 		return false;
 
-	char fname[128], path[MAX_PATH];
-	strcpy_s (fname, ARRAYSIZE(fname), objname);
-	strcat_s (fname, ARRAYSIZE(fname), "_tile.bin");
+    std::filesystem::path path_ {};
+    std::string fname = objname + "_tile.bin";
 
-	if (!gc->TexturePath (fname, path) || fopen_s (&file, path, "rb")) {
-		LogWrn("Surface Tile TOC not found for %s", fname);
+	if (!gc->TexturePath (fname.c_str(), path_) || !(file = std::fopen (path_.c_str(), "rb"))) {
+		LogWrn("Surface Tile TOC not found for %s", fname.c_str());
 		return false; // TOC file not found
 	}
 
-	LogAlw("Reading Tile Data for %s", fname);
+	LogAlw("Reading Tile Data for %s", fname.c_str());
 
 	// read file header
 	char idstr[9] = "        ";
@@ -300,12 +307,11 @@ void TileManager::LoadTextures (char *modstr)
 	// pre-load level 1-8 textures
 	ntex = patchidx[maxbaselvl];
 	texbuf = new LPDIRECT3DTEXTURE9[ntex];
-	char fname[256];
-	strcpy_s (fname, 256, objname);
-	if (modstr) strcat_s (fname, 256, modstr);
-	strcat_s (fname, 256, ".tex");
+    std::string fname = objname;
+    if (modstr) fname += modstr;
+    fname += ".tex";
 
-	if (ntex = LoadPlanetTextures(fname, texbuf, 0, ntex)) {
+	if (ntex = LoadPlanetTextures(fname.c_str(), texbuf, 0, ntex)) {
 		while ((int)ntex < patchidx[maxbaselvl]) maxlvl = --maxbaselvl;
 		while ((int)ntex > patchidx[maxbaselvl]) ReleaseTex(texbuf[--ntex]);
 		// not enough textures loaded for requested resolution level
@@ -331,28 +337,26 @@ void TileManager::PreloadTileTextures (TILEDESC *tile8, DWORD ntex, DWORD nmask)
 {
 	// Load tile surface and mask/light textures, and copy them into the tile tree
 
-	char fname[256];
+    std::string fname {};
 	DWORD i, j, nt = 0, nm = 0;
 	LPDIRECT3DTEXTURE9 *texbuf = NULL, *maskbuf = NULL;
 
 	if (ntex) {  // load surface textures
 		texbuf = new LPDIRECT3DTEXTURE9[ntex];
-		strcpy_s (fname, 256, objname);
-		strcat_s (fname, 256, "_tile.tex");
+        fname = objname + "_tile.tex";
 
-		gc->OutputLoadStatus(fname, 1);
+		gc->OutputLoadStatus(fname.c_str(), 1);
 
-		nt = LoadPlanetTextures(fname, texbuf, 0, ntex);
+		nt = LoadPlanetTextures(fname.c_str(), texbuf, 0, ntex);
 		LogAlw("Number of textures loaded = %u",nt);
 	}
 	if (nmask) { // load mask/light textures
 		maskbuf = new LPDIRECT3DTEXTURE9[nmask];
-		strcpy_s (fname, 256, objname);
-		strcat_s (fname, 256, "_tile_lmask.tex");
+        fname = objname + "_tile_lmask.tex";
 
-		gc->OutputLoadStatus(fname, 1);
+		gc->OutputLoadStatus(fname.c_str(), 1);
 
-		nm = LoadPlanetTextures(fname, maskbuf, 0, nmask);
+		nm = LoadPlanetTextures(fname.c_str(), maskbuf, 0, nmask);
 	}
 	// copy textures into tile tree
 	for (i = 0; i < 364; i++) {
@@ -425,15 +429,13 @@ void TileManager::LoadSpecularMasks ()
 
 		int i;
 		DWORD n;
-		char fname[256];
 
-		strcpy_s (fname, 256, objname);
-		strcat_s (fname, 256, "_lmask.tex");
+        std::string fname = objname + "_lmask.tex";
 
-		gc->OutputLoadStatus(fname, 1);
+		gc->OutputLoadStatus(fname.c_str(), 1);
 
 		specbuf = new LPDIRECT3DTEXTURE9[nmask];
-		if (n = LoadPlanetTextures(fname, specbuf, 0, nmask)) {
+		if (n = LoadPlanetTextures(fname.c_str(), specbuf, 0, nmask)) {
 			if (n < nmask) {
 				//LOGOUT1P("Transparency texture mask file too short: %s_lmask.tex", cbody->Name());
 				//LOGOUT("Disabling specular reflection for this planet");
@@ -524,7 +526,8 @@ void TileManager::Render(LPDIRECT3DDEVICE9 dev, D3DXMATRIX &wmat, double scale, 
 
 	} else {
 
-		WaitForSingleObject (tilebuf->hQueueMutex, INFINITE); // make sure we can write to texture request queue
+        std::lock_guard g {tilebuf->hQueueMutex};
+
 		for (hemisp = idx = 0; hemisp < 2; hemisp++) {
 			if (hemisp) { // flip world transformation to southern hemisphere
 				D3DXMatrixMultiply(&RenderParam.wmat, &Rsouth, &RenderParam.wmat);
@@ -550,7 +553,6 @@ void TileManager::Render(LPDIRECT3DDEVICE9 dev, D3DXMATRIX &wmat, double scale, 
 
 			EndRenderTile();
 		}
-		ReleaseMutex (tilebuf->hQueueMutex);
 	}
 
 	pcdir = RenderParam.cdir; // store camera direction
@@ -635,7 +637,7 @@ void TileManager::ProcessTile (int lvl, int hemisp, int ilat, int nlat, int ilng
 					isfull = false;
 				} else if (subtile->flag & 0x80) { // not yet loaded
 					if ((tile->flag & 0x80) == 0) // only load subtile texture if parent texture is present
-						tilebuf->LoadTileAsync (objname, subtile);
+						tilebuf->LoadTileAsync (objname.c_str(), subtile);
 					isfull = false;
 				}
 				if (isfull)
@@ -945,12 +947,10 @@ TileBuffer::TileBuffer (const oapi::D3D9Client *gclient)
 	, last(0)
 	, bLoadMip(true)
 {
-	DWORD id;
 
 	// Initialize statics
 	nqueue = queue_in = queue_out = 0;
-	hQueueMutex = CreateMutex (0, FALSE, NULL);
-	hLoadThread = CreateThread (NULL, 2048, LoadTile_ThreadProc, this, 0, &id);
+    hLoadThread = std::thread{LoadTile_ThreadProc, this, hStopThread.get_future()};
 }
 
 // =======================================================================
@@ -958,8 +958,6 @@ TileBuffer::TileBuffer (const oapi::D3D9Client *gclient)
 TileBuffer::~TileBuffer()
 {
 	LogAlw("=============== Deleting %u Tile Buffers =================",nbuf);
-
-	CloseHandle(hQueueMutex); hQueueMutex = NULL;
 
 	TerminateLoadThread();
 
@@ -981,7 +979,7 @@ TileBuffer::~TileBuffer()
 
 bool TileBuffer::ShutDown()
 {
-	if (hLoadThread) {
+	if (hLoadThread.joinable()) {
 		TerminateLoadThread();
 		return true;
 	}
@@ -999,14 +997,10 @@ void TileBuffer::HoldThread(bool bHold)
 
 void TileBuffer::TerminateLoadThread()
 {
-	if (hLoadThread) {
+	if (hLoadThread.joinable()) {
 		// Signal thread to stop and wait for it to happen
-		SetEvent(hStopThread);
-		WaitForSingleObject(hLoadThread, INFINITE);
-		// Clean up for next run
-		ResetEvent(hStopThread);
-		CloseHandle(hLoadThread);
-		hLoadThread = NULL;
+        hStopThread.set_value();
+        hLoadThread.join();
 	}
 }
 
@@ -1110,7 +1104,7 @@ bool TileBuffer::LoadTileAsync (const char *name, TILEDESC *tile)
 
 // =======================================================================
 
-DWORD WINAPI TileBuffer::LoadTile_ThreadProc (void *data)
+void TileBuffer::LoadTile_ThreadProc (void *data, std::future<void> stopThread)
 {
 	static const LONG_PTR TILESIZE = 32896; // default texture size for old-style texture files
 	TileBuffer *tb = static_cast<TileBuffer*>(data);
@@ -1122,41 +1116,46 @@ DWORD WINAPI TileBuffer::LoadTile_ThreadProc (void *data)
 	LogAlw("TileBuffer::LoadTile thread started");
 
 	bool bFirstRun = true;
-	while (bFirstRun || WAIT_OBJECT_0 != WaitForSingleObject(hStopThread, idle))
+	while (bFirstRun || (stopThread.wait_for(std::chrono::milliseconds{idle}) != std::future_status::ready))
 	{
 		bFirstRun = false;
 
 		if (bHoldThread) continue;
 
-		WaitForSingleObject(hQueueMutex, INFINITE);
-		if (load = (nqueue > 0)) {
-			memcpy (&qd, loadqueue+queue_out, sizeof(QUEUEDESC));
-		}
-		ReleaseMutex (hQueueMutex);
+        {
+            std::lock_guard g {hQueueMutex};
+
+            if (load = (nqueue > 0)) {
+                memcpy (&qd, loadqueue+queue_out, sizeof(QUEUEDESC));
+            }
+        }
 
 		if (load) {
-			char fname[MAX_PATH];
+            std::string fname {};
 			TILEDESC *td = qd.td;
 			LPDIRECT3DTEXTURE9 tex, mask = 0;
 			LONG_PTR tidx, midx;
 			LONG_PTR ofs;
 
-			if ((td->flag & 0x80) == 0)
+			if ((td->flag & 0x80) == 0) {
+                /* TODO(jec)
 				MessageBeep (-1);
+                */
+            }
 
 			tidx = (LONG_PTR)td->tex;
 			if (tidx == NOTILE)
 				tex = NULL; // "no texture" flag
 			else {
 				ofs = (td->flag & 0x40) ? tidx * TILESIZE : tidx;
-				strcpy_s (fname, 256, qd.name);
-				strcat_s (fname, 256, "_tile.tex");
+                fname = qd.name;
+                fname += "_tile.tex";
 
-				HRESULT hr = ReadDDSSurface (device, fname, ofs, &tex, false);
+				HRESULT hr = ReadDDSSurface (device, fname.c_str(), ofs, &tex, false);
 
 				if (hr != S_OK) {
 					tex = NULL;
-					LogErr("Failed to load a tile using ReadDDSSurface() offset=%u, name=%s, ErrorCode = %d",ofs,fname,hr);
+					LogErr("Failed to load a tile using ReadDDSSurface() offset=%u, name=%s, ErrorCode = %d",ofs,fname.c_str(),hr);
 				}
 			}
 			// Load the specular mask and/or light texture
@@ -1166,40 +1165,39 @@ DWORD WINAPI TileBuffer::LoadTile_ThreadProc (void *data)
 					mask = NULL; // "no mask" flag
 				else {
 					ofs = (td->flag & 0x40) ? midx * TILESIZE : midx;
-					strcpy_s (fname, 256, qd.name);
-					strcat_s (fname, 256, "_tile_lmask.tex");
-					if (ReadDDSSurface (device, fname, ofs, &mask, false) != S_OK) mask = NULL;
+                    fname = qd.name;
+                    fname += "_tile_lmask.tex";
+					if (ReadDDSSurface (device, fname.c_str(), ofs, &mask, false) != S_OK) mask = NULL;
 				}
 			}
 			// apply loaded components
-			WaitForSingleObject (hQueueMutex, INFINITE);
+            std::lock_guard g {hQueueMutex};
+
 			td->tex  = tex;
 			td->ltex = mask;
 			td->flag &= 0x3F; // mark as loaded
 			nqueue--;
 			queue_out = (queue_out+1) % MAXQUEUE;
-			ReleaseMutex (hQueueMutex);
 		}
 	}
 
 	LogAlw("TileBuffer::LoadTile thread terminated");
-	return 0;
 }
 
 
 HRESULT TileBuffer::ReadDDSSurface (LPDIRECT3DDEVICE9 pDev, const char *fname, LONG_PTR ofs, LPDIRECT3DTEXTURE9* pTex, bool bManaged)
 {
 	_TRACE;
-	char cpath[256];
+    std::filesystem::path cpath {};
 
 	DDSURFACEDESC2       ddsd;
 	DWORD                dwMagic;
 
 	FILE *f = NULL;
 
-	sprintf_s(cpath,256,"%s%s", OapiExtension::GetHightexDir(), fname);
-
-	if (fopen_s(&f, cpath, "rb")) return -3;
+    cpath = std::filesystem::path{OapiExtension::GetHightexDir()} / fname;
+    f = std::fopen(cpath.c_str(), "rb");
+	if (!f) return -3;
 
 	fseek(f, (long)ofs, SEEK_SET);
 
@@ -1288,12 +1286,12 @@ HRESULT TileBuffer::ReadDDSSurface (LPDIRECT3DDEVICE9 pDev, const char *fname, L
 
 // =======================================================================
 
-bool TileBuffer::bHoldThread = false;
+std::atomic<bool> TileBuffer::bHoldThread = false;
 int TileBuffer::nqueue = 0;
 int TileBuffer::queue_in = 0;
 int TileBuffer::queue_out = 0;
-HANDLE TileBuffer::hQueueMutex = NULL;
-HANDLE TileBuffer::hLoadThread = NULL;
-HANDLE TileBuffer::hStopThread(CreateEvent(NULL, FALSE, FALSE, NULL));
+std::mutex TileBuffer::hQueueMutex {};
+std::thread TileBuffer::hLoadThread {};
+std::promise<void> TileBuffer::hStopThread {};
 struct TileBuffer::QUEUEDESC TileBuffer::loadqueue[MAXQUEUE] = {0};
 

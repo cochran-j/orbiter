@@ -19,6 +19,9 @@
 #include "D3D9Util.h"
 #include "MaterialMgr.h"
 
+#include <cstring>
+#include <cstdio>
+
 using namespace oapi;
 
 // ==============================================================
@@ -37,8 +40,8 @@ const char *value_string (double val);
 void LogComp(ANIMATIONCOMP *AC, int ident)
 {
 	char id[64];
-	strcpy_s(id, 64, "");
-	for (int i = 0; i < ident; i++) strcat_s(id, 64, " ");
+    std::strncpy(id, "", 64);
+	for (int i = 0; i < ident; i++) std::strncat(id, " ", 64);
 	oapiWriteLogV("%s COMP[%s] has %u children, Parent = %s", id, _PTR(AC), AC->nchildren, _PTR(AC->parent));
 	for (UINT i = 0; i < AC->nchildren; i++) LogComp(AC->children[i], ident + 2);
 }
@@ -63,11 +66,11 @@ vVessel::vVessel(OBJHANDLE _hObj, const Scene *scene): vObject (_hObj, scene)
 	pIrdEnv = NULL;
 
 	pMatMgr = new MatMgr(this, scene->GetClient());
-	for (int i = 0; i < ARRAYSIZE(pEnv); i++) pEnv[i] = NULL;
+	for (int i = 0; i < (sizeof(pEnv) / sizeof(pEnv[0])); i++) pEnv[i] = NULL;
 
-	if (strncmp(vessel->GetClassNameA(), "XR2Ravenstar", 12) == 0) vClass = VCLASS_XR2;
-	if (strncmp(vessel->GetClassNameA(), "SpaceShuttleUltra", 17) == 0) vClass = VCLASS_ULTRA;
-	if (strncmp(vessel->GetClassNameA(), "SSU_CentaurGPrime", 17) == 0) vClass = VCLASS_SSU_CENTAUR;
+	if (strncmp(vessel->GetClassName(), "XR2Ravenstar", 12) == 0) vClass = VCLASS_XR2;
+	if (strncmp(vessel->GetClassName(), "SpaceShuttleUltra", 17) == 0) vClass = VCLASS_ULTRA;
+	if (strncmp(vessel->GetClassName(), "SSU_CentaurGPrime", 17) == 0) vClass = VCLASS_SSU_CENTAUR;
 
 	bBSRecompute = true;
 	ExhaustLength = 0.0f;
@@ -103,7 +106,7 @@ vVessel::~vVessel ()
 	SAFE_RELEASE(pIrrad);
 	SAFE_RELEASE(pIrdEnv);
 
-	for (int i = 0; i < ARRAYSIZE(pEnv); i++) SAFE_RELEASE(pEnv[i]);
+	for (int i = 0; i < (sizeof(pEnv) / sizeof(pEnv[0])); i++) SAFE_RELEASE(pEnv[i]);
 
 	LogAlw("Deleting Vessel Visual %s ...", _PTR(this));
 	DisposeAnimations();
@@ -135,7 +138,9 @@ void vVessel::GlobalExit ()
 //
 void vVessel::clbkEvent(DWORD evnt, DWORD_PTR _context)
 {
-	UINT context = (UINT)_context;
+    /* NOTE(jec):  _context is actually an index of UINT type. */
+    UINT context;
+    std::memcpy(&context, &_context, sizeof(UINT));
 
 	switch (evnt) {
 
@@ -240,7 +245,7 @@ void vVessel::PreInitObject()
 		for (DWORD i=0;i<nmesh;i++) if (meshlist[i].mesh) pMatMgr->ApplyConfiguration(meshlist[i].mesh);
 		pMatMgr->LoadCameraConfig();
 	}
-	else LogErr("Failed to load a custom configuration for %s",vessel->GetClassNameA());
+	else LogErr("Failed to load a custom configuration for %s",vessel->GetClassName());
 }
 
 
@@ -279,7 +284,7 @@ void vVessel::LoadMeshes()
 
 	memset(meshlist, 0, nmesh*sizeof(MESHREC));
 
-	LogAlw("Vessel(%s) %s has %u meshes", _PTR(vessel), vessel->GetClassNameA(), nmesh);
+	LogAlw("Vessel(%s) %s has %u meshes", _PTR(vessel), vessel->GetClassName(), nmesh);
 
 	for (idx=0;idx<nmesh;idx++) {
 
@@ -317,13 +322,13 @@ void vVessel::LoadMeshes()
 			}
 		}
 		else {
-			LogWrn("Vessel %s has a NULL mesh in index %u",vessel->GetClassNameA(),idx);
+			LogWrn("Vessel %s has a NULL mesh in index %u",vessel->GetClassName(),idx);
 		}
 	}
 
 	UpdateBoundingBox();
 
-	LogOk("Loaded %u meshed for %s",nmesh,vessel->GetClassNameA());
+	LogOk("Loaded %u meshed for %s",nmesh,vessel->GetClassName());
 }
 
 
@@ -875,7 +880,7 @@ void vVessel::RenderVectors (LPDIRECT3DDEVICE9 dev, D3D9Pad *pSkp)
 				vessel->GetDragVector(vector);
 				if (length(vector) > threshold) {
 					RenderAxisVector(pSkp, ptr(D3DXCOLOR(1,0,0,alpha)), vector, lscale, scale, bLog);
-					sprintf_s(label, 64, "D = %sN", value_string(length(vector)));
+                    std::snprintf(label, 64, "D = %sN", value_string(length(vector)));
 					RenderAxisLabel(pSkp, ptr(D3DXCOLOR(1,0,0,alpha)), vector, lscale, scale, label, bLog);
 				}
 			}
@@ -884,7 +889,7 @@ void vVessel::RenderVectors (LPDIRECT3DDEVICE9 dev, D3D9Pad *pSkp)
 				vessel->GetWeightVector(vector);
 				if (length(vector) > threshold) {
 					RenderAxisVector(pSkp, ptr(D3DXCOLOR(1,1,0,alpha)), vector, lscale, scale, bLog);
-					sprintf_s(label, 64, "G = %sN", value_string(length(vector)));
+                    std::snprintf(label, 64, "G = %sN", value_string(length(vector)));
 					RenderAxisLabel(pSkp, ptr(D3DXCOLOR(1,1,0,alpha)), vector, lscale, scale, label, bLog);
 				}
 			}
@@ -893,7 +898,7 @@ void vVessel::RenderVectors (LPDIRECT3DDEVICE9 dev, D3D9Pad *pSkp)
 				vessel->GetThrustVector(vector);
 				if (length(vector) > threshold) {
 					RenderAxisVector(pSkp, ptr(D3DXCOLOR(0,0,1,alpha)), vector, lscale, scale, bLog);
-					sprintf_s(label, 64, "T = %sN", value_string(length(vector)));
+                    std::snprintf(label, 64, "T = %sN", value_string(length(vector)));
 					RenderAxisLabel(pSkp, ptr(D3DXCOLOR(0,0,1,alpha)), vector, lscale, scale, label, bLog);
 				}
 			}
@@ -902,7 +907,7 @@ void vVessel::RenderVectors (LPDIRECT3DDEVICE9 dev, D3D9Pad *pSkp)
 				vessel->GetLiftVector(vector);
 				if (length(vector) > threshold) {
 					RenderAxisVector(pSkp, ptr(D3DXCOLOR(0,1,0,alpha)), vector, lscale, scale, bLog);
-					sprintf_s(label, 64, "L = %sN", value_string(length(vector)));
+                    std::snprintf(label, 64, "L = %sN", value_string(length(vector)));
 					RenderAxisLabel(pSkp, ptr(D3DXCOLOR(0,1,0,alpha)), vector, lscale, scale, label, bLog);
 				}
 			}
@@ -911,7 +916,7 @@ void vVessel::RenderVectors (LPDIRECT3DDEVICE9 dev, D3D9Pad *pSkp)
 				vessel->GetForceVector(vector);
 				if (length(vector) > threshold) {
 					RenderAxisVector(pSkp, ptr(D3DXCOLOR(1,1,1,alpha)), vector, lscale, scale, bLog);
-					sprintf_s(label, 64, "F = %sN", value_string(length(vector)));
+                    std::snprintf(label, 64, "F = %sN", value_string(length(vector)));
 					RenderAxisLabel(pSkp, ptr(D3DXCOLOR(1,1,1,alpha)), vector, lscale, scale, label, bLog);
 				}
 			}
@@ -920,7 +925,7 @@ void vVessel::RenderVectors (LPDIRECT3DDEVICE9 dev, D3D9Pad *pSkp)
 				vessel->GetTorqueVector(vector);
 				if (length(vector) > threshold) {
 					RenderAxisVector(pSkp, ptr(D3DXCOLOR(1,0,1,alpha)), vector, lscale, scale, bLog);
-					sprintf_s(label, 64, "M = %sNm", value_string(length(vector)));
+                    std::snprintf(label, 64, "M = %sNm", value_string(length(vector)));
 					RenderAxisLabel(pSkp, ptr(D3DXCOLOR(1,0,1,alpha)), vector, lscale, scale, label, bLog);
 				}
 			}
@@ -1884,15 +1889,17 @@ int vVessel::GetMatrixTransform(gcCore::MatrixId func, DWORD mi, DWORD gi, FMATR
 	if (pMesh == NULL) return -2;
 	if (gi >= pMesh->GetGroupCount()) return -3;
 
-	if (func == gcCore::MatrixId::MESH)	memcpy_s(pMat, sizeof(FMATRIX4), ptr(pMesh->GetTransform(-1, false)), sizeof(D3DXMATRIX));
-	if (func == gcCore::MatrixId::GROUP) memcpy_s(pMat, sizeof(FMATRIX4), ptr(pMesh->GetTransform(gi, false)), sizeof(D3DXMATRIX));
+    static_assert(sizeof(FMATRIX4) == sizeof(D3DXMATRIX),
+                  "Incompatible matrices");
+	if (func == gcCore::MatrixId::MESH)	std::memcpy(pMat, ptr(pMesh->GetTransform(-1, false)), sizeof(D3DXMATRIX));
+	if (func == gcCore::MatrixId::GROUP) std::memcpy(pMat, ptr(pMesh->GetTransform(gi, false)), sizeof(D3DXMATRIX));
 
 	if (func == gcCore::MatrixId::OFFSET) {
-		if (meshlist[mi].trans) memcpy_s(pMat, sizeof(FMATRIX4), meshlist[mi].trans, sizeof(D3DXMATRIX));
+		if (meshlist[mi].trans) std::memcpy(pMat, meshlist[mi].trans, sizeof(D3DXMATRIX));
 		else {
 			D3DXMATRIX Ident;
 			D3DXMatrixIdentity(&Ident);
-			memcpy_s(pMat, sizeof(FMATRIX4), &Ident, sizeof(D3DXMATRIX));
+            std::memcpy(pMat, &Ident, sizeof(D3DXMATRIX));
 		}
 		return 0;
 	}
@@ -1902,9 +1909,9 @@ int vVessel::GetMatrixTransform(gcCore::MatrixId func, DWORD mi, DWORD gi, FMATR
 		if (meshlist[mi].trans) {
 			D3DXMATRIX MeshGrpTrans;
 			D3DXMatrixMultiply(&MeshGrpTrans, &MeshGrp, meshlist[mi].trans);
-			memcpy_s(pMat, sizeof(FMATRIX4), &MeshGrpTrans, sizeof(D3DXMATRIX));
+            std::memcpy(pMat, &MeshGrpTrans, sizeof(D3DXMATRIX));
 		}
-		else memcpy_s(pMat, sizeof(FMATRIX4), &MeshGrp, sizeof(D3DXMATRIX));
+		else std::memcpy(pMat, &MeshGrp, sizeof(D3DXMATRIX));
 	}
 
 	return 0;
@@ -1919,9 +1926,12 @@ int vVessel::SetMatrixTransform(gcCore::MatrixId func, DWORD mi, DWORD gi, const
 	if (pMesh == NULL) return -2;
 	if (gi >= pMesh->GetGroupCount()) return -3;
 
+    static_assert(sizeof(FMATRIX4) == sizeof(D3DXMATRIX),
+                  "Incompatible matrices");
+
 	if (func == gcCore::MatrixId::OFFSET) {
 		if (meshlist[mi].trans == NULL) meshlist[mi].trans = new D3DXMATRIX;
-		memcpy_s(meshlist[mi].trans, sizeof(D3DXMATRIX), pMat, sizeof(FMATRIX4));
+        std::memcpy(meshlist[mi].trans, pMat, sizeof(FMATRIX4));
 	}
 
 	if (func == gcCore::MatrixId::MESH) if (!pMesh->SetTransform(-1, (LPD3DXMATRIX)pMat)) return -4;
@@ -1999,7 +2009,7 @@ inline const char *value_string (char *buf, size_t buf_size, double val)
 
 	// apply array index offset (+2) [-2...5] => [0...7]
 	index = clip(index+2, 0, ARRAY_ELEMS(unit_prefixes) -1);
-	sprintf_s(buf, buf_size, "%.3f %c", val, unit_prefixes[index]);
+    std::snprintf(buf, buf_size, "%.3f %c", val, unit_prefixes[index]);
 
 	return buf;
 }

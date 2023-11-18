@@ -7,12 +7,14 @@
 // Copyright (C) 2011 - 2016 Jarmo Nikkanen (D3D9Client modification) 
 // ==============================================================
 
-#include "D3D9util.h"
+#include "D3D9Util.h"
 #include "CSphereMgr.h"
 #include "Scene.h"
 #include "D3D9Config.h"
 #include "D3D9Catalog.h"
 #include "Spherepatch.h"
+
+#include <mutex>
 
 using namespace oapi;
 
@@ -428,7 +430,7 @@ void CSphereManager::Render (LPDIRECT3DDEVICE9 dev, int level, double bglvl)
 
 	RenderParam.camdir = _V(rcam.m13, rcam.m23, rcam.m33);
 
-	WaitForSingleObject (tilebuf->hQueueMutex, INFINITE);
+    std::lock_guard g {tilebuf->hQueueMutex};
 
 	CelFlow.bAlpha = m_bBkgImg;
 	CelFlow.bBeta = m_bStarImg;
@@ -454,8 +456,6 @@ void CSphereManager::Render (LPDIRECT3DDEVICE9 dev, int level, double bglvl)
 			}
 		}
 	}
-
-	ReleaseMutex (tilebuf->hQueueMutex);
 }
 
 // =======================================================================

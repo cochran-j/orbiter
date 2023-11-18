@@ -208,7 +208,7 @@ typedef struct _LightStruct  {
 	D3DXVECTOR4   Param;            ///< range, falloff, theta, phi
 public : _LightStruct () :	Type(0),
 							Dst2(0.0),
-							Diffuse(D3DXCOLOR(0ul)),
+							Diffuse(D3DXCOLOR(0u)),
 							Position(0,0,0), Direction(1.0f, 0.0f, 0.0f), Attenuation(1.0f, 1.0f, 1.0f),
 							Param(0,0,0,0)
 							{}
@@ -449,7 +449,7 @@ inline void LogSunLight(D3D9Sun& s)
 
 inline RECT _RECT(DWORD l, DWORD t, DWORD r, DWORD b)
 {
-	RECT rect = { long(l), long(t), long(r), long(b) };
+	RECT rect = { LONG(l), LONG(t), LONG(r), LONG(b) };
 	return rect;
 }
 
@@ -571,7 +571,6 @@ int fgets2(char *buf, int cmax, FILE *file, DWORD param=0);
 float D3DXVec3Angle(D3DXVECTOR3 a, D3DXVECTOR3 b);
 D3DXVECTOR3 Perpendicular(D3DXVECTOR3 *a);
 
-const char *RemovePath(const char *in);
 SketchMesh * GetSketchMesh(const MESHHANDLE hMesh);
 
 bool CreateVolumeTexture(LPDIRECT3DDEVICE9 pDevice, int count, LPDIRECT3DTEXTURE9 *pIn, LPDIRECT3DVOLUMETEXTURE9 *pOut);
@@ -687,6 +686,8 @@ std::string::size_type replace_all (std::string &subj, const std::string &s, con
  * avoid any not-closed HANDLES leaks when the block scope is left (via thrown
  * exception or return e.g.)
  */
+/* TODO(jec):  Delete after re-working users.  Replace with different handles
+ * for different handle types with std::unique_ptr.
 struct AutoHandle
 {
 	HANDLE Handle; ///< The handle storage
@@ -701,14 +702,14 @@ struct AutoHandle
 
 	/**
 	 * \brief Check whether the handle is not valid
-	 */
+	 *
 	bool IsInvalid () {
 		return Handle == INVALID_HANDLE_VALUE || Handle == NULL;
 	}
 
 	/**
 	 * \brief Close the handle
-	 */
+	 *
 	void ForceClose()
 	{
 		if (!IsInvalid()) {
@@ -717,6 +718,7 @@ struct AutoHandle
 		Handle = NULL;
 	}
 };
+*/
 
 
 /**

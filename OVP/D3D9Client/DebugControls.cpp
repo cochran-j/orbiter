@@ -10,14 +10,19 @@
 #include "D3D9Config.h"
 #include "D3D9Surface.h"
 #include "DebugControls.h"
+/* TODO(jec)
 #include "Commctrl.h"
-#include "vObject.h"
-#include "vVessel.h"
-#include "vPlanet.h"
+*/
+#include "VObject.h"
+#include "VVessel.h"
+#include "VPlanet.h"
 #include "Mesh.h"
 #include "MaterialMgr.h"
 #include "VectorHelpers.h"
-#include <stdio.h>
+
+#include <cstdio>
+#include <filesystem>
+
 
 enum scale { LIN, SQRT, SQR };
 
@@ -52,13 +57,15 @@ std::map<int, const LightEmitter*> Emitters;
 
 HWND hTipRed, hTipGrn, hTipBlu, hTipAlp;
 
+/* TODO(jec)
 OPENFILENAMEA OpenTex, SaveTex;
+*/
 char OpenFileName[255];
 char SaveFileName[255];
 
 void UpdateMaterialDisplay(bool bSetup=false);
 void SetGFXSliders();
-INT_PTR CALLBACK WndProcGFX(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR WndProcGFX(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void OpenGFXDlgClbk(void *context);
 
 
@@ -110,16 +117,19 @@ const void *GetConfigParam (DWORD paramtype)
 float GetFloatFromBox(HWND hWnd, int item)
 {
 	char lbl[32];
+    /* TODO(jec)
 	GetWindowTextA(GetDlgItem(hWnd, item), lbl, 32);	
+    */
 	return float(atof(lbl));
 }
 
 // =============================================================================================
 //
-HWND CreateToolTip(int toolID, HWND hDlg, PTSTR pszText)
+HWND CreateToolTip(int toolID, HWND hDlg, char* pszText)
 {
     if (!toolID || !hDlg || !pszText) return NULL;
-    
+   
+    /* TODO(jec)
     // Get the window of the tool.
     HWND hwndTool = GetDlgItem(hDlg, toolID);
     // Create the tooltip. g_hInst is the global instance handle.
@@ -137,11 +147,14 @@ HWND CreateToolTip(int toolID, HWND hDlg, PTSTR pszText)
     SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 
     return hwndTip;
+    */
+    return nullptr;
 }
 
 
 void SetToolTip(int toolID, HWND hTip, const char *a)
 {
+    /* TODO(jec)
 	HWND hwndTool = GetDlgItem(hDlg, toolID);
 	TOOLINFO toolInfo = { 0 };
 	toolInfo.cbSize = sizeof(toolInfo);
@@ -150,6 +163,7 @@ void SetToolTip(int toolID, HWND hTip, const char *a)
 	toolInfo.uId = (UINT_PTR)hwndTool;
 	toolInfo.lpszText = (PTSTR)a;
 	SendMessage(hTip, TTM_UPDATETIPTEXT, 0, (LPARAM)&toolInfo);
+    */
 }
 
 // =============================================================================================
@@ -182,10 +196,13 @@ void Create()
 	dwGFX = oapiRegisterCustomCmd((char*)"D3D9 Graphics Controls", (char*)"This dialog allows to control various graphics options", OpenGFXDlgClbk, NULL);
 
 	resbias = 4.0 + Config->LODBias;
-  
+ 
+    /* TODO(jec)
 	memset(&OpenTex, 0, sizeof(OPENFILENAME));
+    */
 	memset(OpenFileName, 0, sizeof(OpenFileName));
 
+    /* TODO(jec)
 	OpenTex.lStructSize = sizeof(OPENFILENAME);
 	OpenTex.lpstrFile = OpenFileName;
 	OpenTex.lpstrInitialDir = "Textures\0";
@@ -195,10 +212,14 @@ void Create()
 	OpenTex.lpstrFileTitle = NULL;
 	OpenTex.nMaxFileTitle = 0;
 	OpenTex.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+    */
 
+    /* TODO(jec)
 	memset(&SaveTex, 0, sizeof(OPENFILENAME));
+    */
 	memset(SaveFileName, 0, sizeof(SaveFileName));
 
+    /* TODO(jec)
 	SaveTex.lStructSize = sizeof(OPENFILENAME);
 	SaveTex.lpstrFile = SaveFileName;
 	SaveTex.lpstrInitialDir = "Textures\0";
@@ -208,6 +229,7 @@ void Create()
 	SaveTex.lpstrFileTitle = NULL;
 	SaveTex.nMaxFileTitle = 0;
 	SaveTex.Flags = OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
+    */
 
 	PrmList.push_back(MatParams("Diffuse", 0));
 	PrmList.push_back(MatParams("Ambient", 1));
@@ -252,7 +274,9 @@ bool IsActive()
 int GetSceneDebug()
 {
 	if (!hDlg) return -1;
+    /* TODO(jec)
 	return (int)SendDlgItemMessageA(hDlg, IDC_DBG_SCENEDBG, CB_GETCURSEL, 0, 0);
+    */
 }
 
 // =============================================================================================
@@ -260,7 +284,9 @@ int GetSceneDebug()
 int GetSelectedEnvMap()
 {
 	if (!hDlg) return 0;
+    /* TODO(jec)
 	return (int)SendDlgItemMessageA(hDlg, IDC_DBG_ENVMAP, CB_GETCURSEL, 0, 0);
+    */
 }
 
 // =============================================================================================
@@ -280,6 +306,7 @@ void Release()
 //
 void UpdateFlags()
 {
+    /* TODO(jec)
 	SETFLAG(debugFlags, DBG_FLAGS_SELGRPONLY,	(SendDlgItemMessageA(hDlg, IDC_DBG_GRPO, BM_GETCHECK, 0, 0)==BST_CHECKED));
 	SETFLAG(debugFlags, DBG_FLAGS_SELMSHONLY,	(SendDlgItemMessageA(hDlg, IDC_DBG_MSHO, BM_GETCHECK, 0, 0)==BST_CHECKED));
 	SETFLAG(debugFlags, DBG_FLAGS_TILEBOXES,	(SendDlgItemMessageA(hDlg, IDC_DBG_TILEBB, BM_GETCHECK, 0, 0)==BST_CHECKED));
@@ -293,6 +320,7 @@ void UpdateFlags()
 	SETFLAG(debugFlags, DBG_FLAGS_DUALSIDED,	(SendDlgItemMessageA(hDlg, IDC_DBG_DUAL, BM_GETCHECK, 0, 0)==BST_CHECKED));
 	SETFLAG(debugFlags, DBG_FLAGS_PICK,			(SendDlgItemMessageA(hDlg, IDC_DBG_PICK, BM_GETCHECK, 0, 0)==BST_CHECKED));
 	SETFLAG(debugFlags, DBG_FLAGS_FPSLIM,		(SendDlgItemMessageA(hDlg, IDC_DBG_FPSLIM, BM_GETCHECK, 0, 0)==BST_CHECKED));
+    */
 
 	Config->EnableLimiter = (int)((debugFlags&DBG_FLAGS_FPSLIM)>0);
 }
@@ -313,7 +341,7 @@ inline _Variable DefVar(float min, float max, float extmax, scale scl, const cha
 	var.max = max;
 	var.extmax = extmax;
 	var.min = min;
-	strncpy_s(var.tip, 80, tip, 80);
+    std::strncpy(var.tip, tip, 80);
 	return var;
 }
 
@@ -326,7 +354,7 @@ inline _Variable DefVar(float min, float max, scale scl, const char *tip, bool b
 	var.max = max;
 	var.extmax = max;
 	var.min = min;
-	strncpy_s(var.tip, 80, tip, 80);
+    std::strncpy(var.tip, tip, 80);
 	return var;
 }
 
@@ -340,24 +368,32 @@ DWORD DropdownList(DWORD x)
 //
 void InitMatList(WORD shader)
 {
+    /* TODO(jec)
 	LRESULT idx = SendDlgItemMessageA(hDlg, IDC_DBG_MATPRP, CB_GETCURSEL, 0, 0);
 	SendDlgItemMessageA(hDlg, IDC_DBG_MATPRP, CB_RESETCONTENT, 0, 0);
+    */
 	
 	Dropdown.clear();
 
 	if (shader == SHADER_NULL) {
 		std::list<char> list = { 0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17 };
 		for (auto x : list) Dropdown.push_back(PrmList[x]);
+        /* TODO(jec)
 		for (auto x : Dropdown) SendDlgItemMessageA(hDlg, IDC_DBG_MATPRP, CB_ADDSTRING, 0, (LPARAM)x.name.c_str());	
+        */
 	}
 
 	if (shader == SHADER_METALNESS) {
 		std::list<char> list = { 0, 3, 5, 7, 8, 9 };
 		for (auto x : list) Dropdown.push_back(PrmList[x]);
+        /* TODO(jec)
 		for (auto x : Dropdown) SendDlgItemMessageA(hDlg, IDC_DBG_MATPRP, CB_ADDSTRING, 0, (LPARAM)x.name.c_str());
+        */
 	}
 
+    /* TODO(jec)
 	SendDlgItemMessageA(hDlg, IDC_DBG_MATPRP, CB_SETCURSEL, idx, 0);
+    */
 
 	switch (shader) {
 	case SHADER_NULL:
@@ -384,10 +420,13 @@ void OpenDlgClbk(void *context)
 	else return;
 
 	RECT rect;
+    /* TODO(jec)
 	GetWindowRect(hDlg, &rect);
 	SetWindowPos(hDlg, NULL, rect.left, rect.top, 298, rect.bottom - rect.top, SWP_SHOWWINDOW);
+    */
 	origwidth = rect.right - rect.left;
 
+    /* TODO(jec)
 	SendDlgItemMessage(hDlg, IDC_DBG_FPSLIM, BM_SETCHECK, Config->EnableLimiter==1, 0);
 
 	SendDlgItemMessageA(hDlg, IDC_DBG_DISPLAY, CB_RESETCONTENT, 0, 0);
@@ -472,6 +511,7 @@ void OpenDlgClbk(void *context)
 	
 	// Set the "pick" checked
 	SendDlgItemMessage(hDlg, IDC_DBG_PICK, BM_SETCHECK, 1, 0);
+    */
 
 	camMode = 0;
 	dspMode = 0;
@@ -482,6 +522,7 @@ void OpenDlgClbk(void *context)
 
 	UpdateFlags();
 
+    /* TODO(jec)
 	CreateToolTip(IDC_DBG_TARGET, hDlg, (char*)"Select a target where the resulting image is assigned");
 	CreateToolTip(IDC_DBG_SEAMS, hDlg, (char*)"Enable seams reduction at each mipmap level");
 	CreateToolTip(IDC_DBG_FADE, hDlg, (char*)"Enable mipmap post processing. Contrast and detail is reduced from each mipmap to prevent 'stripes' (See:Fa,Fb)");
@@ -498,6 +539,7 @@ void OpenDlgClbk(void *context)
 	hTipGrn = CreateToolTip(IDC_DBG_GREEN, hDlg, (char*)"Green");
 	hTipBlu = CreateToolTip(IDC_DBG_BLUE, hDlg, (char*)"Blue");
 	hTipAlp = CreateToolTip(IDC_DBG_ALPHA, hDlg, (char*)"Alpha");
+    */
 
 	// Diffuse
 	Params[0].var[0] = DefVar(0, 1, 2, SQRT, "Red");
@@ -581,7 +623,10 @@ void OpenDlgClbk(void *context)
 //
 void SetTuningValue(int idx, D3DCOLORVALUE *pClr, DWORD clr, float value)
 {
+    /* TODO(jec)
 	bool bExtend = (SendDlgItemMessageA(hDlg, IDC_DBG_EXTEND, BM_GETCHECK, 0, 0) == BST_CHECKED);
+    */
+    bool bExtend = false;
 
 	float mi = Params[idx].var[clr].min;
 	float mx = (bExtend ? Params[idx].var[clr].extmax : Params[idx].var[clr].max);
@@ -619,7 +664,11 @@ float GetTuningValue(int idx, D3DCOLORVALUE *pClr, DWORD clr)
 //
 float _Clamp(float value, DWORD p, DWORD v)
 {
+    /* TODO(jec)
 	bool bExtend = (SendDlgItemMessageA(hDlg, IDC_DBG_EXTEND, BM_GETCHECK, 0, 0) == BST_CHECKED);
+    */
+    bool bExtend = false;
+
 	return CLAMP(value, Params[p].var[v].min, (bExtend ? Params[p].var[v].extmax : Params[p].var[v].max));
 }
 
@@ -627,7 +676,7 @@ float _Clamp(float value, DWORD p, DWORD v)
 //
 void UpdateShader()
 {
-	OBJHANDLE hObj = vObj->GetObjectA();
+	OBJHANDLE hObj = vObj->GetObject();
 
 	if (!oapiIsVessel(hObj)) return;
 
@@ -635,7 +684,10 @@ void UpdateShader()
 
 	if (!hMesh) return;
 
+    /* TODO(jec)
 	DWORD Shader = DWORD(SendDlgItemMessageA(hDlg, IDC_DBG_DEFSHADER, CB_GETCURSEL, 0, 0));
+    */
+    DWORD Shader = 0;
 
 	vVessel *vVes = (vVessel *)vObj;
 	MatMgr *pMgr = vVes->GetMaterialManager();
@@ -658,7 +710,7 @@ void UpdateShader()
 //
 void UpdateMeshMaterial(float value, DWORD MatPrp, DWORD clr)
 {
-	OBJHANDLE hObj = vObj->GetObjectA();
+	OBJHANDLE hObj = vObj->GetObject();
 
 	if (!oapiIsVessel(hObj)) return;
 
@@ -823,7 +875,7 @@ DWORD GetModFlags(DWORD MatPrp)
 //
 bool IsMaterialModified(DWORD MatPrp)
 {
-	OBJHANDLE hObj = vObj->GetObjectA();
+	OBJHANDLE hObj = vObj->GetObject();
 
 	if (!oapiIsVessel(hObj)) return false;
 
@@ -845,7 +897,7 @@ bool IsMaterialModified(DWORD MatPrp)
 //
 void SetMaterialModified(DWORD MatPrp, bool bState)
 {
-	OBJHANDLE hObj = vObj->GetObjectA();
+	OBJHANDLE hObj = vObj->GetObject();
 
 	if (!oapiIsVessel(hObj)) return;
 
@@ -870,7 +922,7 @@ void SetMaterialModified(DWORD MatPrp, bool bState)
 //
 float GetMaterialValue(DWORD MatPrp, DWORD clr)
 {
-	OBJHANDLE hObj = vObj->GetObjectA();
+	OBJHANDLE hObj = vObj->GetObject();
 
 	if (!oapiIsVessel(hObj)) return 0.0f;
 
@@ -1033,8 +1085,12 @@ float GetMaterialValue(DWORD MatPrp, DWORD clr)
 //
 void SetColorSlider()
 {
+    /* TODO(jec)
 	DWORD MatPrp = DropdownList(DWORD(SendDlgItemMessageA(hDlg, IDC_DBG_MATPRP, CB_GETCURSEL, 0, 0)));
 	bool bExtend = (SendDlgItemMessageA(hDlg, IDC_DBG_EXTEND, BM_GETCHECK, 0, 0) == BST_CHECKED);
+    */
+    DWORD MatPrp = 0;
+    bool bExtend = false;
 
 	float mi = Params[MatPrp].var[SelColor].min;
 	float mx = (bExtend ? Params[MatPrp].var[SelColor].extmax : Params[MatPrp].var[SelColor].max);
@@ -1046,7 +1102,9 @@ void SetColorSlider()
 	if (Params[MatPrp].var[SelColor].Scl == scale::SQRT) val = sqrt(val);
 	if (Params[MatPrp].var[SelColor].Scl == scale::SQR) val = val*val;
 
+    /* TODO(jec)
 	SendDlgItemMessage(hDlg, IDC_DBG_MATADJ, TBM_SETPOS,  1, WORD(val*255.0f));
+    */
 }
 
 // =============================================================================================
@@ -1055,29 +1113,41 @@ void DisplayMat(bool bRed, bool bGreen, bool bBlue, bool bAlpha)
 {
 	char lbl[32];
 
+    /* TODO(jec)
 	DWORD MatPrp = DropdownList(DWORD(SendDlgItemMessageA(hDlg, IDC_DBG_MATPRP, CB_GETCURSEL, 0, 0)));
+    */
+    DWORD MatPrp = 0;
 	
 	float r = GetMaterialValue(MatPrp, 0);
 	float g = GetMaterialValue(MatPrp, 1);
 	float b = GetMaterialValue(MatPrp, 2);
 	float a = GetMaterialValue(MatPrp, 3);
 
-	if (bRed) sprintf_s(lbl,32,"%3.3f", r);
-	else	  sprintf_s(lbl,32,"");
+	if (bRed) std::snprintf(lbl,32,"%3.3f", r);
+	else	  std::snprintf(lbl,32,"");
+    /* TODO(jec)
 	SetWindowText(GetDlgItem(hDlg, IDC_DBG_RED),   lbl);
+    */
 	
-	if (bGreen) sprintf_s(lbl,32,"%3.3f", g);
-	else		sprintf_s(lbl,32,"");
+	if (bGreen) std::snprintf(lbl,32,"%3.3f", g);
+	else		std::snprintf(lbl,32,"");
+    /* TODO(jec)
 	SetWindowText(GetDlgItem(hDlg, IDC_DBG_GREEN), lbl);
+    */
 
-	if (bBlue) sprintf_s(lbl,32,"%3.3f", b);
-	else	   sprintf_s(lbl,32,"");
+	if (bBlue) std::snprintf(lbl,32,"%3.3f", b);
+	else	   std::snprintf(lbl,32,"");
+    /* TODO(jec)
 	SetWindowText(GetDlgItem(hDlg, IDC_DBG_BLUE),  lbl);
+    */
 
-	if (bAlpha) sprintf_s(lbl,32,"%3.3f", a);
-	else	    sprintf_s(lbl,32,"");
+	if (bAlpha) std::snprintf(lbl,32,"%3.3f", a);
+	else	    std::snprintf(lbl,32,"");
+    /* TODO(jec)
 	SetWindowText(GetDlgItem(hDlg, IDC_DBG_ALPHA), lbl);
+    */
 
+    /* TODO(jec)
 	if (bRed)   EnableWindow(GetDlgItem(hDlg, IDC_DBG_RED), true);
 	else	    EnableWindow(GetDlgItem(hDlg, IDC_DBG_RED), false);	
 	if (bGreen) EnableWindow(GetDlgItem(hDlg, IDC_DBG_GREEN), true);
@@ -1086,10 +1156,13 @@ void DisplayMat(bool bRed, bool bGreen, bool bBlue, bool bAlpha)
 	else	    EnableWindow(GetDlgItem(hDlg, IDC_DBG_BLUE), false);	
 	if (bAlpha) EnableWindow(GetDlgItem(hDlg, IDC_DBG_ALPHA), true);
 	else		EnableWindow(GetDlgItem(hDlg, IDC_DBG_ALPHA), false);
+    */
 
 	bool bModified = IsMaterialModified(MatPrp);
 
+    /* TODO(jec)
 	SendDlgItemMessageA(hDlg, IDC_DBG_DEFINED, BM_SETCHECK, bModified, 0);
+    */
 }
 
 // =============================================================================================
@@ -1099,53 +1172,72 @@ void UpdateMaterialDisplay(bool bSetup)
 	char lbl[256];
 	char lbl2[64];
 
-	OBJHANDLE hObj = vObj->GetObjectA();
+	OBJHANDLE hObj = vObj->GetObject();
 	if (!oapiIsVessel(hObj)) return;
 	
 	D3D9Mesh *hMesh = (D3D9Mesh *)vObj->GetMesh(sMesh);
 	if (!hMesh) return;
 
 	WORD Shader = hMesh->GetDefaultShader();
+    /* TODO(jec)
 	if (Shader == SHADER_NULL) SendDlgItemMessageA(hDlg, IDC_DBG_DEFSHADER, CB_SETCURSEL, 0, 0);
 	if (Shader == SHADER_METALNESS) SendDlgItemMessageA(hDlg, IDC_DBG_DEFSHADER, CB_SETCURSEL, 1, 0);
+    */
 
 	DWORD matidx = hMesh->GetMeshGroupMaterialIdx(sGroup);
 
 	// Set material info
 	const char *skin = NULL;
-	if (skin)	sprintf_s(lbl, 256, "Material %u: [Skin %s]", matidx, skin);
-	else		sprintf_s(lbl, 256, "Material %u:", matidx);
+	if (skin)	std::snprintf(lbl, 256, "Material %u: [Skin %s]", matidx, skin);
+	else		std::snprintf(lbl, 256, "Material %u:", matidx);
 
+    /* TODO(jec)
 	GetWindowText(GetDlgItem(hDlg, IDC_DBG_MATGRP), lbl2, 64);
 	if (strcmp(lbl, lbl2)) SetWindowText(GetDlgItem(hDlg, IDC_DBG_MATGRP), lbl); // Avoid causing flashing
+                                                                                    */
 
 	if (bSetup) SelColor = 0;
 
+    /* TODO(jec)
 	DWORD MatPrp = DropdownList(DWORD(SendDlgItemMessageA(hDlg, IDC_DBG_MATPRP, CB_GETCURSEL, 0, 0)));
+    */
+    DWORD MatPrp = 0;
 	
 	DisplayMat(Params[MatPrp].var[0].bUsed, Params[MatPrp].var[1].bUsed, Params[MatPrp].var[2].bUsed, Params[MatPrp].var[3].bUsed);
 
+    /* TODO(jec)
 	SetToolTip(IDC_DBG_RED, hTipRed, Params[MatPrp].var[0].tip);
 	SetToolTip(IDC_DBG_GREEN, hTipGrn, Params[MatPrp].var[1].tip);
 	SetToolTip(IDC_DBG_BLUE, hTipBlu, Params[MatPrp].var[2].tip);
 	SetToolTip(IDC_DBG_ALPHA, hTipAlp, Params[MatPrp].var[3].tip);
+    */
 
 	DWORD texidx = hMesh->GetMeshGroupTextureIdx(sGroup);
 
+    /* TODO(jec)
 	if (texidx==0) SetWindowText(GetDlgItem(hDlg, IDC_DBG_TEXTURE), "Texture: None");
 	else {
+    */
 		SURFHANDLE hSrf = hMesh->GetTexture(texidx);
 		if (hSrf) {
-			sprintf_s(lbl, 256, "Texture: %s [%u]", RemovePath(SURFACE(hSrf)->GetName()), texidx);
+            std::filesystem::path p {SURFACE(hSrf)->GetName()};
+            std::snprintf(lbl, 256, "Texture: %s [%u]", p.filename().c_str(), texidx);
+            /* TODO(jec)
 			SetWindowText(GetDlgItem(hDlg, IDC_DBG_TEXTURE), lbl);
+            */
 		}
+    /* TODO(jec)
 	}
+    */
 
-	sprintf_s(lbl, 256, "Mesh: %s", RemovePath(hMesh->GetName()));
+    std::filesystem::path p {hMesh->GetName()};
+    std::snprintf(lbl, 256, "Mesh: %s", p.filename().c_str());
+    /*TODO (jec)
 	SetWindowText(GetDlgItem(hDlg, IDC_DBG_MESHNAME), lbl);
 	
 	GetWindowText(GetDlgItem(hDlg, IDC_DBG_MESHGRP), lbl2, 64);
 	if (strcmp(lbl, lbl2)) SetWindowText(GetDlgItem(hDlg, IDC_DBG_MESHGRP), lbl); // Avoid causing flashing
+                                                                                    */
 }
 
 // =============================================================================================
@@ -1163,11 +1255,16 @@ bool IsSelectedGroupRendered()
 void UpdateColorSlider(WORD pos)
 {
 	float val = float(pos)/255.0f;
-	
+
+    /* TODO(jec)
 	DWORD MatPrp = DropdownList(DWORD(SendDlgItemMessageA(hDlg, IDC_DBG_MATPRP, CB_GETCURSEL, 0, 0)));	
 
 	bool bLink = (SendDlgItemMessageA(hDlg, IDC_DBG_LINK, BM_GETCHECK, 0, 0)==BST_CHECKED);
 	bool bExtend = (SendDlgItemMessageA(hDlg, IDC_DBG_EXTEND, BM_GETCHECK, 0, 0) == BST_CHECKED);
+    */
+    DWORD MatPrp = 0;
+    bool bLink = false;
+    bool bExtend = false;
 
 	float mi = Params[MatPrp].var[SelColor].min;
 	float mx = (bExtend ? Params[MatPrp].var[SelColor].extmax : Params[MatPrp].var[SelColor].max);
@@ -1242,7 +1339,9 @@ void SetupMeshGroups()
 
 	if (!vObj) return; 
 
+    /* TODO(jec)
 	SetWindowText(GetDlgItem(hDlg, IDC_DBG_VISUAL), visual);
+    */
 
 	if (nMesh!=0) {
 		if (sMesh>0xFFFF) sMesh = nMesh-1;
@@ -1250,13 +1349,17 @@ void SetupMeshGroups()
 	}
 	else {
 		sMesh=0, sGroup=0, nGroup=0;
+        /* TODO(jec)
 		SetWindowText(GetDlgItem(hDlg, IDC_DBG_MESH), "N/A");
 		SetWindowText(GetDlgItem(hDlg, IDC_DBG_GROUP), "N/A");
+        */
 		return;
 	}
 
-	sprintf_s(lbl,256,"%u/%u",sMesh,nMesh-1);
+    std::snprintf(lbl,256,"%u/%u",sMesh,nMesh-1);
+    /* TODO(jec)
 	SetWindowText(GetDlgItem(hDlg, IDC_DBG_MESH), lbl);
+    */
 
 	D3D9Mesh *mesh = (class D3D9Mesh *)vObj->GetMesh(sMesh);
 
@@ -1269,12 +1372,16 @@ void SetupMeshGroups()
 	}
 	else {
 		sGroup=0;
+        /* TODO(jec)
 		SetWindowText(GetDlgItem(hDlg, IDC_DBG_GROUP), "N/A");
+        */
 		return;
 	}
 
-	sprintf_s(lbl,256,"%u/%u",sGroup,nGroup-1);
+    std::snprintf(lbl,256,"%u/%u",sGroup,nGroup-1);
+    /* TODO(jec)
 	SetWindowText(GetDlgItem(hDlg, IDC_DBG_GROUP), lbl);
+    */
 
 	UpdateMaterialDisplay();
 	SetColorSlider();
@@ -1286,7 +1393,7 @@ void SetupMeshGroups()
 double GetVisualSize()
 {
 	if (hDlg && vObj) {
-		OBJHANDLE hObj = vObj->GetObjectA();
+		OBJHANDLE hObj = vObj->GetObject();
 		if (hObj) return oapiGetSize(hObj);
 	}
 	return 1.0;
@@ -1317,15 +1424,19 @@ void UpdateVisual()
 {
 	if (!vObj || !hDlg) return; 
 	nMesh = vObj->GetMeshCount();
-	sprintf_s(visual, 64, "Visual: %s", vObj->GetName());
+    std::snprintf(visual, 64, "Visual: %s", vObj->GetName());
 	SetupMeshGroups();
 
+    /* TODO(jec)
 	SendDlgItemMessageA(hDlg, IDC_DBG_CONES, CB_RESETCONTENT, 0, 0);
+    */
 	Emitters.clear();
 
 	if (vObj->Type() == OBJTP_VESSEL) {
 
+        /* TODO(jec)
 		SendDlgItemMessageA(hDlg, IDC_DBG_CONES, CB_ADDSTRING, 0, (LPARAM)"NONE");
+        */
 		Emitters[0] = NULL;
 
 		char line[64];
@@ -1343,30 +1454,34 @@ void UpdateVisual()
 				double P = sl->GetPenumbra()*DEG;
 				double U = sl->GetUmbra()*DEG;
 				double R = sl->GetRange();
-				sprintf_s(line, 64, "%s P%1.0f U%1.0f R%1.0f", _PTR(em), P, U, R);
+                std::snprintf(line, 64, "%s P%1.0f U%1.0f R%1.0f", _PTR(em), P, U, R);
 			}	
 
 			if (em->GetType() == LightEmitter::LT_POINT) {
 				const PointLight *pl = static_cast<const PointLight*>(em);
 				double R = pl->GetRange();
-				sprintf_s(line, 64, "%s R%1.0f", _PTR(em), R);
+                std::snprintf(line, 64, "%s R%1.0f", _PTR(em), R);
 			}
 
 			switch (em->GetVisibility())
 			{
-			case LightEmitter::VIS_EXTERNAL: strcat_s(line, 64, " EXT"); break;
-			case LightEmitter::VIS_COCKPIT: strcat_s(line, 64, " VC"); break;
-			case LightEmitter::VIS_ALWAYS: strcat_s(line, 64, " ALW"); break;
+                case LightEmitter::VIS_EXTERNAL: std::strncat(line, " EXT", 64); break;
+                case LightEmitter::VIS_COCKPIT: std::strncat(line, " VC", 64); break;
+                case LightEmitter::VIS_ALWAYS: std::strncat(line, " ALW", 64); break;
 			}
 
 			if ((em->GetType() == LightEmitter::LT_SPOT) || (em->GetType() == LightEmitter::LT_POINT)) {
+                /* TODO(jec)
 				SendDlgItemMessageA(hDlg, IDC_DBG_CONES, CB_ADDSTRING, 0, (LPARAM)line);
+                */
 				Emitters[j + 1] = em;
 			}
 		}
 	}
 
+    /* TODO(jec)
 	SendDlgItemMessageA(hDlg, IDC_DBG_CONES, CB_SETCURSEL, 0, 0);
+    */
 }
 
 // =============================================================================================
@@ -1380,7 +1495,11 @@ void RemoveVisual(vObject *vo)
 //
 void SetColorValue(const char *lbl)
 {
+    /* TODO(jec)
 	DWORD MatPrp = DropdownList(DWORD(SendDlgItemMessageA(hDlg, IDC_DBG_MATPRP, CB_GETCURSEL, 0, 0)));
+    */
+    DWORD MatPrp = 0;
+
 	UpdateMeshMaterial(float(atof(lbl)), MatPrp, SelColor);
 	SetColorSlider();
 }
@@ -1436,23 +1555,37 @@ D3DXCOLOR ProcessColor(D3DXVECTOR4 C, PCParam *prm, int x, int y)
 
 // =============================================================================================
 //
+/* TODO(jec):  Compat definition */
+struct OPENFILENAME {
+    char* lpstrFile;
+};
+using LPOPENFILENAME = OPENFILENAME*;
+
 bool Execute(HWND hWnd, LPOPENFILENAME pOF)
 {
 	LPDIRECT3DDEVICE9 pDevice = g_client->GetDevice();
 
+    /* TODO(jec)
 	SaveTex.hwndOwner = hWnd;
+    */
 
 	D3DLOCKED_RECT in, out;
 	PCParam prm;
 
 	DWORD Func = 0;
+    /* TODO(jec)
 	DWORD Action = DWORD(SendDlgItemMessageA(hDlg, IDC_DBG_ACTION, CB_GETCURSEL, 0, 0));
 	DWORD Target = DWORD(SendDlgItemMessageA(hDlg, IDC_DBG_TARGET, CB_GETCURSEL, 0, 0));
+    */
+    DWORD Action = 0;
+    DWORD Target = 0;
 
+    /* TODO(jec)
 	if (SendDlgItemMessageA(hDlg, IDC_DBG_NORM, BM_GETCHECK, 0, 0)==BST_CHECKED) Func |= 0x1;
 	if (SendDlgItemMessageA(hDlg, IDC_DBG_FADE, BM_GETCHECK, 0, 0)==BST_CHECKED) Func |= 0x2;
 	if (SendDlgItemMessageA(hDlg, IDC_DBG_SEAMS, BM_GETCHECK, 0, 0)==BST_CHECKED) Func |= 0x4;
-	
+	*/
+
 	if (Action>=0 && Action<=2) {
 
 		LPDIRECT3DTEXTURE9 pTex = NULL;
@@ -1564,6 +1697,7 @@ bool Execute(HWND hWnd, LPOPENFILENAME pOF)
 		// Save the texture into a file -------------------------------
 		//
 		if (Target==0) {
+            /* TODO(jec)
 			strcpy_s(SaveTex.lpstrFile, 255, OpenTex.lpstrFile);
 			if (GetSaveFileName(&SaveTex)) {
 				if (D3DXSaveTextureToFileA(SaveTex.lpstrFile, D3DXIFF_DDS, pSave, NULL)!=S_OK) {
@@ -1573,6 +1707,7 @@ bool Execute(HWND hWnd, LPOPENFILENAME pOF)
 				SAFE_RELEASE(pSave);
 				return true;
 			}
+            */
 		}
 
 		// Assign the texture for rendering -----------------------------
@@ -1614,7 +1749,7 @@ void Append(const char *format, ...)
 	char buf[256];
 	va_list args;
 	va_start(args, format);
-	_vsnprintf_s(buf, 256, 256, format, args);
+    std::vsnprintf(buf, 256, format, args);
 	va_end(args);
 	buffer += buf;
 }
@@ -1627,7 +1762,7 @@ void Append2(const char *format, ...)
 	char buf[256];
 	va_list args;
 	va_start(args, format);
-	_vsnprintf_s(buf, 256, 256, format, args);
+    std::vsnprintf(buf, 256, format, args);
 	va_end(args);
 	buffer2 += buf;
 }
@@ -1640,7 +1775,9 @@ void Refresh2()
 
 	Append2("LocalPos = [%f, %f, %f]", PickLocation.x, PickLocation.y, PickLocation.z);
 
+    /* TODO(jec)
 	SetWindowTextA(GetDlgItem(hDataWnd, IDC_DBG_DATAVIEW2), buffer2.c_str());
+    */
 	buffer2.clear();
 }
 
@@ -1649,7 +1786,9 @@ void Refresh2()
 void Refresh()
 {
 	if (hDataWnd == NULL) return;
+    /* TODO(jec)
 	SetWindowTextA(GetDlgItem(hDataWnd, IDC_DBG_DATAVIEW), buffer.c_str());
+    */
 	buffer.clear();
 	Refresh2();
 }
@@ -1728,10 +1867,11 @@ oapiWriteLogV("TotalWeight = %f", w);
 // ==============================================================
 // Dialog message handler
 
-INT_PTR CALLBACK ViewProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR ViewProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static bool isOpen = false; // IDC_DBG_MORE (full or reduced width)
 
+    /* TODO(jec)
 	DWORD Prp = DropdownList(DWORD(SendDlgItemMessageA(hDlg, IDC_DBG_MATPRP, CB_GETCURSEL, 0, 0)));
 	
 	switch (uMsg) {
@@ -1755,6 +1895,7 @@ INT_PTR CALLBACK ViewProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	}
+    */
 
 	return oapiDefDialogProc(hWnd, uMsg, wParam, lParam);
 }
@@ -1763,13 +1904,14 @@ INT_PTR CALLBACK ViewProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 // ==============================================================
 // Dialog message handler
 
-INT_PTR CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	char lbl[32];
 	RECT rect;
 	bool bPaused;
 	static bool isOpen = false; // IDC_DBG_MORE (full or reduced width)
 
+    /* TODO(jec)
 	OpenTex.hwndOwner = hWnd;
 
 	DWORD Prp = DropdownList(DWORD(SendDlgItemMessageA(hDlg, IDC_DBG_MATPRP, CB_GETCURSEL, 0, 0)));
@@ -2054,6 +2196,7 @@ INT_PTR CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	}
+    */
 
 	return oapiDefDialogProc(hWnd, uMsg, wParam, lParam);
 }
@@ -2081,6 +2224,7 @@ void OpenGFXDlgClbk(void *context)
 	if (l_hDlg) hGfxDlg = l_hDlg; // otherwise open already
 	else return;
 
+    /* TODO(jec)
 	// slider
 	SendDlgItemMessage(hGfxDlg, IDC_GFX_INTENSITY, TBM_SETRANGEMAX, 1, 255);
 	SendDlgItemMessage(hGfxDlg, IDC_GFX_INTENSITY, TBM_SETRANGEMIN, 1, 0);
@@ -2151,6 +2295,7 @@ void OpenGFXDlgClbk(void *context)
 	CreateToolTip(IDC_GFX_IRRADIANCE_RESET,	 hGfxDlg, (char*)"Reset to default");
 	CreateToolTip(IDC_GFX_LOCALMAX_RESET,	 hGfxDlg, (char*)"Reset to default");
 	CreateToolTip(IDC_GFX_GLARE_RESET,		 hGfxDlg, (char*)"Reset to default");
+    */
 
 	SetGFXSliders();
 }
@@ -2161,44 +2306,60 @@ void SetGFXSliders()
 	double fpos;
 
 	fpos = Config->GFXIntensity;
-	sprintf_s(lbl, 32, "%1.2f", fpos);
+    std::snprintf(lbl, 32, "%1.2f", fpos);
+    /* TODO(jec)
 	SetWindowTextA(GetDlgItem(hGfxDlg, IDC_GFX_VAL1), lbl);
 	SendDlgItemMessage(hGfxDlg, IDC_GFX_INTENSITY, TBM_SETPOS, 1, WORD(fpos*255.0));
+    */
 
 	fpos = Config->GFXDistance;
-	sprintf_s(lbl, 32, "%1.2f", fpos);
+    std::snprintf(lbl, 32, "%1.2f", fpos);
+    /* TODO(jec)
 	SetWindowTextA(GetDlgItem(hGfxDlg, IDC_GFX_VAL2), lbl);
 	SendDlgItemMessage(hGfxDlg, IDC_GFX_DISTANCE, TBM_SETPOS, 1, WORD(fpos*255.0));
+    */
 
 	fpos = Config->GFXThreshold;
-	sprintf_s(lbl, 32, "%1.2f", fpos);
+    std::snprintf(lbl, 32, "%1.2f", fpos);
+    /* TODO(jec)
 	SetWindowTextA(GetDlgItem(hGfxDlg, IDC_GFX_VAL3), lbl);
 	SendDlgItemMessage(hGfxDlg, IDC_GFX_THRESHOLD, TBM_SETPOS, 1, WORD(fpos*255.0 / 2.0));
+    */
 
 	fpos = Config->GFXGamma;
-	sprintf_s(lbl, 32, "%1.2f", fpos);
+    std::snprintf(lbl, 32, "%1.2f", fpos);
+    /* TODO(jec)
 	SetWindowTextA(GetDlgItem(hGfxDlg, IDC_GFX_VAL4), lbl);
 	SendDlgItemMessage(hGfxDlg, IDC_GFX_GAMMA, TBM_SETPOS, 1, WORD(fpos*255.0 / 2.5));
+    */
 
 	fpos = Config->GFXSunIntensity;
-	sprintf_s(lbl, 32, "%1.2f", fpos);
+    std::snprintf(lbl, 32, "%1.2f", fpos);
+    /* TODO(jec)
 	SetWindowTextA(GetDlgItem(hGfxDlg, IDC_GFX_VAL5), lbl);
 	SendDlgItemMessage(hGfxDlg, IDC_GFX_SUNLIGHT, TBM_SETPOS, 1, WORD(fpos*255.0 / 2.0));
+    */
 
 	fpos = Config->PlanetGlow;
-	sprintf_s(lbl, 32, "%1.2f", fpos);
+    std::snprintf(lbl, 32, "%1.2f", fpos);
+    /* TODO(jec0
 	SetWindowTextA(GetDlgItem(hGfxDlg, IDC_GFX_VAL6), lbl);
 	SendDlgItemMessage(hGfxDlg, IDC_GFX_IRRADIANCE, TBM_SETPOS, 1, WORD(fpos*255.0 / 2.0));
+    */
 
 	fpos = Config->GFXLocalMax;
-	sprintf_s(lbl, 32, "%1.2f", fpos);
+    std::snprintf(lbl, 32, "%1.2f", fpos);
+    /* TODO(jec)
 	SetWindowTextA(GetDlgItem(hGfxDlg, IDC_GFX_VAL7), lbl);
 	SendDlgItemMessage(hGfxDlg, IDC_GFX_LOCALMAX, TBM_SETPOS, 1, WORD(fpos*255.0));
+    */
 
 	fpos = Config->GFXGlare;
-	sprintf_s(lbl, 32, "%1.2f", fpos);
+    std::snprintf(lbl, 32, "%1.2f", fpos);
+    /* TODO(je)
 	SetWindowTextA(GetDlgItem(hGfxDlg, IDC_GFX_VAL8), lbl);
 	SendDlgItemMessage(hGfxDlg, IDC_GFX_GLARE, TBM_SETPOS, 1, WORD(fpos * 255.0));
+    */
 }
 
 void ReadGFXSliders()
@@ -2206,49 +2367,66 @@ void ReadGFXSliders()
 	char lbl[32];
 	double fpos;
 
+    /* TODO(jec)
 	fpos = (1.0 / 255.0) * double(SendDlgItemMessage(hGfxDlg, IDC_GFX_INTENSITY, TBM_GETPOS, 0, 0));
-	sprintf_s(lbl, 32, "%1.2f", fpos);
+    std::spnrintf(lbl, 32, "%1.2f", fpos);
 	SetWindowTextA(GetDlgItem(hGfxDlg, IDC_GFX_VAL1), lbl);
+    */
 	Config->GFXIntensity = fpos;
 	
+    /* TODO(jec)
 	fpos = (1.0 / 255.0) * double(SendDlgItemMessage(hGfxDlg, IDC_GFX_DISTANCE, TBM_GETPOS, 0, 0));
-	sprintf_s(lbl, 32, "%1.2f", fpos);
+    std::snprintf(lbl, 32, "%1.2f", fpos);
 	SetWindowTextA(GetDlgItem(hGfxDlg, IDC_GFX_VAL2), lbl);
+    */
 	Config->GFXDistance = fpos;
-	
+
+    /* TODO(jec)
 	fpos = (2.0 / 255.0) * double(SendDlgItemMessage(hGfxDlg, IDC_GFX_THRESHOLD, TBM_GETPOS, 0, 0));
-	sprintf_s(lbl, 32, "%1.2f", fpos);
+    std::snprintf(lbl, 32, "%1.2f", fpos);
 	SetWindowTextA(GetDlgItem(hGfxDlg, IDC_GFX_VAL3), lbl);
+    */
 	Config->GFXThreshold = fpos;
 
+    /* TODO(jec)
 	fpos = (2.5 / 255.0) * double(SendDlgItemMessage(hGfxDlg, IDC_GFX_GAMMA, TBM_GETPOS, 0, 0));
-	sprintf_s(lbl, 32, "%1.2f", fpos);
+    std::snprintf(lbl, 32, "%1.2f", fpos);
 	SetWindowTextA(GetDlgItem(hGfxDlg, IDC_GFX_VAL4), lbl);
+    */
 	Config->GFXGamma = fpos;	
 
+    /* TODO(jec)
 	fpos = (2.0 / 255.0) * double(SendDlgItemMessage(hGfxDlg, IDC_GFX_SUNLIGHT, TBM_GETPOS, 0, 0));
-	sprintf_s(lbl, 32, "%1.2f", fpos);
+    std::snprintf(lbl, 32, "%1.2f", fpos);
 	SetWindowTextA(GetDlgItem(hGfxDlg, IDC_GFX_VAL5), lbl);
+    */
 	Config->GFXSunIntensity = fpos;
 
+    /* TODO(jec)
 	fpos = (2.0 / 255.0) * double(SendDlgItemMessage(hGfxDlg, IDC_GFX_IRRADIANCE, TBM_GETPOS, 0, 0));
-	sprintf_s(lbl, 32, "%1.2f", fpos);
+    std::snprintf(lbl, 32, "%1.2f", fpos);
 	SetWindowTextA(GetDlgItem(hGfxDlg, IDC_GFX_VAL6), lbl);
+    */
 	Config->PlanetGlow = fpos;
 
+    /* TODO(jec)
 	fpos = (1.0 / 255.0) * double(SendDlgItemMessage(hGfxDlg, IDC_GFX_LOCALMAX, TBM_GETPOS, 0, 0));
-	sprintf_s(lbl, 32, "%1.2f", fpos);
+    std::snprintf(lbl, 32, "%1.2f", fpos);
 	SetWindowTextA(GetDlgItem(hGfxDlg, IDC_GFX_VAL7), lbl);
+    */
 	Config->GFXLocalMax = fpos;
 
+    /* TODO(jec)
 	fpos = (1.0 / 255.0) * double(SendDlgItemMessage(hGfxDlg, IDC_GFX_GLARE, TBM_GETPOS, 0, 0));
-	sprintf_s(lbl, 32, "%1.2f", fpos);
+    std::snprintf(lbl, 32, "%1.2f", fpos);
 	SetWindowTextA(GetDlgItem(hGfxDlg, IDC_GFX_VAL8), lbl);
+    */
 	Config->GFXGlare = fpos;
 }
 
-INT_PTR CALLBACK WndProcGFX(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR WndProcGFX(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 
 	case WM_INITDIALOG:
@@ -2330,6 +2508,7 @@ INT_PTR CALLBACK WndProcGFX(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	}
+    */
 
 	return oapiDefDialogProc(hWnd, uMsg, wParam, lParam);
 }

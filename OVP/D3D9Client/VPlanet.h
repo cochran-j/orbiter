@@ -194,6 +194,17 @@ struct ConstParams
  * Simple planets might only be implemented as spherical objects, without
  * variations in elevation.
  */
+
+class TileManager;
+class SurfaceManager;
+template <class T>
+class TileManager2;
+class CloudManager;
+class HazeManager;
+class HazeManager2;
+class RingManager;
+class vBase;
+
 class vPlanet: public vObject {
 
 	friend class TileManager;

@@ -12,7 +12,7 @@
 #define ORBITER_MODULE
 #include <windows.h>
 #include "MFDWindow.h"
-#include "orbitersdk.h"
+#include "Orbitersdk.h"
 #include "resource.h"
 #include <stdio.h>
 
@@ -29,9 +29,9 @@ DWORD g_dwCmd;        // custom function identifier
 // ==============================================================
 
 void OpenDlgClbk (void *context);
-INT_PTR CALLBACK MsgProc (HWND, UINT, WPARAM, LPARAM);
-extern LRESULT FAR PASCAL MFD_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-extern LRESULT FAR PASCAL MFD_BtnProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR MsgProc (HWND, UINT, WPARAM, LPARAM);
+extern LRESULT MFD_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+extern LRESULT MFD_BtnProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 // ==============================================================
 // API interface
@@ -53,6 +53,7 @@ DLLCLBK void InitModule (HINSTANCE hDLL)
 		OpenDlgClbk, NULL);
 
 	// Load the bitmap for the "pin" title button
+    /* TODO(jec)
 	g_hPin = (HBITMAP)LoadImage (g_hInst, MAKEINTRESOURCE(IDB_PIN), IMAGE_BITMAP, 15, 30, 0);
 
 	// Register a window classes for the MFD display and buttons
@@ -75,6 +76,7 @@ DLLCLBK void InitModule (HINSTANCE hDLL)
 	wndClass.hbrBackground = (HBRUSH)GetStockObject (LTGRAY_BRUSH);
 	wndClass.lpszClassName = "ExtMFD_Button";
 	RegisterClass (&wndClass);
+    */
 }
 
 // ==============================================================
@@ -84,6 +86,7 @@ DLLCLBK void InitModule (HINSTANCE hDLL)
 DLLCLBK void ExitModule (HINSTANCE hDLL)
 {
 	// Unregister window classes
+    /* TODO(jec)
 	UnregisterClass ("ExtMFD_Display", g_hInst);
 	UnregisterClass ("ExtMFD_Button", g_hInst);
 
@@ -92,6 +95,7 @@ DLLCLBK void ExitModule (HINSTANCE hDLL)
 
 	// Unregister the custom function in Orbiter
 	oapiUnregisterCustomCmd (g_dwCmd);
+    */
 }
 
 

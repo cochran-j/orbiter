@@ -316,7 +316,7 @@ namespace InterfaceBuilder
        
                     foreach (var x in Methods)
                     {
-                        Cpp.WriteLine("\tif (strcmp(name,\"" + x.fnc + "\")==0) *ppFnc = &gcCore2::" + x.fnc + ";");
+                        Cpp.WriteLine("\tif (strcmp(name,\"" + x.fnc + "\")==0) *ppFnc = reinterpret_cast<void*>(&gcCore2::" + x.fnc + ");");
                     }
 
                     while (CppFile.Count > 0)

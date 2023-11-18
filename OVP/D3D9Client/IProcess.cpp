@@ -4,10 +4,10 @@
 // licensed under LGPL v2
 // ===================================================
 
-#include <string.h>
 #include "IProcess.h"
 #include "D3D9Util.h"
 #include "D3D9Surface.h"
+#include <cstring>
 #include <sstream>
 
 
@@ -28,7 +28,7 @@ ImageProcessing::ImageProcessing(LPDIRECT3DDEVICE9 pDev, const char *_file, cons
 	, iVP()
 	, mesh_tex_idx(-1)
 {
-	for (int i=0;i<ARRAYSIZE(pTextures);i++) pTextures[i].hTex = NULL;
+	for (int i=0;i<(sizeof(pTextures) / sizeof(pTextures[0]));i++) pTextures[i].hTex = NULL;
 	for (int i=0;i<4;i++) pRtg[i] = pRtgBak[i] = NULL;
 
 	if (_vsentry) pVertex = CompileVertexShader(pDevice, _file, _vsentry, "IPIVS", NULL, &pVSConst);
@@ -68,10 +68,10 @@ ImageProcessing::ImageProcessing(LPDIRECT3DDEVICE9 pDev, const char *_file, cons
 		q += w*2.0;
 	}
 
-	strcpy_s(file, 256, _file);
-	strcpy_s(entry, 32, _psentry);
-	if (_ppf) strcpy_s(ppf, 256, _ppf);
-	else strcpy_s(ppf, 32, "");
+    std::strncpy(file, _file, 256);
+    std::strncpy(entry, _psentry, 32);
+	if (_ppf) std::strncpy(ppf, _ppf, 256);
+	else std::strncpy(ppf, "", 32);
 
 	// Create a database of defines ----------------------------------------------------------------
 	std::string line;
@@ -123,7 +123,7 @@ bool ImageProcessing::Activate(const char *Entry)
 		LogErr("ImageProcessing::Activate() FAILED Entry=%s", Entry);
 		return false;
 	}
-	strcpy_s(entry, 31, Entry);
+    std::strncpy(entry, Entry, 31);
 	pPixel = Shaders[name].pPixel;
 	pPSConst = Shaders[name].pPSConst;
 	return true;
@@ -306,7 +306,7 @@ bool ImageProcessing::Execute(DWORD blendop, bool bInScene, gcIPInterface::ipite
 
 	// Set textures and samplers -----------------------------------------------
 	//
-	for (int idx=0;idx<ARRAYSIZE(pTextures);idx++) {
+	for (int idx=0;idx < (sizeof(pTextures) / sizeof(pTextures[0]));idx++) {
 
 		if (pTextures[idx].hTex==NULL) continue;
 
@@ -395,7 +395,7 @@ bool ImageProcessing::Execute(DWORD blendop, bool bInScene, gcIPInterface::ipite
 
 	// Disconnect textures -----------------------------------------------------
 	//
-	for (int idx=0;idx<ARRAYSIZE(pTextures);idx++) {
+	for (int idx=0;idx<(sizeof(pTextures) / sizeof(pTextures[0]));idx++) {
 		if (pTextures[idx].hTex==NULL) continue;
 		HR(pDevice->SetTexture(idx, NULL));
 	}

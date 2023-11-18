@@ -11,6 +11,12 @@
 #define ORBITER_MODULE
 
 #include <set> // ...for Brush-, Pen- and Font-accounting
+#include <filesystem>
+#include <thread>
+#include <chrono>
+#include <string>
+#include <cstring>
+
 #include "Orbitersdk.h"
 #include "D3D9Client.h"
 #include "D3D9Config.h"
@@ -94,7 +100,7 @@ std::set<Brush *> g_brushes;
 extern list<gcGUIApp *> g_gcGUIAppList;
 
 extern "C" {
-	_declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+	/* TODO(jec) _declspec(dllexport)*/ DWORD NvOptimusEnablement = 0x00000001;
 }
 
 // ==============================================================
@@ -159,12 +165,15 @@ DLLCLBK void InitModule(HINSTANCE hDLL)
 	Config = new D3D9Config();
 
 	if (Config->ShaderCacheUse) {
-		DWORD fa = GetFileAttributesA("Cache");
-		if (fa == INVALID_FILE_ATTRIBUTES) CreateDirectoryA("Cache", NULL);
-		fa = GetFileAttributesA("Cache/D3D9Client");
-		if (fa == INVALID_FILE_ATTRIBUTES) CreateDirectoryA("Cache/D3D9Client", NULL);
-		fa = GetFileAttributesA("Cache/D3D9Client/Shaders");
-		if (fa == INVALID_FILE_ATTRIBUTES) CreateDirectoryA("Cache/D3D9Client/Shaders", NULL);
+        if (!std::filesystem::exists("Cache")) {
+            std::filesystem::create_directory("Cache");
+        }
+        if (!std::filesystem::exists("Cache/D3D9Client")) {
+            std::filesystem::create_directory("Cache/D3D9Client");
+        }
+        if (!std::filesystem::exists("Cache/D3D9Client/Shaders")) {
+            std::filesystem::create_directory("Cache/D3D9Client/Shaders");
+        }
 	}
 
 	g_pConst = new gcConst();
@@ -240,7 +249,7 @@ D3D9Client::D3D9Client (HINSTANCE hInstance) :
 	pItemsSkp   (NULL),
 	hLblFont1   (NULL),
 	hLblFont2   (NULL),
-	hMainThread (NULL),
+	hMainThread (),
 	pCaps       (NULL),
 	pWM			(NULL),
 	pBltSkp		(NULL),
@@ -356,7 +365,7 @@ HWND D3D9Client::clbkCreateRenderWindow()
 	pBltGrpTgt		 = NULL;	// Let's set this NULL here, constructor is called only once. Not when exiting and restarting a simulation.
 	pNoiseTex		 = NULL;
 	surfBltTgt		 = NULL;	// This variable is not used, set it to NULL anyway
-	hMainThread		 = GetCurrentThread();
+	hMainThread		 = std::this_thread::get_id();
 
 	memset(&D3D9Stats, 0, sizeof(D3D9Stats));
 
@@ -372,7 +381,9 @@ HWND D3D9Client::clbkCreateRenderWindow()
 	hRenderWnd = GraphicsClient::clbkCreateRenderWindow();
 
 	LogAlw("Window Handle = %s",_PTR(hRenderWnd));
+    /* TODO(jec)
 	SetWindowText(hRenderWnd, "[D3D9Client]");
+    */
 
 	LogOk("Starting to initialize device and 3D environment...");
 
@@ -390,6 +401,7 @@ HWND D3D9Client::clbkCreateRenderWindow()
 	}
 
 	RECT rect;
+    /* TODO(jec)
 	GetClientRect(hRenderWnd, &rect);
 	HDC hWnd = GetDC(hRenderWnd);
 	HBRUSH hBr = CreateSolidBrush(RGB(0,0,0));
@@ -397,6 +409,7 @@ HWND D3D9Client::clbkCreateRenderWindow()
 	DeleteObject(hBr);
 	ReleaseDC(hRenderWnd, hWnd);
 	ValidateRect(hRenderWnd, NULL);	// avoids white flash after splash screen
+    */
 
 	pCaps = pFramework->GetCaps();
 
@@ -439,12 +452,16 @@ HWND D3D9Client::clbkCreateRenderWindow()
 	int x=0;
 	if (viewW>1282) x=4;
 
+    /* TODO(jec)
 	hLblFont1 = CreateFont(24+x, 0, 0, 0, 700, false, false, 0, 0, 3, 2, 1, 49, "Courier New");
 	hLblFont2 = CreateFont(18+x, 0, 0, 0, 700, false, false, 0, 0, 3, 2, 1, 49, "Courier New");
+    */
 
 	SplashScreen();  // Warning SurfNative is not yet fully initialized here
 
+    /* TODO(jec)
 	ShowWindow(hRenderWnd, SW_SHOW);
+    */
 
 	OutputLoadStatus("Building Shader Programs...",0);
 
@@ -852,8 +869,10 @@ void D3D9Client::clbkDestroyRenderWindow (bool fastclose)
 	SAFE_DELETE(defpen);
 	SAFE_DELETE(deffont);
 
+    /* TODO(jec)
 	DeleteObject(hLblFont1);
 	DeleteObject(hLblFont2);
+    */
 
 	D3D9Pad::GlobalExit();
 	D3D9Text::GlobalExit();
@@ -1121,7 +1140,9 @@ void D3D9Client::clbkRenderScene()
 
 	if (pDevice->TestCooperativeLevel()!=S_OK) {
 		bFailed=true;
+        /* TODO(jec)
 		MessageBoxA(pFramework->GetRenderWindow(),"Connection to Direct3DDevice is lost\nExit the simulation with Ctrl+Q and restart.\n\nAlt-Tabing not supported in a true fullscreen mode.\nDialog windows won't work with multi-sampling in a true fullscreen mode.","D3D9Client: Lost Device",0);
+        */
 		return;
 	}
 
@@ -1134,16 +1155,18 @@ void D3D9Client::clbkRenderScene()
 
 	if (hVes && Config->LabelDisplayFlags)
 	{
-		char Label[7] = "";
-		if (Config->LabelDisplayFlags & D3D9Config::LABEL_DISPLAY_RECORD && hVes->Recording()) strcpy_s(Label, 7, "Record");
-		if (Config->LabelDisplayFlags & D3D9Config::LABEL_DISPLAY_REPLAY && hVes->Playback()) strcpy_s(Label, 7, "Replay");
+        std::string Label {};
+		if (Config->LabelDisplayFlags & D3D9Config::LABEL_DISPLAY_RECORD && hVes->Recording()) Label = "Record";
+		if (Config->LabelDisplayFlags & D3D9Config::LABEL_DISPLAY_REPLAY && hVes->Playback()) Label = "Replay";
 
-		if (Label[0]!=0) {
+		if (!Label.empty()) {
 			pDevice->BeginScene();
 			RECT rect2 = _RECT(0, viewH - 60, viewW, viewH - 20);
-			pFramework->GetLargeFont()->DrawTextA(0, Label, 6, &rect2, DT_CENTER | DT_TOP, D3DCOLOR_XRGB(0, 0, 0));
+            /* TODO(jec)
+			pFramework->GetLargeFont()->DrawTextA(0, Label.c_str(), 6, &rect2, DT_CENTER | DT_TOP, D3DCOLOR_XRGB(0, 0, 0));
 			rect2.left-=4; rect2.top-=4;
-			pFramework->GetLargeFont()->DrawTextA(0, Label, 6, &rect2, DT_CENTER | DT_TOP, D3DCOLOR_XRGB(255, 255, 255));
+			pFramework->GetLargeFont()->DrawTextA(0, Label.c_str(), 6, &rect2, DT_CENTER | DT_TOP, D3DCOLOR_XRGB(255, 255, 255));
+            */
 			pDevice->EndScene();
 		}
 	}
@@ -1212,7 +1235,7 @@ bool D3D9Client::clbkDisplayFrame()
 		if (frmt>0) frame_timer++;
 		else        frame_timer--;
 		if (frame_timer>40) frame_timer=40;
-		Sleep(frame_timer);
+        std::this_thread::sleep_for(std::chrono::milliseconds{frame_timer});
 	}
 
 	return true;
@@ -1237,7 +1260,9 @@ static void FixOutOfScreenPositions (const HWND *hWnd, DWORD count)
 		for (DWORD i=0; i<count; ++i)
 		{
 			RECT rect;
+            /* TODO(jec)
 			GetWindowRect(hWnd[i], &rect);
+            */
 
 			int x = -1, y, w, h; // x != -1 indicates "position change needed"
 			if (rect.left < 0) {
@@ -1250,6 +1275,7 @@ static void FixOutOfScreenPositions (const HWND *hWnd, DWORD count)
 			}
 
 			// For the rest we need monitor information...
+            /* TODO(jec)
 			HMONITOR monitor = MonitorFromWindow(hWnd[i], MONITOR_DEFAULTTONEAREST);
 			MONITORINFO info;
 			info.cbSize = sizeof(MONITORINFO);
@@ -1272,6 +1298,7 @@ static void FixOutOfScreenPositions (const HWND *hWnd, DWORD count)
 				h = rect.bottom - rect.top;
 				MoveWindow(hWnd[i], x, y, w, h, FALSE);
 			}
+            */
 		}
 
 	}
@@ -1296,10 +1323,12 @@ bool D3D9Client::RenderWithPopupWindows()
 
 	if (!bFullscreen) {
 		for (DWORD i=0;i<count;i++) {
+            /* TODO(jec)
 			DWORD val = GetWindowLongA(hPopupWnd[i], GWL_STYLE);
 			if ((val&WS_SYSMENU)==0) {
 				SetWindowLongA(hPopupWnd[i], GWL_STYLE, val|WS_SYSMENU);
 			}
+            */
 		}
 	}
 
@@ -1616,16 +1645,20 @@ int D3D9Client::clbkVisEvent(OBJHANDLE hObj, VISHANDLE vis, DWORD msg, DWORD_PTR
 //
 void D3D9Client::PickTerrain(DWORD uMsg, int xpos, int ypos)
 {
+    /* TODO(jec)
 	bool bUD = (uMsg == WM_LBUTTONUP || uMsg == WM_RBUTTONUP || uMsg == WM_LBUTTONDOWN || uMsg == WM_RBUTTONDOWN);
 	bool bPrs = IsGenericProcEnabled(GENERICPROC_PICK_TERRAIN) && bUD;
 	bool bHov = IsGenericProcEnabled(GENERICPROC_HOVER_TERRAIN) && (uMsg == WM_MOUSEMOVE || uMsg == WM_MOUSEWHEEL);
+    */
 
+    /* TODO(jec)
 	if (bPrs || bHov) {
 		gcCore::PickGround pg = gcCore2::ScanScreen(xpos, ypos);
 		pg.msg = uMsg;
 		if (bPrs) MakeGenericProcCall(GENERICPROC_PICK_TERRAIN, sizeof(gcCore::PickGround), &pg);
 		if (bHov) MakeGenericProcCall(GENERICPROC_HOVER_TERRAIN, sizeof(gcCore::PickGround), &pg);
 	}
+    */
 }
 
 
@@ -1639,10 +1672,12 @@ LRESULT D3D9Client::RenderWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 	D3D9Pick pick;
 
+    /* TODO(jec)
 	if (hRenderWnd!=hWnd && uMsg!= WM_NCDESTROY) {
 		LogErr("Invalid Window !! RenderWndProc() called after calling clbkDestroyRenderWindow() uMsg=0x%X", uMsg);
 		return 0;
 	}
+    */
 
 	if (bRunning && DebugControls::IsActive()) {
 		// Must update camera to correspond MAIN_SCENE due to Pick() function,
@@ -1654,6 +1689,7 @@ LRESULT D3D9Client::RenderWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	if (pWM) if (pWM->MainWindowProc(hWnd, uMsg, wParam, lParam)) return 0;
 
 
+    /* TODO(jec)
 	switch (uMsg)
 	{
 		case WM_MOUSELEAVE:
@@ -1844,6 +1880,7 @@ LRESULT D3D9Client::RenderWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			if (bFullscreen) return 0;  // trap Alt-key
 			break;
 	}
+    */
 
 	if (!bRunning && uMsg>=0x0200 && uMsg<=0x020E) return 0;
 	return GraphicsClient::RenderWndProc (hWnd, uMsg, wParam, lParam);
@@ -2026,6 +2063,7 @@ bool oapi::D3D9Client::SaveSurfaceToFile (const D3DSURFACE_DESC* desc, D3DLOCKED
 
 bool oapi::D3D9Client::SaveSurfaceToClipboard (const D3DSURFACE_DESC* desc)
 {
+    /* TODO(jec)
 	if (OpenClipboard(hRenderWnd))
 	{
 		HDC hDC = GetDC(hRenderWnd);
@@ -2040,6 +2078,7 @@ bool oapi::D3D9Client::SaveSurfaceToClipboard (const D3DSURFACE_DESC* desc)
 		CloseClipboard();
 		return true;
 	}
+    */
 	return false;
 }
 
@@ -2129,9 +2168,8 @@ SURFHANDLE D3D9Client::clbkLoadSurface (const char *fname, DWORD attrib, bool bP
 
 HBITMAP D3D9Client::gcReadImageFromFile(const char *_path)
 {
-	char path[MAX_PATH];
-	sprintf_s(path, sizeof(path), "%s\\%s", OapiExtension::GetTextureDir(), _path);
-	return ReadImageFromFile(path);
+    auto path_ = std::filesystem::path{OapiExtension::GetTextureDir()} / _path;
+	return ReadImageFromFile(path_.c_str());
 }
 
 // ==============================================================
@@ -2344,7 +2382,7 @@ bool D3D9Client::clbkScaleBlt (SURFHANDLE tgt, DWORD tgtx, DWORD tgty, DWORD tgt
 		HALT();
 	}
 
-	POINT tp = { (long)tgtx, (long)tgty };
+	POINT tp = { (LONG)tgtx, (LONG)tgty };
 
 	const D3DSURFACE_DESC* td = SURFACE(tgt)->GetDesc();
 	const D3DSURFACE_DESC* sd = SURFACE(src)->GetDesc();
@@ -2477,12 +2515,15 @@ bool D3D9Client::clbkCopyBitmap(SURFHANDLE pdds, HBITMAP hbm, int x, int y, int 
 {
 	HDC                     hdcImage;
 	HDC                     hdc;
+    /* TODO(jec)
 	BITMAP                  bm;
+    */
 
 	if (hbm == NULL || pdds == NULL) return false;
 
 	// Select bitmap into a memoryDC so we can use it.
 	//
+    /* TODO(jec)
 	hdcImage = CreateCompatibleDC(NULL);
 
 	if (!hdcImage) OutputDebugString("createcompatible dc failed\n");
@@ -2495,22 +2536,28 @@ bool D3D9Client::clbkCopyBitmap(SURFHANDLE pdds, HBITMAP hbm, int x, int y, int 
 	dx = dx == 0 ? bm.bmWidth : dx;     // Use the passed size, unless zero
 	dy = dy == 0 ? bm.bmHeight : dy;
 
+    */
 
 	// Get size of surface.
 	//
 	DWORD surfW = SURFACE(pdds)->GetWidth();
 	DWORD surfH = SURFACE(pdds)->GetHeight();
 
-	RECT r = { 0, 0, (long)surfW, (long)surfH };
+	RECT r = { 0, 0, (LONG)surfW, (LONG)surfH };
 	POINT tp = { 0, 0 };
 
 	if (SURFACE(pdds)->IsGDISurface())
 	{
 		if (hdc = clbkGetSurfaceDC(pdds)) {
+            /* TODO(jec)
 			StretchBlt(hdc, 0, 0, surfW, surfH, hdcImage, x, y,	dx, dy, SRCCOPY);
+            */
+
 			clbkReleaseSurfaceDC(pdds, hdc);
 		}
+        /* TODO(jec)
 		DeleteDC(hdcImage);
+        */
 		SURFACE(pdds)->SetName("clbkCopyBitmap");
 		return true;
 	}
@@ -2526,7 +2573,9 @@ bool D3D9Client::clbkCopyBitmap(SURFHANDLE pdds, HBITMAP hbm, int x, int y, int 
 		{
 			if (S_OK == pSrf->GetDC(&hdc))
 			{
+                /* TODO(jec)
 				StretchBlt(hdc, 0, 0, surfW, surfH, hdcImage, x, y, dx, dy, SRCCOPY);
+                */
 
 				pSrf->ReleaseDC(hdc);
 
@@ -2537,7 +2586,9 @@ bool D3D9Client::clbkCopyBitmap(SURFHANDLE pdds, HBITMAP hbm, int x, int y, int 
 					HR(pDevice->UpdateSurface(pSrf, &r, SURFACE(pdds)->GetSurface(), &tp));
 				}
 
+                /* TODO(jec)
 				DeleteDC(hdcImage);
+                */
 				pSrf->Release();
 				SURFACE(pdds)->SetName("clbkCopyBitmap");
 				return true;
@@ -2548,7 +2599,9 @@ bool D3D9Client::clbkCopyBitmap(SURFHANDLE pdds, HBITMAP hbm, int x, int y, int 
 			}		
 		}
 	}
+    /* TODO(jec)
 	DeleteDC(hdcImage);
+    */
 	return false;
 }
 
@@ -2607,10 +2660,14 @@ HDC D3D9Client::clbkGetSurfaceDC(SURFHANDLE surf)
 				if (bGDIClear) {
 					bGDIClear = false;
 					DWORD color = 0xF08040; // BGR "Color Key" value for transparency
+                    /* TODO(jec)
 					HBRUSH hBrush = CreateSolidBrush((COLORREF)color);
+                    */
 					RECT r = _RECT( 0, 0, viewW, viewH );
+                    /* TODO(jec)
 					FillRect(hDC, &r, hBrush);
 					DeleteObject(hBrush);
+                    */
 				}
 				return hDC;
 			}
@@ -2761,7 +2818,7 @@ void D3D9Client::WriteLog(const char *msg) const
 {
 	_TRACE;
 	char cbuf[256];
-	sprintf_s(cbuf, 256, "D3D9: %s", msg);
+    std::snprintf(cbuf, 256, "D3D9: %s", msg);
 	oapiWriteLog(cbuf);
 }
 
@@ -2772,8 +2829,8 @@ bool D3D9Client::OutputLoadStatus(const char *txt, int line)
 
 	if (bRunning) return false;
 
-	if (line == 1) strcpy_s(pLoadItem, 127, txt); else
-	if (line == 0) strcpy_s(pLoadLabel, 127, txt), pLoadItem[0] = '\0'; // New top line => clear 2nd line
+	if (line == 1) pLoadItem = txt;  else
+	if (line == 0) pLoadLabel = txt, pLoadItem.clear(); // New top line => clear 2nd line
 
 	if (pTextScreen) {
 
@@ -2789,15 +2846,16 @@ bool D3D9Client::OutputLoadStatus(const char *txt, int line)
 		HDC hDC;
 		HR(pTextScreen->GetDC(&hDC));
 
+        /* TODO(jec)
 		HFONT hO = (HFONT)SelectObject(hDC, hLblFont1);
 		SetTextColor(hDC, 0xE0A0A0);
 		SetBkMode(hDC,TRANSPARENT);
 		SetTextAlign(hDC, TA_LEFT|TA_TOP);
 
-		TextOut(hDC, 2, 2, pLoadLabel, lstrlen(pLoadLabel));
+		TextOut(hDC, 2, 2, pLoadLabel.c_str(), pLoadLabel.size());
 
 		SelectObject(hDC, hLblFont2);
-		TextOut(hDC, 2, 36, pLoadItem, lstrlen(pLoadItem));
+		TextOut(hDC, 2, 36, pLoadItem.c_str(), pLoadItem.size());
 
 		HPEN pen = CreatePen(PS_SOLID,1,0xE0A0A0);
 		HPEN po = (HPEN)SelectObject(hDC, pen);
@@ -2808,6 +2866,7 @@ bool D3D9Client::OutputLoadStatus(const char *txt, int line)
 		SelectObject(hDC, po);
 		SelectObject(hDC, hO);
 		DeleteObject(pen);
+        */
 
 		HR(pTextScreen->ReleaseDC(hDC));
 		HR(pDevice->StretchRect(pSplashScreen, NULL, pBackBuffer, NULL, D3DTEXF_POINT));
@@ -2822,8 +2881,10 @@ bool D3D9Client::OutputLoadStatus(const char *txt, int line)
 		}
 
 		// Prevent "Not Responding" during loading
+        /* TODO(jec)
 		MSG msg;
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+        */
 	}
 	return false;
 }
@@ -2840,7 +2901,9 @@ void D3D9Client::SplashScreen()
 
 	RECT rS;
 
+    /* TODO(jec)
 	GetWindowRect(hRenderWnd, &rS);
+    */
 
 	LogAlw("Splash Window Size = [%u, %u]", rS.right - rS.left, rS.bottom - rS.top);
 	LogAlw("Splash Window LeftTop = [%d, %d]", rS.left, rS.top);
@@ -2852,11 +2915,15 @@ void D3D9Client::SplashScreen()
 
 	D3DXIMAGE_INFO Info;
 
+    /* TODO(jec):  Hacking the splash screen bitmap from main exe resources.
 	HMODULE hOrbiter =  GetModuleHandleA("orbiter.exe");
 	HRSRC hRes = FindResourceA(hOrbiter, MAKEINTRESOURCEA(292), "IMAGE");
 	HGLOBAL hImage = LoadResource(hOrbiter, hRes);
 	LPVOID pData = LockResource(hImage);
 	DWORD size = SizeofResource(hOrbiter, hRes);
+    */
+    LPVOID pData = nullptr;
+    DWORD size = 0;
 
 	// Splash screen image is 1920 x 1200 pixel
 	double scale = min(viewW / 1920.0, viewH / 1200.0);
@@ -2876,6 +2943,7 @@ void D3D9Client::SplashScreen()
 	HDC hDC;
 	HR(pSplashScreen->GetDC(&hDC));
 
+    /* TODO(jec)
 	LOGFONTA fnt; memset((void *)&fnt, 0, sizeof(LOGFONT));
 
 	fnt.lfHeight		 = 18;
@@ -2892,6 +2960,7 @@ void D3D9Client::SplashScreen()
 	HFONT hO = (HFONT)SelectObject(hDC, hF);
 	SetTextColor(hDC, 0xE0A0A0);
 	SetBkMode(hDC,TRANSPARENT);
+    */
 
 	const char *months[]={"???","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","???"};
 
@@ -2906,7 +2975,7 @@ void D3D9Client::SplashScreen()
 	char dataA[]={"Using D3D9Client (Release Build)"};
 #endif
 
-	char dataB[128]; sprintf_s(dataB,128,"Build %s %lu 20%lu [%u]", months[m], d, y, oapiGetOrbiterVersion());
+	char dataB[128]; std::snprintf(dataB,128,"Build %s %lu 20%lu [%u]", months[m], d, y, oapiGetOrbiterVersion());
 	char dataD[] = { "Warning: Config folder not present in /Modules/Server/. Please create symbolic link." };
 	//char dataE[] = { "Note: Cubic Interpolation is use... Consider using linear for better elevation matching" };
 	//char dataF[] = { "Note: Terrain flattening offline due to cubic interpolation" };
@@ -2914,23 +2983,33 @@ void D3D9Client::SplashScreen()
 	int xc = viewW*750/1280;
 	int yc = viewH*545/800;
 
+    /* TODO(jec)
 	TextOut(hDC, xc, yc + 0*20, "ORBITER Space Flight Simulator",30);
 	TextOut(hDC, xc, yc + 1*20, dataB, lstrlen(dataB));
 	TextOut(hDC, xc, yc + 2*20, dataA, lstrlen(dataA));
+    */
 
 	DWORD VPOS = viewH - 50;
 	DWORD LSPACE = 20;
 
+    /* TODO(jec)
 	SetTextAlign(hDC, TA_CENTER);
-	DWORD cattrib = GetFileAttributes("Modules/Server/Config");
+    */
 
-	if ((cattrib&0x10)==0 || cattrib==INVALID_FILE_ATTRIBUTES) {
+    auto configPath = std::filesystem::path{"Modules"} / "Server" / "Config";
+    if (!std::filesystem::exists(configPath) ||
+        !std::filesystem::is_directory(configPath)) {
+
+        /* TODO(jec)
 		TextOut(hDC, viewW/2, VPOS, dataD, lstrlen(dataD));
+        */
 		VPOS -= LSPACE;
 	}
 
+    /* TODO(jec)
 	SelectObject(hDC, hO);
 	DeleteObject(hF);
+    */
 
 	HR(pSplashScreen->ReleaseDC(hDC));
 
@@ -2973,7 +3052,7 @@ oapi::Sketchpad *D3D9Client::clbkGetSketchpad_const(SURFHANDLE surf) const
 {
 	if (ChkDev(__FUNCTION__)) return NULL;
 
-	if (GetCurrentThread() != hMainThread) {
+	if (std::this_thread::get_id() != hMainThread) {
 		LogErr("Sketchpad called from a worker thread !");
 		HALT();
 	}

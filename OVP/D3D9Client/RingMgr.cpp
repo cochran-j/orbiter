@@ -14,6 +14,9 @@
 #include "RingMgr.h"
 #include "D3D9Catalog.h"
 
+#include <filesystem>
+#include <string>
+
 using namespace oapi;
 
 void ReleaseTex(LPDIRECT3DTEXTURE9 pTex);
@@ -62,12 +65,11 @@ void RingManager::SetMeshRes(DWORD res)
 
 DWORD RingManager::LoadTextures ()
 {
-	char fname[128] = { '\0' };
-	char temp[128];
-	char path[MAX_PATH] = { '\0' };
+    std::string fname {}; fname.resize(128);
+    std::string temp {};
+    std::filesystem::path path_ {};
 
-
-	oapiGetObjectName (vp->Object(), fname, ARRAYSIZE(fname));
+	oapiGetObjectName (vp->Object(), fname.data(), fname.size());
 
 	LPDIRECT3DDEVICE9 pDev = gc->GetDevice();
 
@@ -75,17 +77,20 @@ DWORD RingManager::LoadTextures ()
 
 	int size = max(min((int)caps->MaxTextureWidth, 8192), 2048);
 
-	sprintf_s(temp, ARRAYSIZE(temp), "%s_ring_%d.dds", fname, size);
-	if (gc->TexturePath(temp, path) &&
-	    D3DXCreateTextureFromFileExA(pDev, path, 0, 0, D3DFMT_FROM_FILE, 0, D3DFMT_FROM_FILE, D3DPOOL_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &pTex) == S_OK)
+    temp = fname;
+    temp += "_ring_";
+    temp += std::to_string(size);
+    temp += ".dds";
+	if (gc->TexturePath(temp, path_) &&
+	    D3DXCreateTextureFromFileExA(pDev, path_.c_str(), 0, 0, D3DFMT_FROM_FILE, 0, D3DFMT_FROM_FILE, D3DPOOL_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &pTex) == S_OK)
 	{
-		LogAlw("High resolution ring texture loaded [%s]", path);
+		LogAlw("High resolution ring texture loaded [%s]", path_.c_str());
 	}
 	
 	// Fallback for old method
-	strcat_s(fname, ARRAYSIZE(fname), "_ring.tex");
+    fname += "_ring.tex";
 	
-	return LoadPlanetTextures(fname, tex, 0, MAXRINGRES);
+	return LoadPlanetTextures(fname.c_str(), tex, 0, MAXRINGRES);
 }
 
 bool RingManager::Render(LPDIRECT3DDEVICE9 dev, D3DXMATRIX &mWorld, bool front)

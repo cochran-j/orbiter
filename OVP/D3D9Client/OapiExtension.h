@@ -8,8 +8,9 @@
 #ifndef __OAPIEXTENSION_H
 #define __OAPIEXTENSION_H
 
-#include <Windows.h>
+#include <windows.h>
 #include <string>
+#include <filesystem>
 #include "D3D9Util.h"
 
 class D3D9Config;
@@ -154,11 +155,11 @@ private:
 	// OrbiterSound 4.0 helper
 	static bool isOrbiter2010;          ///< Whether we run Orbiter  2010 (and derivatives)
 	static bool orbiterSound40;
-	static std::string configDir;       ///< Value of Orbiters ConfigDir parameter
-	static std::string meshDir;         ///< Value of Orbiters MeshDir parameter
-	static std::string textureDir;      ///< Value of Orbiters TextureDir parameter
-	static std::string hightexDir;      ///< Value of Orbiters HightexDir parameter
-	static std::string scenarioDir;     ///< Value of Orbiters ScenarioDir config parameter
+	static std::filesystem::path configDir;       ///< Value of Orbiters ConfigDir parameter
+	static std::filesystem::path meshDir;         ///< Value of Orbiters MeshDir parameter
+	static std::filesystem::path textureDir;      ///< Value of Orbiters TextureDir parameter
+	static std::filesystem::path hightexDir;      ///< Value of Orbiters HightexDir parameter
+	static std::filesystem::path scenarioDir;     ///< Value of Orbiters ScenarioDir config parameter
 	static std::string startupScenario; ///< Scenario-Path if Orbiters was started with "-s {Scenario}" command line parameter
 	// WINE detection
 	static bool runsUnderWINE;          ///< Whether Orbiter runs under WINE

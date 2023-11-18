@@ -40,6 +40,8 @@ namespace gcGUI
 
 typedef void * HNODE;
 
+class gcGUIApp;
+
 class gcGUIBase
 {
 	friend class gcGUIApp;

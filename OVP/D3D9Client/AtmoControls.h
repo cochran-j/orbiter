@@ -72,7 +72,7 @@ namespace AtmoControls {
 	void		UpdateSliders();
 	bool		Visualize();
 
-	INT_PTR CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	INT_PTR WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // !__ATMOCONTROLS_H

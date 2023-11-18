@@ -27,10 +27,12 @@
 #include "D3D9Config.h"
 #include "VPlanet.h"
 
+/* TODO(jec)
 #pragma warning(push)
 #pragma warning(disable : 4838)
 #include <xnamath.h>
 #pragma warning(pop)
+*/
 
 typedef struct {
 	float rad;
@@ -44,22 +46,28 @@ void CheckMeshStats(MESHHANDLE hMesh, MeshStats *stats)
 	int nGrp = oapiMeshGroupCount(hMesh);
 	if (nGrp == 0) return;
 
+    /* TODO(jec)
 	XMVECTOR mi = XMLoadFloat3(ptr(XMFLOAT3(1e12f, 1e12f, 1e12f)));
 	XMVECTOR mx = -mi;
+    */
 
 	for (int i = 0; i < nGrp; i++) {
 
 		MESHGROUPEX *grp = oapiMeshGroupEx(hMesh, i);
-		
+	
+        /* TODO(jec)
 		for (DWORD v = 0; v < grp->nVtx; v++) {
 			XMVECTOR x = XMLoadFloat3((XMFLOAT3 *)&grp->Vtx[v].x);
 			mi = XMVectorMin(mi, x);
 			mx = XMVectorMax(mx, x);
 		}
+        */
 	}
 
+    /* TODO(jec)
 	XMStoreFloat3((XMFLOAT3 *)&stats->min.x, mi);
 	XMStoreFloat3((XMFLOAT3 *)&stats->max.x, mx);
+    */
 
 	stats->width = stats->max.x - stats->min.x;
 	stats->height = stats->max.y - stats->min.y;

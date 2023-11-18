@@ -23,6 +23,7 @@
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <vector>
+#include <string>
 
 const DWORD SPEC_DEFAULT = (DWORD)(-1); // "default" material/texture flag
 const DWORD SPEC_INHERIT = (DWORD)(-2); // "inherit" material/texture flag
@@ -209,7 +210,7 @@ public:
 
 	void			SetName(const char *name);
 	void			SetName(UINT idx);
-	const char *	GetName() const { return name; }
+	const char *	GetName() const { return name.c_str(); }
 
 	void			SetDefaultShader(WORD shader) { DefShader = shader; bMtrlModidied = true; }
 	WORD			GetDefaultShader() const { return DefShader; }
@@ -367,7 +368,7 @@ private:
 	bool bModulateMatAlpha;     // mix material and texture alpha channels
 	bool bGlobalTF;				// Mesh has a valid mTransform matrix
 
-	char name[128];
+    std::string name;
 
 	static MeshShader* s_pShader[16];
 };

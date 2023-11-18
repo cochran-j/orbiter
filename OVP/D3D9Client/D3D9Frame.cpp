@@ -21,6 +21,9 @@
 #include "D3D9Config.h"
 #include "OapiExtension.h"
 
+#include <thread>
+#include <chrono>
+
 using namespace oapi;
 
 IDirect3DVertexDeclaration9	*pMeshVertexDecl = NULL;
@@ -54,7 +57,9 @@ CD3DFramework9::CD3DFramework9()
 	if (pD3D==NULL) {
 		LogErr("ERROR: [Direct3D9 Creation Failed]");
 		LogErr(d3dmessage);
+        /* TODO(jec)
 		MessageBoxA(NULL, d3dmessage, "D3D9Client Initialization Failed",MB_OK);
+        */
 	}
 }
 
@@ -128,7 +133,7 @@ HRESULT CD3DFramework9::DestroyObjects ()
 	SAFE_RELEASE(pSketchpadDecl);
 	SAFE_RELEASE(pLocalLightsDecl);
 
-	Sleep(200);
+    std::this_thread::sleep_for(std::chrono::milliseconds{200});
 
 	if (pDevice->Reset(&d3dPP)==S_OK)	LogAlw("[DirectX Device Reset Succesfull]");
 	else								LogWrn("[Failed to Reset DirectX Device] (Likely blocked by undeleted resources)");
@@ -201,11 +206,13 @@ HRESULT CD3DFramework9::Initialize(HWND _hWnd, GraphicsClient::VIDEODATA *vData)
 			case 1:
 			{
 				dwDisplayMode = 1;
+                /* TODO(jec)
 				int x = GetSystemMetrics(SM_CXSCREEN);
 				int y = GetSystemMetrics(SM_CYSCREEN);
 				if (vData->pageflip) x = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 				SetWindowLongA(hWnd, GWL_STYLE, WS_CLIPCHILDREN | WS_VISIBLE);
 				SetWindowPos(hWnd,0, 0,0, x, y, SWP_SHOWWINDOW);
+                */
 				bIsFullscreen = false;
 			}
 			break;
@@ -215,11 +222,13 @@ HRESULT CD3DFramework9::Initialize(HWND _hWnd, GraphicsClient::VIDEODATA *vData)
 			{
 				dwDisplayMode = 1;
 				RECT rect;
+                /* TODO(jec)
 				SystemParametersInfo(SPI_GETWORKAREA,0,&rect,0);
 				SetWindowLongA(hWnd, GWL_STYLE, WS_CLIPCHILDREN | WS_VISIBLE);
 				int x = GetSystemMetrics(SM_CXSCREEN);
 				if (vData->pageflip) x = rect.right-rect.left;
 				SetWindowPos(hWnd,0,rect.left, rect.top, x, rect.bottom - rect.top, SWP_SHOWWINDOW);
+                */
 				bIsFullscreen = false;
 			}
 			break;
@@ -227,8 +236,10 @@ HRESULT CD3DFramework9::Initialize(HWND _hWnd, GraphicsClient::VIDEODATA *vData)
 	}
 	else {
 		dwDisplayMode = 2;
+        /* TODO(jec)
 		LONG x = GetWindowLongA(hWnd, GWL_STYLE);
 		SetWindowLongA(hWnd, GWL_STYLE, x | WS_CLIPCHILDREN | WS_VISIBLE);
+        */
 	}
 
 	// Hardware CAPS Checks --------------------------------------------------
@@ -404,7 +415,9 @@ HRESULT CD3DFramework9::Initialize(HWND _hWnd, GraphicsClient::VIDEODATA *vData)
 
 	if (bFail) {
 		oapiWriteLog((char*)"D3D9: FAIL: !! Graphics card doesn't meet the minimum requirements to run !!");
+        /* TODO(jec)
 		MessageBoxA(NULL, "Graphics card doesn't meet the minimum requirements to run D3D9Client.", "D3D9Client Error",MB_OK);
+        */
 		return -1;
 	}
 
@@ -446,26 +459,34 @@ HRESULT CD3DFramework9::Initialize(HWND _hWnd, GraphicsClient::VIDEODATA *vData)
 	D3DXFONT_DESC fontDesc;
 	fontDesc.Height          = 30;
 	fontDesc.Width           = 22;
+    /*TODO(jec)
 	fontDesc.Weight          = FW_BOLD;
+    */
 	fontDesc.MipLevels       = 0;
 	fontDesc.Italic          = false;
+    /* TODO(Jec)
 	fontDesc.CharSet         = DEFAULT_CHARSET;
 	fontDesc.OutputPrecision = OUT_DEFAULT_PRECIS;
 	fontDesc.Quality         = ANTIALIASED_QUALITY;
 	fontDesc.PitchAndFamily  = DEFAULT_PITCH | FF_DONTCARE;
+    */
 	strcpy(fontDesc.FaceName, "Arial");
 
 	HR(D3DXCreateFontIndirect(pDevice, &fontDesc, &pLargeFont));
 
 	fontDesc.Height          = 16;
 	fontDesc.Width           = 10;
+    /* TODO(jec)
 	fontDesc.Weight          = FW_NORMAL;
+    */
 	fontDesc.MipLevels       = 0;
 	fontDesc.Italic          = false;
+    /* TODO(jec)
 	fontDesc.CharSet         = DEFAULT_CHARSET;
 	fontDesc.OutputPrecision = OUT_DEFAULT_PRECIS;
 	fontDesc.Quality         = ANTIALIASED_QUALITY;
 	fontDesc.PitchAndFamily  = DEFAULT_PITCH | FF_DONTCARE;
+    */
 	strcpy(fontDesc.FaceName, "Arial");
 
 	HR(D3DXCreateFontIndirect(pDevice, &fontDesc, &pSmallFont));
@@ -484,7 +505,9 @@ HRESULT CD3DFramework9::CreateFullscreenMode()
 
 	// Get the dimensions of the screen bounds
 	// Store the rectangle which contains the renderer
+    /* TODO(jec)
 	SetRect(&rcScreenRect, 0, 0, dwRenderWidth, dwRenderHeight);
+    */
 
 	HR(pD3D->CheckDeviceType(Adapter, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DFMT_X8R8G8B8, false));
 
@@ -549,7 +572,9 @@ HRESULT CD3DFramework9::CreateWindowedMode()
 	_TRACE;
 
 	// Get the dimensions of the viewport and screen bounds
+    /* TODO(jec)
 	GetClientRect(hWnd, &rcScreenRect);
+    */
 	
 	// What is this ?!!
 	//ClientToScreen(hWnd, (POINT*)&rcScreenRect.left);

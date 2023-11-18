@@ -1,4 +1,7 @@
+/* TODO(jec)
 #include <commctrl.h>
+*/
+
 // Fix Microsoft Visual Studio Version 2012 resource compiler RC4011 warnings.
 // Instead of #include <Richedit.h>
 #if defined(RC_INVOKED)

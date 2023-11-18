@@ -18,7 +18,9 @@
 // =================================================================================================================================
 
 #include <windows.h>
+/* TODO(jec)
 #include <windowsx.h>
+*/
 
 #include <stdio.h>
 #include <math.h>
@@ -64,7 +66,9 @@ public:
 	 */
 	static void GlobalExit();
 
+    /* TODO(jec)
 	void		SetCharSet(int charset=ANSI_CHARSET);	// Must be set before Init
+    */
 
 				// Init Will Create Charters from "first" (32:space) to "last" (255 ???)
 	bool        Init(HFONT hFont);
@@ -94,7 +98,9 @@ public:
 	float		PrintSkp (class D3D9Pad *pSkp, float x, float y, const char *str, int len = -1, bool bBox = false);
 	float		PrintSkp (class D3D9Pad *pSkp, float x, float y, LPCWSTR str, int len = -1, bool bBox = false);
 
+    /* TODO(jec)
     void		GetD3D9TextMetrics(TEXTMETRIC *t) { memcpy(t, &tm, sizeof(TEXTMETRIC)); }
+    */
 
 private:
 
@@ -117,8 +123,10 @@ private:
 	LPDIRECT3DDEVICE9	pDev;
 	LPDIRECT3DTEXTURE9	pTex;
 	D3D9FontData		*FontData;  ///< Array of font data information ( [c - first] )
+    /* TODO(jec)
 	TEXTMETRIC			tm;         ///< Font attributes
 	LOGFONT             lf;         ///< Font attributes
+    */
 	ID3DXFont           *wfont;     ///< WCHAR font
 
 	// Rendering pipeline configuration

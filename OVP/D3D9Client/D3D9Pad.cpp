@@ -13,6 +13,23 @@
 #include "Log.h"
 #include "Mesh.h"
 
+#include <mutex>
+#include <thread>
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
+static bool caseInsensitiveEquals(const std::string_view& str1,
+                                  const std::string_view& str2) {
+
+    return std::equal(str1.begin(), str1.end(),
+                      str2.begin(), str2.end(),
+                      [](char c1, char c2) {
+                          return std::tolower(static_cast<unsigned char>(c1)) ==
+                                 std::tolower(static_cast<unsigned char>(c2));
+                      });
+}
+
 using namespace oapi;
 
 
@@ -71,8 +88,6 @@ void D3D9Pad::D3D9TechInit(D3D9Client *_gc, LPDIRECT3DDEVICE9 pDevice)
 	gc = _gc;
 	log = NULL;
 
-	InitializeCriticalSectionAndSpinCount(&LogCrit, 256);
-
 
 #ifdef SKPDBG
 	if (fopen_s(&log, "Sketchpad.log", "w+")) { log = NULL; } // Failed
@@ -90,7 +105,7 @@ void D3D9Pad::D3D9TechInit(D3D9Client *_gc, LPDIRECT3DDEVICE9 pDevice)
 	// Initialize Techniques -------------------------------------------------------------------------
 	//
 	char name[256];
-	sprintf_s(name, 256, "Modules/D3D9Client/Sketchpad.fx");
+    std::snprintf(name, 256, "Modules/D3D9Client/Sketchpad.fx");
 
 	// Create the Effect from a .fx file.
 	ID3DXBuffer* errors = 0;
@@ -99,8 +114,10 @@ void D3D9Pad::D3D9TechInit(D3D9Client *_gc, LPDIRECT3DDEVICE9 pDevice)
 
 	if (errors) {
 		LogErr("Effect Error: %s",(char*)errors->GetBufferPointer());
+        /* TODO(jec)
 		MessageBoxA(0, (char*)errors->GetBufferPointer(), "Sketchpad.fx Error", 0);
 		FatalAppExitA(0,"Critical error has occured. See Orbiter.log for details");
+        */
 	}
 
 	if (FX==0) {
@@ -112,8 +129,8 @@ void D3D9Pad::D3D9TechInit(D3D9Client *_gc, LPDIRECT3DDEVICE9 pDevice)
 	if (Config->ShaderDebug) {
 		LPD3DXBUFFER pBuffer = NULL;
 		if (D3DXDisassembleEffect(FX, true, &pBuffer) == S_OK) {
-			FILE *fp = NULL;
-			if (!fopen_s(&fp, "Sketchpad_asm.html", "w")) {
+			FILE *fp = fopen("Sketchpad_asm.html", "w");
+			if (fp) {
 				fwrite(pBuffer->GetBufferPointer(), 1, pBuffer->GetBufferSize(), fp);
 				fclose(fp);
 			}
@@ -180,8 +197,6 @@ void D3D9Pad::GlobalExit()
 
 	if (log) fclose(log);
 	log = NULL;
-
-	DeleteCriticalSection(&LogCrit);
 }
 
 // ===============================================================================================
@@ -189,16 +204,16 @@ void D3D9Pad::GlobalExit()
 void D3D9Pad::Log(const char *format, ...) const
 {
 	if (log == NULL) return;
-	EnterCriticalSection(&LogCrit);
+    std::lock_guard g {LogCrit};
+
 	char ErrBuf[1024];
-	DWORD th = GetCurrentThreadId();
+    auto th = std::this_thread::get_id();
 	va_list args;
 	va_start(args, format);
-	_vsnprintf_s(ErrBuf, 1024, 1024, format, args);
+    std::vsnprintf(ErrBuf, 1024, format, args);
 	va_end(args);
-	fprintf_s(log, "<0x%X> [%s] %s\n", th, _PTR(this), ErrBuf);
+    std::fprintf(log, "<0x%X> [%s] %s\n", th, _PTR(this), ErrBuf);
 	fflush(log);
-	LeaveCriticalSection(&LogCrit);
 }
 
 // ===============================================================================================
@@ -245,7 +260,9 @@ void D3D9Pad::LoadDefaults()
 	vmode = ORTHO;
 	tCurrent = NONE;
 	Change = SKPCHG_ALL;
+    /* TODO(jec)
 	bkmode = TRANSPARENT;
+    */
 	dwBlendState = Sketchpad::BlendState::ALPHABLEND;
 
 	bColorComp = true;
@@ -284,14 +301,13 @@ void D3D9Pad::LoadDefaults()
 //
 D3D9Pad::D3D9Pad(SURFHANDLE s, const char *_name) : Sketchpad(s),
 	_isSaveBuffer(false),
-	_saveBuffer(NULL),
-	_saveBufferSize(0)
+	_saveBuffer("")
 {
 #ifdef SKPDBG 
 	Log("#### Sketchpad Interface Created");
 #endif
-	if (_name) strcpy_s(name, 32, _name);
-	else strcpy_s(name, 32, "NoName");
+	if (_name) name = _name;
+	else name = "NoName";
 	Reset();
 	LoadDefaults();
 }
@@ -305,14 +321,13 @@ D3D9Pad::D3D9Pad(SURFHANDLE s, const char *_name) : Sketchpad(s),
 //
 D3D9Pad::D3D9Pad(const char *_name) : Sketchpad(NULL),
 	_isSaveBuffer(false),
-	_saveBuffer(NULL),
-	_saveBufferSize(0)
+	_saveBuffer("")
 {
 #ifdef SKPDBG 
 	Log("#### Sketchpad Interface Created (NoTgt)");
 #endif
-	if (_name) strcpy_s(name, 32, _name);
-	else strcpy_s(name, 32, "NoName");
+	if (_name) name = _name;
+	else name = "NoName";
 	Reset();
 	LoadDefaults();
 }
@@ -327,7 +342,6 @@ D3D9Pad::~D3D9Pad ()
 	Log("#### Sketchpad Interface Deleted");
 #endif
 	assert(bBeginDraw == false);
-	SAFE_DELETEA(_saveBuffer);
 }
 
 
@@ -388,7 +402,7 @@ void D3D9Pad::BeginDrawing(LPDIRECT3DSURFACE9 pRenderTgt, LPDIRECT3DSURFACE9 pDe
 	
 	pTgt = pRenderTgt;
 	pDep = pDepthStensil;
-	tgt = { 0, 0, (long)tgt_desc.Width, (long)tgt_desc.Height };
+	tgt = { 0, 0, (LONG)tgt_desc.Width, (LONG)tgt_desc.Height };
 	Change = SKPCHG_ALL;
 }
 
@@ -773,7 +787,9 @@ HDC D3D9Pad::GetDC()
 	if ((*cf & OAPISURF_SKP_GDI_WARN) == 0) {
 		*cf |= OAPISURF_SKP_GDI_WARN;
 		LogErr("Call to obsolete Sketchpad::GetDC() detected. Returned NULL");
+        /* TODO(jec):  Hits breakpoint??  On some trap condition.
 		if (Config->DebugBreak) DebugBreak();
+        */
 	}
 
 	return NULL;
@@ -889,10 +905,12 @@ void D3D9Pad::SetBackgroundMode(BkgMode mode)
 {
 	// No Change required
 
+    /* TODO(jec)
 	switch (mode) {
 		case BK_TRANSPARENT: bkmode = TRANSPARENT; break;
 		case BK_OPAQUE:      bkmode = OPAQUE; break;
 	}
+    */
 }
 
 
@@ -900,10 +918,14 @@ void D3D9Pad::SetBackgroundMode(BkgMode mode)
 //
 DWORD D3D9Pad::GetCharSize ()
 {
+    /* TODO(jec)
 	TEXTMETRIC tm;
+    */
 	if (cfont==NULL) return 0;
+    /* TODO(jec)
 	static_cast<const D3D9PadFont *>(cfont)->pFont->GetD3D9TextMetrics(&tm);
 	return MAKELONG(tm.tmHeight-tm.tmInternalLeading, tm.tmAveCharWidth);
+    */
 }
 
 
@@ -911,10 +933,14 @@ DWORD D3D9Pad::GetCharSize ()
 //
 DWORD D3D9Pad::GetLineHeight () // ... *with* "internal leading"
 {
+    /* TODO(jec)
 	TEXTMETRIC tm;
+    */
 	if (cfont == NULL) return 0;
+    /* TODO(jec)
 	static_cast<const D3D9PadFont *>(cfont)->pFont->GetD3D9TextMetrics(&tm);
 	return tm.tmHeight;
+    */
 }
 
 
@@ -957,7 +983,9 @@ bool D3D9Pad::HasPen() const
 {
 	if (QPen.bEnabled) return true;
 	if (cpen==NULL) return false;
+    /* TODO(jec)
 	if (static_cast<D3D9PadPen*>(cpen)->style==PS_NULL) return false;
+    */
 	return true;
 }
 
@@ -975,9 +1003,12 @@ void D3D9Pad::IsLineTopologyAllowed()
 //
 bool D3D9Pad::IsDashed() const
 {
+    /* TODO(jec):  Qt support already here? */
 	if (QPen.bEnabled) return QPen.style == 2;
 	if (cpen==NULL) return false;
+    /* TODO(jec)
 	if (static_cast<D3D9PadPen*>(cpen)->style==PS_DOT) return true;
+    */
 	return false;
 }
 
@@ -1058,16 +1089,16 @@ bool D3D9Pad::TextBox (int x1, int y1, int x2, int y2, const char *str, int len)
 
 	ToSaveBuffer(str, len);
 
-	char *pch, *pEnd =_saveBuffer+len; // <= point to terminating zero
-	for (pch = strtok(_saveBuffer, "\n"); pch != NULL; pch = strtok(NULL, "\n"))
+	char *pch, *pEnd =_saveBuffer.data()+len; // <= point to terminating zero
+	for (pch = strtok(_saveBuffer.data(), "\n"); pch != NULL; pch = strtok(NULL, "\n"))
 	{
-		int _len = lstrlen(pch);
+		int _len = std::strlen(pch);
 		if (_len>1) { WrapOneLine(pch, _len, x2-x1); }
 		if (pch+_len < pEnd) { *(pch+_len) = '\n'; } // strtok splits by inserting '\0's => revert'em
 	}
 
 	// "forEach(line...)" split multi-lines
-	for (pch = strtok(_saveBuffer, "\n"); pch != NULL; pch = strtok(NULL, "\n")) {
+	for (pch = strtok(_saveBuffer.data(), "\n"); pch != NULL; pch = strtok(NULL, "\n")) {
 		result = Text(x1, y1, pch, -1); // len is irrelevant for pointer into 'save' buffer
 		y1 += lineSpace;
 	}
@@ -1105,7 +1136,9 @@ bool D3D9Pad::Text (int x, int y, const char *str, int len)
 
 	pText->SetRotation(static_cast<D3D9PadFont *>(cfont)->rotation);
 	pText->SetScaling(1.0f);
+    /* TODO(jec)
 	pText->PrintSkp(this, float(x - 1), float(y - 1), str, len, (bkmode == OPAQUE));
+    */
 
 	return true;
 }
@@ -1387,13 +1420,8 @@ void D3D9Pad::Lines(const FVECTOR2 *pt, int nlines)
 // Copy string to internal 'save' buffer, so it can be changed (adding terminating zeroes, etc.)
 void D3D9Pad::ToSaveBuffer (const char *str, int len)
 {
-	if (_saveBufferSize < len)
-	{ // re-allloc bigger space
-		if (_saveBuffer) { delete[] _saveBuffer; }
-		_saveBuffer = new char[len + 1];
-		_saveBufferSize = len;
-	}
-	strncpy_s(_saveBuffer, len + 1, str, len);
+    _saveBuffer = str;
+    _saveBuffer += '\0'; // Extra null character for strtok.
 	_isSaveBuffer = true;
 }
 
@@ -1794,7 +1822,7 @@ LPDIRECT3DDEVICE9 D3D9Pad::pDev = 0;
 LPDIRECT3DTEXTURE9 D3D9Pad::pNoise = 0;
 
 FILE* D3D9Pad::log = 0;
-CRITICAL_SECTION D3D9Pad::LogCrit;
+std::mutex D3D9Pad::LogCrit{};
 
 
 // ======================================================================
@@ -1809,10 +1837,10 @@ D3D9PadFont::D3D9PadFont(int height, bool prop, const char *face, FontStyle styl
 	const char *def_serifface = "Times New Roman";
 
 	if (face[0]!='*') {
-		if (!_stricmp (face, "fixed")) face = def_fixedface;
-		else if (!_stricmp (face, "sans")) face = def_sansface;
-		else if (!_stricmp (face, "serif")) face = def_serifface;
-		else if (_stricmp (face, def_fixedface) && _stricmp (face, def_sansface) && _stricmp (face, def_serifface)) face = (prop ? def_sansface : def_fixedface);
+		if (caseInsensitiveEquals(face, "fixed")) face = def_fixedface;
+		else if (caseInsensitiveEquals(face, "sans")) face = def_sansface;
+		else if (caseInsensitiveEquals(face, "serif")) face = def_serifface;
+		else if (!caseInsensitiveEquals(face, def_fixedface) && !caseInsensitiveEquals(face, def_sansface) && !caseInsensitiveEquals(face, def_serifface)) face = (prop ? def_sansface : def_fixedface);
 	}
 	else face++;
 
@@ -1828,16 +1856,19 @@ D3D9PadFont::D3D9PadFont(int height, bool prop, const char *face, FontStyle styl
 		if (fcache[i]->height!=height) continue;
 		if (fcache[i]->style!=style) continue;
 		if (fcache[i]->prop!=prop) continue;
-		if (_stricmp(fcache[i]->face,face)!=0) continue;
+		if (!caseInsensitiveEquals(fcache[i]->face,face)) continue;
 		pFont = fcache[i]->pFont;
 		break;
 	}
 
+    /* TODO(jec)
 	int weight = (style & FONT_BOLD) ? FW_BOLD : FW_NORMAL;
+    */
 	DWORD italic = (style & FONT_ITALIC) ? TRUE : FALSE;
 	DWORD underline = (style & FONT_UNDERLINE) ? TRUE : FALSE;
 	DWORD strikeout = (style & FONT_STRIKEOUT) ? TRUE : FALSE;
 
+    /* TODO(jec)
 	Quality = NONANTIALIASED_QUALITY;
 
 	if ((flags & 0xF) == 0) {
@@ -1848,17 +1879,22 @@ D3D9PadFont::D3D9PadFont(int height, bool prop, const char *face, FontStyle styl
 		if (flags&SKP_FONT_ANTIALIAS) Quality = PROOF_QUALITY;
 		if (flags&SKP_FONT_CLEARTYPE) Quality = CLEARTYPE_QUALITY;
 	}
+    */
 
 	// Create DirectX accelerated font for a use with D3D9Pad ------------------
 	//
 	if (pFont==NULL) {
 
+        /* TODO(jec)
 		HFONT hNew = CreateFont(height, 0, 0, 0, weight, italic, underline, strikeout, 0, 0, 2, Quality, 49, face);
+        */
 
 		pFont = std::make_shared<D3D9Text>(pDev);
+        /* TODO(jec)
 		pFont->Init(hNew);
 
 		DeleteObject(hNew);
+        */
 
 		pFont->SetRotation(rotation);
 
@@ -1868,17 +1904,21 @@ D3D9PadFont::D3D9PadFont(int height, bool prop, const char *face, FontStyle styl
 		p->height = height;
 		p->style  = style;
 		p->prop   = prop;
-		strcpy_s(p->face, 64, face);
+        std::strncpy(p->face, face, 64);
 		fcache.push_back(p);
 	}
 
 	// Create Rotated windows GDI Font for a use with GDIPad ---------------------------
 	//
+    /* TODO(jec)
 	hFont = CreateFontA(height, 0, orientation, orientation, weight, italic, underline, strikeout, 0, 0, 2, Quality, 49, face);
+    */
 
 	if (hFont==NULL) {
 		face  = (prop ? def_sansface : def_fixedface);
+        /* TODO(jec)
 		hFont = CreateFont(height, 0, orientation, orientation, weight, italic, underline, strikeout, 0, 0, 2, Quality, 49, face);
+        */
 	}
 }
 
@@ -1899,7 +1939,7 @@ D3D9PadFont::D3D9PadFont(int height, char *face, int width, int weight, FontStyl
 		if (qcache[i]->width != width) continue;
 		if (qcache[i]->weight != weight) continue;
 		if (qcache[i]->spacing != spacing) continue;
-		if (_stricmp(qcache[i]->face, face) != 0) continue;
+		if (!caseInsensitiveEquals(qcache[i]->face, face)) continue;
 		pFont = qcache[i]->pFont;
 		break;
 	}
@@ -1908,19 +1948,22 @@ D3D9PadFont::D3D9PadFont(int height, char *face, int width, int weight, FontStyl
 	DWORD underline = (style & FONT_UNDERLINE) ? TRUE : FALSE;
 	DWORD strikeout = (style & FONT_STRIKEOUT) ? TRUE : FALSE;
 
+    /* TODO(jec)
 	Quality = NONANTIALIASED_QUALITY;
 	if (Config->SketchpadFont == 1) Quality = ANTIALIASED_QUALITY;
 	if (Config->SketchpadFont == 2) Quality = PROOF_QUALITY;
 	
 	if (style & FONT_CRISP) Quality = NONANTIALIASED_QUALITY;
 	if (style & FONT_ANTIALIAS) Quality = ANTIALIASED_QUALITY;
+    */
 	
 	
 	// Create DirectX accelerated font for a use with D3D9Pad ------------------
 	//
 	if (pFont == NULL) {
-
+        /* TODO(jec)
 		hFont = CreateFont(height, width, 0, 0, weight, italic, underline, strikeout, 0, 0, 2, Quality, 49, face);
+        */
 
 		pFont = std::make_shared<D3D9Text>(pDev);
 		pFont->Init(hFont);
@@ -1935,13 +1978,15 @@ D3D9PadFont::D3D9PadFont(int height, char *face, int width, int weight, FontStyl
 		p->weight = weight;
 		p->style = style;
 		p->spacing = spacing;
-		strcpy_s(p->face, 64, face);
+        std::strncpy(p->face, face, 64);
 		qcache.push_back(p);
 	}
 	else {
 		// Create windows GDI Font for a use with GDIPad ---------------------------
 		//
+        /* TODO(jec)
 		hFont = CreateFont(height, width, 0, 0, weight, italic, underline, strikeout, 0, 0, 2, Quality, 49, face);
+        */
 	}
 }
 
@@ -1950,7 +1995,9 @@ D3D9PadFont::D3D9PadFont(int height, char *face, int width, int weight, FontStyl
 D3D9PadFont::~D3D9PadFont ()
 {
 	if (pFont) pFont->SetRotation(0.0f), pFont.reset();
+    /* TODO(jec)
 	if (hFont) DeleteObject(hFont);
+    */
 }
 
 
@@ -1992,14 +2039,18 @@ void D3D9PadFont::D3D9TechInit(LPDIRECT3DDEVICE9 pDevice)
 
 D3D9PadPen::D3D9PadPen (int s, int w, DWORD col): oapi::Pen (style, width, col)
 {
+    /* TODO(jec)
 	switch (s) {
 		case 0:  style = PS_NULL;  break;
 		case 2:  style = PS_DOT;   break;
 		default: style = PS_SOLID; break;
 	}
+    */
 	width = w;
 	if (width<1) width = 1;
+    /* TODO(jec)
 	hPen = CreatePen(style, width, COLORREF(col&0xFFFFFF));
+    */
 	clr = SkpColor(col);
 }
 
@@ -2007,7 +2058,9 @@ D3D9PadPen::D3D9PadPen (int s, int w, DWORD col): oapi::Pen (style, width, col)
 //
 D3D9PadPen::~D3D9PadPen ()
 {
+    /* TODO(jec)
 	DeleteObject(hPen);
+    */
 }
 
 // -----------------------------------------------------------------------------------------------
@@ -2025,7 +2078,9 @@ void D3D9PadPen::D3D9TechInit(LPDIRECT3DDEVICE9 pDevice)
 
 D3D9PadBrush::D3D9PadBrush (DWORD col): oapi::Brush (col)
 {
+    /* TODO(jec)
 	hBrush = CreateSolidBrush(COLORREF(col&0xFFFFFF));
+    */
 	clr = SkpColor(col);
 }
 
@@ -2033,7 +2088,9 @@ D3D9PadBrush::D3D9PadBrush (DWORD col): oapi::Brush (col)
 //
 D3D9PadBrush::~D3D9PadBrush ()
 {
+    /* TODO(jec)
 	DeleteObject(hBrush);
+    */
 }
 
 // -----------------------------------------------------------------------------------------------

@@ -17,6 +17,17 @@
 
 #include "OrbiterAPI.h"
 #include <d3d9.h>
+/* TODO(jec):  Compatibility definitions for d3dx9.h */
+#define LF_FACESIZE 32
+struct TEXTMETRICA;
+struct TEXTMETRICW;
+#define STDAPI
+#define DECLARE_INTERFACE_IID_(type, base, iid) DECLARE_INTERFACE_(type, base)
+using LPGUID = void*;
+struct IStream;
+struct GLYPHMETRICSFLOAT;
+using DOUBLE = double;
+
 #include <d3dx9.h>
 
 class BeaconArray;

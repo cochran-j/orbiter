@@ -56,7 +56,7 @@ D3D9CelestialSphere::D3D9CelestialSphere(D3D9Client *gc, Scene *scene)
 	SURFHANDLE hSurf = m_gc->clbkLoadTexture("gridlabel.dds", 0);
 	if (hSurf) m_GridLabelTex = SURFACE(hSurf);
 	if (!m_GridLabelTex)
-		oapiWriteLogError("Failed to load texture gridlabel.dds");
+		oapiWriteLogError("%s", "Failed to load texture gridlabel.dds");
 }
 
 // ==============================================================

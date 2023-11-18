@@ -16,12 +16,26 @@
 // IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 // =================================================================================================================================
 
-
-#include <d3d9.h> 
-#include <d3dx9.h>
-
 #ifndef __D3D9TK_H
 #define __D3D9TK_H
+
+#include <d3d9.h>
+
+/* TODO(jec):  Compatibility definitions.  The DXVK d3dx9.h appears like it's
+ * not ready for prime time.  The d3dx9 functionality may be deprecated legacy
+ * functionality by MSFT. */
+#define LF_FACESIZE 32
+struct TEXTMETRICA;
+struct TEXTMETRICW;
+#define STDAPI
+#define DECLARE_INTERFACE_IID_(type, base, iid) DECLARE_INTERFACE_(type, base)
+using LPGUID = void*;
+struct IStream;
+struct GLYPHMETRICSFLOAT;
+using DOUBLE = double;
+
+#include <d3dx9.h>
+
 
 #define SctPwr 1.0
 #define SctPwr2 2.0

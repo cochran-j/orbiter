@@ -10,9 +10,13 @@
 // LOD (level-of-detail) algorithm for cloud patch resolution.
 // ==============================================================
 
-#include "cloudmgr2.h"
+#include "Cloudmgr2.h"
 #include "D3D9Catalog.h"
 #include "D3D9Config.h"
+
+#include <filesystem>
+#include <sstream>
+#include <iomanip>
 
 // =======================================================================
 // =======================================================================
@@ -45,9 +49,21 @@ void CloudTile::PreLoad()
 	bool ok = false;
 
 	if (cmgr->DoLoadIndividualFiles(0)) { // try loading from individual tile file
-		char path[MAX_PATH];
-		sprintf_s (path, MAX_PATH, "%s\\Cloud\\%02d\\%06d\\%06d.dds", mgr->DataRootDir().c_str(), lvl+4, ilat, ilng);
-		ok = LoadTextureFile(path, &pPreSrf, false);
+        std::ostringstream lvl_name {};
+        lvl_name << std::setw(2) << std::setfill('0') << lvl + 4;
+        std::ostringstream ilat_name {};
+        ilat_name << std::setw(6) << std::setfill('0') << ilat;
+        std::ostringstream ilon_name {};
+        ilon_name << std::setw(6) << std::setfill('0') << ilng;
+
+        auto path_ = std::filesystem::path{mgr->DataRootDir()} /
+            "Cloud" /
+            lvl_name.str() /
+            ilat_name.str() /
+            ilon_name.str();
+        path_ += ".dds";
+
+		ok = LoadTextureFile(path_.c_str(), &pPreSrf, false);
 	}
 	if (!ok && cmgr->ZTreeManager(0)) { // try loading from compressed archive
 		BYTE *buf;
@@ -258,9 +274,8 @@ void TileManager2<CloudTile>::InitHasIndividualFiles()
 {
 	hasIndividualFiles = new bool[ntreeMgr]();
 	if (cprm.tileLoadFlags & 0x0001) {
-		char path[MAX_PATH], dummy[MAX_PATH];
-		sprintf_s(path, MAX_PATH, "%s\\Cloud", m_dataRootDir.c_str());
-		hasIndividualFiles[0] = FileExists(path);
+        auto path_ = std::filesystem::path{m_dataRootDir} / "Cloud";
+		hasIndividualFiles[0] = FileExists(path_.c_str());
 	}
 }
 

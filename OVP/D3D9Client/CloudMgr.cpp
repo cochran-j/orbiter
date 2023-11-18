@@ -16,6 +16,8 @@
 #include "VPlanet.h"
 #include "D3D9Surface.h"
 
+#include <string>
+
 using namespace oapi;
 
 // =======================================================================
@@ -23,12 +25,7 @@ using namespace oapi;
 CloudManager::CloudManager(D3D9Client *gclient, const vPlanet *vplanet)
 : TileManager (gclient, vplanet)
 {
-	size_t len = strlen(objname)+7;
-	char *texname = new char[len];
-	strcpy_s(texname, len, objname);
-	strcat_s(texname, len, "_cloud");
-	delete []objname;
-	objname = texname;
+    objname += "_cloud";
 
 	maxlvl = min (*(int*)gc->GetConfigParam (CFGPRM_SURFACEMAXLEVEL),        // global setting
 	              *(int*)oapiGetObjectParam (obj, OBJPRM_PLANET_SURFACEMAXLEVEL)); // planet-specific setting

@@ -9,9 +9,11 @@
 #include "resource.h"
 #include "D3D9Config.h"
 #include "AtmoControls.h"
+/* TODO(jec)
 #include "Commctrl.h"
-#include "vObject.h"
-#include "vPlanet.h"
+*/
+#include "VObject.h"
+#include "VPlanet.h"
 #include "Mesh.h"
 #include "Scene.h"
 #include <stdio.h>
@@ -85,10 +87,11 @@ vPlanet *vObj = NULL;
 
 // ==============================================================
 
-HWND CreateToolTip(int toolID, HWND hDlg, PTSTR pszText)
+HWND CreateToolTip(int toolID, HWND hDlg, char* pszText)
 {
     if (!toolID || !hDlg || !pszText) return NULL;
-    
+   
+    /* TODO(jec)
     // Get the window of the tool.
     HWND hwndTool = GetDlgItem(hDlg, toolID);
     // Create the tooltip. g_hInst is the global instance handle.
@@ -106,6 +109,8 @@ HWND CreateToolTip(int toolID, HWND hDlg, PTSTR pszText)
     SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 
     return hwndTip;
+    */
+    return nullptr;
 }
 
 // ==============================================================
@@ -176,7 +181,10 @@ bool IsActive()
 bool Visualize()
 {
 	if (!hDlg) return false;
+    /* TODO(jec)
 	return SendDlgItemMessage(hDlg, IDC_ATM_DISPLAY, BM_GETCHECK, 0, 0) == BST_CHECKED;
+    */
+    return false;
 }
 
 // ==============================================================
@@ -203,7 +211,9 @@ void OpenDlgClbk(void *context)
 	if (vObj) param = vObj->GetAtmoParams(atmmode);
 	else      param = &defs;
 
+    /* TODO(jec)
 	for (int i=0;i<ATM_SLIDER_COUNT;i++) Slider[i].hWnd = GetDlgItem(hDlg, Slider[i].id);
+    */
 
 	// Style flags
 	// 1 = unit in [km] 
@@ -263,6 +273,7 @@ void OpenDlgClbk(void *context)
 	CreateToolTip(IDC_ATM_AUX4,		hDlg, (char*)"Omnidirectional mie scattering scale factor");
 	CreateToolTip(IDC_ATM_AUX5,		hDlg, (char*)"[Dual purpose] Clouds intensity [on surface]. Multiscatter light level [on orbit]");
 	
+    /* TODO(jec)
 	SendDlgItemMessageA(hDlg, IDC_ATM_MODE, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessageA(hDlg, IDC_ATM_MODE, CB_ADDSTRING, 0, (LPARAM)"Auto");
 	SendDlgItemMessageA(hDlg, IDC_ATM_MODE, CB_ADDSTRING, 0, (LPARAM)"Surface");
@@ -271,6 +282,7 @@ void OpenDlgClbk(void *context)
 	SendDlgItemMessageA(hDlg, IDC_ATM_MODE, CB_SETCURSEL, atmmode, 0);
 
 	SetTimer(hDlg, 0, 200, NULL);
+    */
 
 	UpdateSliders();
 }
@@ -348,10 +360,12 @@ void UpdateSlider(int id, bool bSetPos)
 	for (int i=0;i<ATM_SLIDER_COUNT;i++) if (Slider[i].id==id) {
 
 		double val = param->data[i];
-		
+	
+        /* TODO(jec)
 		SendDlgItemMessage(hDlg, id, TBM_SETRANGEMAX, 1, 1000);
 		SendDlgItemMessage(hDlg, id, TBM_SETRANGEMIN, 1, 0);
 		SendDlgItemMessage(hDlg, id, TBM_SETTICFREQ,  1, 0);
+        */
 
 		if (bSetPos) {
 			double x = (val - Slider[i].min)/(Slider[i].max-Slider[i].min);
@@ -359,13 +373,17 @@ void UpdateSlider(int id, bool bSetPos)
 			if (Slider[i].style & 16) x = x * x;
 			if (Slider[i].style & 32) x = pow(x, 0.25);
 			DWORD dpos = 1000 - DWORD(x*1000.0);
+            /* TODO(jec)
 			SendDlgItemMessage(hDlg, id, TBM_SETPOS,  1, dpos);
+            */
 		}
 
-		if (Slider[i].style&1) sprintf_s(buf,"%.1lf k", val);
-		else				   sprintf_s(buf,"%.3lf", val);
+		if (Slider[i].style&1) std::snprintf(buf, sizeof(buf), "%.1lf k", val);
+		else				   std::snprintf(buf, sizeof(buf), "%.3lf", val);
 		
+        /* TODO(jec)
 		SetWindowTextA(GetDlgItem(hDlg, Slider[i].dsp), buf);
+        */
 		return;
 	}
 	LogErr("Invalid Slider ID in AtmoControls");
@@ -390,7 +408,7 @@ void SetVisual(vObject *vo)
 
 	if (!hDlg || !dwCmd) return;
 	
-	OBJHANDLE hObj = vo->GetObjectA();
+	OBJHANDLE hObj = vo->GetObject();
 
 	if (oapiGetObjectType(hObj)!=OBJTP_PLANET) {
 		LogErr("Invalid Object Type in AtmoControls");
@@ -411,10 +429,11 @@ void SetVisual(vObject *vo)
 // ==============================================================
 // Dialog message handler
 
-INT_PTR CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static bool bOrbOld = false;
 
+    /* TODO(jec)
 	switch (uMsg) {
 
 	case WM_INITDIALOG:
@@ -511,6 +530,7 @@ INT_PTR CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	}
+    */
 
 	return oapiDefDialogProc(hWnd, uMsg, wParam, lParam);;
 }

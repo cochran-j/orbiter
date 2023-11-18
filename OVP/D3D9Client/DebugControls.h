@@ -125,8 +125,8 @@ namespace DebugControls {
 	void		Append(const char *format, ...);
 	void		Refresh();
 
-	INT_PTR CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	INT_PTR CALLBACK ViewProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	INT_PTR WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	INT_PTR ViewProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // !__DEBUGCONTROLS_H

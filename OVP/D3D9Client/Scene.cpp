@@ -24,6 +24,9 @@
 #include "VectorHelpers.h"
 #include <sstream>
 #include <vector>
+#include <string>
+#include <cstring>
+#include <filesystem>
 
 #define IKernelSize 150
 
@@ -173,10 +176,17 @@ Scene::Scene(D3D9Client *_gc, DWORD w, DWORD h)
 			char c;	float a, b;	iss >> a >> c >> b;
 			data.push_back(FVECTOR2(a, b));
 		}
-		if (data.size() != ARRAYSIZE(DepthSampleKernel)) LogErr("Modules/D3D9Client/GKernel.txt Size missmatch. Expecting 57 entries");
-		else for (int i = 0; i < ARRAYSIZE(DepthSampleKernel); i++) DepthSampleKernel[i] = data[i];
+		if (data.size() != (sizeof(DepthSampleKernel) / sizeof(DepthSampleKernel[0]))) {
+            LogErr("Modules/D3D9Client/GKernel.txt Size missmatch. Expecting 57 entries");
+        } else {
+            for (int i = 0; i < (sizeof(DepthSampleKernel) / sizeof(DepthSampleKernel[0])); i++) {
+                DepthSampleKernel[i] = data[i];
+            }
+        }
 		data.clear();
-	} else LogErr("Failed to read: Modules/D3D9Client/GKernel.txt");
+	} else {
+        LogErr("Failed to read: Modules/D3D9Client/GKernel.txt");
+    }
 	fs.close();
 
 	CreateSunGlare();
@@ -260,12 +270,12 @@ Scene::Scene(D3D9Client *_gc, DWORD w, DWORD h)
 		D3DSURFACE_DESC desc;
 		gc->GetBackBuffer()->GetDesc(&desc);
 
-		char flags[32] = { 0 };
-		if (Config->ShaderDebug) strcpy_s(flags, 32, "DISASM");
+        std::string flags {};
+		if (Config->ShaderDebug) flags = "DISASM";
 
 		// Load postprocessing effects
 		if (Config->PostProcess == PP_DEFAULT)
-			pLightBlur = new ImageProcessing(pDevice, "Modules/D3D9Client/LightBlur.hlsl", "PSMain", flags);
+			pLightBlur = new ImageProcessing(pDevice, "Modules/D3D9Client/LightBlur.hlsl", "PSMain", flags.c_str());
 
 		if (pLightBlur) {
 			BufSize = pLightBlur->FindDefine("BufferDivider");
@@ -280,9 +290,13 @@ Scene::Scene(D3D9Client *_gc, DWORD w, DWORD h)
 		HR(D3DXCreateTexture(pDevice, viewW, viewH, 1, D3DUSAGE_RENDERTARGET, BackBuffer, D3DPOOL_DEFAULT, &ptgBuffer[GBUF_COLOR]));
 
 		// Load some textures
-		char buff[MAX_PATH];
-		if (gc->TexturePath("D3D9Noise.dds", buff)) HR(D3DXCreateTextureFromFileA(pDevice, buff, &pTextures[TEX_NOISE]));
-		if (gc->TexturePath("D3D9CLUT.dds", buff)) HR(D3DXCreateTextureFromFileA(pDevice, buff, &pTextures[TEX_CLUT]));
+        std::filesystem::path buff {};
+		if (gc->TexturePath("D3D9Noise.dds", buff)) {
+            HR(D3DXCreateTextureFromFileA(pDevice, buff.c_str(), &pTextures[TEX_NOISE]));
+        }
+		if (gc->TexturePath("D3D9CLUT.dds", buff)) {
+            HR(D3DXCreateTextureFromFileA(pDevice, buff.c_str(), &pTextures[TEX_CLUT]));
+        }
 
 		if (pLightBlur) {
 			HR(D3DXCreateTexture(pDevice, viewW / BufSize, viewH / BufSize, 1, D3DUSAGE_RENDERTARGET, BackBuffer, D3DPOOL_DEFAULT, &ptgBuffer[GBUF_BLUR]));
@@ -298,7 +312,11 @@ Scene::Scene(D3D9Client *_gc, DWORD w, DWORD h)
 		}
 	}
 
-	for (int i = 0; i < ARRAYSIZE(ptgBuffer);i++)  if (ptgBuffer[i]) ptgBuffer[i]->GetSurfaceLevel(0, &psgBuffer[i]);
+	for (int i = 0; i < (sizeof(ptgBuffer) / sizeof(ptgBuffer[0]));i++)  {
+        if (ptgBuffer[i]) {
+            ptgBuffer[i]->GetSurfaceLevel(0, &psgBuffer[i]);
+        }
+    }
 
 
 	if (Config->GDIOverlay) {
@@ -306,10 +324,12 @@ Scene::Scene(D3D9Client *_gc, DWORD w, DWORD h)
 		// Clear the GDI Overlay with transparency
 		if (psgBuffer[GBUF_GDI]->GetDC(&hDC) == S_OK) {
 			DWORD color = 0xF08040; // BGR "Color Key" value for transparency
+            /* TODO(jec)
 			HBRUSH hBrush = CreateSolidBrush((COLORREF)color);
 			RECT r = _RECT( 0, 0, viewW, viewH );
 			FillRect(hDC, &r, hBrush);
 			DeleteObject(hBrush);
+            */
 			psgBuffer[GBUF_GDI]->ReleaseDC(hDC);
 		}
 	}
@@ -328,9 +348,9 @@ Scene::~Scene ()
 	pDevice->SetRenderTarget(2, NULL);
 	pDevice->SetRenderTarget(3, NULL);
 
-	for (int i = 0; i < ARRAYSIZE(psgBuffer); i++) SAFE_RELEASE(psgBuffer[i]);
-	for (int i = 0; i < ARRAYSIZE(ptgBuffer); i++) SAFE_RELEASE(ptgBuffer[i]);
-	for (int i = 0; i < ARRAYSIZE(pTextures); i++) SAFE_RELEASE(pTextures[i]);
+	for (int i = 0; i < (sizeof(psgBuffer) / sizeof(psgBuffer[0])); i++) SAFE_RELEASE(psgBuffer[i]);
+	for (int i = 0; i < (sizeof(ptgBuffer) / sizeof(ptgBuffer[0])); i++) SAFE_RELEASE(ptgBuffer[i]);
+	for (int i = 0; i < (sizeof(pTextures) / sizeof(pTextures[0])); i++) SAFE_RELEASE(pTextures[i]);
 
 	SAFE_DELETE(pGDIOverlay);
 	SAFE_DELETE(pBlur);
@@ -356,10 +376,10 @@ Scene::~Scene ()
 	SAFE_RELEASE(pSunGlare);
 	SAFE_RELEASE(pSunGlareAtm);
 
-	for (int i = 0; i < ARRAYSIZE(psShmDS); i++) SAFE_RELEASE(psShmDS[i]);
-	for (int i = 0; i < ARRAYSIZE(ptShmRT); i++) SAFE_RELEASE(ptShmRT[i]);
-	for (int i = 0; i < ARRAYSIZE(psShmRT); i++) SAFE_RELEASE(psShmRT[i]);
-	for (int i = 0; i < ARRAYSIZE(pBlrTemp); i++) SAFE_RELEASE(pBlrTemp[i]);
+	for (int i = 0; i < (sizeof(psShmDS) / sizeof(psShmDS[0])); i++) SAFE_RELEASE(psShmDS[i]);
+	for (int i = 0; i < (sizeof(ptShmRT) / sizeof(ptShmRT[0])); i++) SAFE_RELEASE(ptShmRT[i]);
+	for (int i = 0; i < (sizeof(psShmRT) / sizeof(psShmRT[0])); i++) SAFE_RELEASE(psShmRT[i]);
+	for (int i = 0; i < (sizeof(pBlrTemp) / sizeof(pBlrTemp[0])); i++) SAFE_RELEASE(pBlrTemp[i]);
 
 	if (Lights) {
 		delete []Lights;
@@ -1293,7 +1313,7 @@ void Scene::RenderMainScene()
 		{
 			if (camCurrent == CustomCams.cend()) camCurrent = CustomCams.cbegin();
 
-			OBJHANDLE hVessel = vFocus->GetObjectA();
+			OBJHANDLE hVessel = vFocus->GetObject();
 			
 			vObject *vO = GetVisObject((*camCurrent)->hVessel);
 			double maxd = min(500e3, GetCameraAltitude() + 15e3);
@@ -2241,7 +2261,7 @@ void Scene::RenderMainScene()
 	// -------------------------------------------------------------------------------------------------------
 
 	const char* dbgString = oapiDebugString();
-	int len = lstrlen(dbgString);
+	int len = std::strlen(dbgString);
 
 	if (len>0 || !D3D9DebugQueue.empty()) {
 
@@ -2263,7 +2283,7 @@ void Scene::RenderMainScene()
 		while (!D3D9DebugQueue.empty()) {
 			pos -= (height * 3) / 2;
 			std::string str = D3D9DebugQueue.front();
-			len = lstrlen(str.c_str());
+			len = static_cast<int>(str.size());
 			DWORD width = pSketch->GetTextWidth(str.c_str(), len);
 			pSketch->Rectangle(-1, pos - height - 1, width + 4, pos);
 			pSketch->Text(2, pos - 2, str.c_str(), len);
@@ -3098,7 +3118,7 @@ void Scene::DelParticleStream (DWORD idx)
 //
 void Scene::InitGDIResources ()
 {
-	char dbgfnt[64]; sprintf_s(dbgfnt,64,"*%s",Config->DebugFont);
+	char dbgfnt[64]; std::snprintf(dbgfnt,64,"*%s",Config->DebugFont.c_str());
 	pAxisFont  = oapiCreateFont(24, false, "Arial", FONT_NORMAL, 0);
 	pLabelFont = oapiCreateFont(15, false, "Arial", FONT_NORMAL, 0);
 	pDebugFont = oapiCreateFont(Config->DebugFontSize, true, dbgfnt, FONT_NORMAL, 0);
@@ -3730,7 +3750,7 @@ void Scene::GlobalExit()
 void Scene::D3D9TechInit(LPDIRECT3DDEVICE9 pDev, const char *folder)
 {
 	char name[256];
-	sprintf_s(name,256,"Modules/%s/SceneTech.fx", folder);
+    std::snprintf(name,256,"Modules/%s/SceneTech.fx", folder);
 
 	// Create the Effect from a .fx file.
 	ID3DXBuffer* errors = 0;
@@ -3743,7 +3763,9 @@ void Scene::D3D9TechInit(LPDIRECT3DDEVICE9 pDev, const char *folder)
 		//
 		if (strstr((char*)errors->GetBufferPointer(),"warning")==NULL) {
 			LogErr("Effect Error: %s",(char*)errors->GetBufferPointer());
+            /* TODO(jec)
 			MessageBoxA(0, (char*)errors->GetBufferPointer(), "SceneTech.fx Error", 0);
+            */
 			return;
 		}
 

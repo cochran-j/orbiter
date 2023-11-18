@@ -31,6 +31,8 @@
 #include "D3D9Surface.h"
 #include "D3D9Client.h"
 
+#include <cstring>
+
 using namespace oapi;
 
 // Initialisation of static members
@@ -113,7 +115,7 @@ void vObject::GlobalExit()
 {
 	_TRACE;
 	for (int i=0;i<3;i++) DELETE_SURFACE(blobtex[i]);
-	for (int i = 0; i < ARRAYSIZE(hStockMesh); i++) SAFE_DELETE(hStockMesh[i]);
+	for (int i = 0; i < (sizeof(hStockMesh) / sizeof(hStockMesh[0])); i++) SAFE_DELETE(hStockMesh[i]);
 }
 
 
@@ -461,7 +463,7 @@ void vObject::RenderAxisLabel(D3D9Pad *pSkp, const D3DXCOLOR *clr, VECTOR3 vecto
 		int xc = (int)(scn->ViewW()*0.5*(1.0f + homog.x));
 		int yc = (int)(scn->ViewH()*0.5*(1.0f - homog.y));
 		pSkp->SetTextColor(D3DXCOLOR(clr->b, clr->g, clr->r, clr->a));
-		pSkp->Text(xc + 10, yc, label, lstrlen(label));
+		pSkp->Text(xc + 10, yc, label, static_cast<int>(std::strlen(label)));
 	}
 }
 

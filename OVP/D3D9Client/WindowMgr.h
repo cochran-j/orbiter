@@ -23,10 +23,11 @@
 #ifndef __WNDMGR_H
 #define __WNDMGR_H
 
-#include <Windows.h>
+#include <windows.h>
 #include "gcCore.h"
 #include <vector>
 #include <map>
+#include <string>
 #include "gcGUI.h"
 
 using namespace std;
@@ -42,7 +43,7 @@ typedef struct {
 	SideBar *pTgt;
 } tInsert;
 
-LRESULT CALLBACK SideBarWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LRESULT SideBarWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 class Node
 {
@@ -66,14 +67,16 @@ public:
 	SideBar *	pSB;
 	Node *		pParent;	// Parent node for subsections or NULL for Application root node
 	HBITMAP		hBmp;		// Titlebar graphics
+    /* TODO(jec)
 	BITMAP		bm;			// Titlebar dimensions
+    */
 	HWND		hDlg;		// Dialog handle or NULL
 	POINT		pos;		// Top-left corner of dialog window
 	RECT		trect;		// Titlebar rect
 	RECT		crect;		// Close button rect
 	bool		bOpen;		// Open or collapsed
 	bool		bClose;		// Display close window icon
-	char *		Label;		// Titlebar label
+    std::string	Label;		// Titlebar label
 };
 
 
@@ -100,8 +103,8 @@ public:
 	void		RemoveWindow(class Node *pAp);
 	bool		IsOpen() const;
 	void		PaintWindow();
-	HDC			GetDC() const { return GetWindowDC(hBar); }
-	void		ReleaseDC(HDC hdc) const { ::ReleaseDC(hBar, hdc); }
+	HDC			GetDC() const { /* TODO(jec) return GetWindowDC(hBar);*/ return nullptr; }
+	void		ReleaseDC(HDC hdc) const { /* TODO(jec) ::ReleaseDC(hBar, hdc); */ }
 	int			ComputeLength();
 	int			GetWidth() const { return width; }
 	int			GetHeight() const { return height; }

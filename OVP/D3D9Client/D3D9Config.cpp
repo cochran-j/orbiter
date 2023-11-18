@@ -27,10 +27,8 @@ D3D9Config::D3D9Config()
 D3D9Config::~D3D9Config ()
 {
 	WriteParams ();
-	delete []DebugFont;
-	DebugFont = NULL;
-	delete []SolCfg;
-	SolCfg = NULL;
+    DebugFont.clear();
+    SolCfg.clear();
 }
 
 void D3D9Config::Reset ()
@@ -110,8 +108,10 @@ void D3D9Config::Reset ()
 
 	AtmoCfg["Earth"] = "Earth.atm.cfg";
 
-	SolCfg = new char[64];   strcpy_s(SolCfg,64,"Sol");
-	DebugFont = new char[64];   strcpy_s(DebugFont,64,"Fixed");
+    SolCfg.resize(64);
+    SolCfg = "Sol";
+    DebugFont.resize(64);
+    DebugFont = "Fixed";
 }
 
 int D3D9Config::MaxLights()
@@ -203,8 +203,11 @@ bool D3D9Config::ReadParams ()
 	if (oapiReadItem_float (hFile, (char*)"GFXGlare", d))						GFXGlare = max(0.1, min(10.0, d));
 
 
-	oapiReadItem_string (hFile, (char*)"SolCfg", SolCfg);
-	oapiReadItem_string (hFile, (char*)"DebugLineFont", DebugFont);
+    // TODO(jec):  ReadItem_string appears to be unsafe.
+    SolCfg.resize(64);
+	oapiReadItem_string (hFile, (char*)"SolCfg", SolCfg.data());
+    DebugFont.resize(64);
+	oapiReadItem_string (hFile, (char*)"DebugLineFont", DebugFont.data());
 
 	char Temp[256];
 	if (oapiReadItem_string(hFile, (char*)"EarthAtmoCfg", Temp)) AtmoCfg["Earth"] = Temp;
@@ -291,8 +294,8 @@ void D3D9Config::WriteParams ()
 	oapiWriteItem_float (hFile, (char*)"GFXLocalMax", GFXLocalMax);
 	oapiWriteItem_float (hFile, (char*)"GFXGlare", GFXGlare);
 
-	oapiWriteItem_string (hFile,(char*) "SolCfg", SolCfg);
-	oapiWriteItem_string (hFile,(char*) "DebugLineFont", DebugFont);
+	oapiWriteItem_string (hFile,(char*) "SolCfg", SolCfg.c_str());
+	oapiWriteItem_string (hFile,(char*) "DebugLineFont", DebugFont.c_str());
 
 	oapiWriteItem_string(hFile, (char*)"EarthAtmoCfg", (char *)AtmoCfg["Earth"].c_str());
 

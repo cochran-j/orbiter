@@ -9,7 +9,7 @@
 
 #define STRICT
 
-#include "D3D9util.h"
+#include "D3D9Util.h"
 #include "AABBUtil.h"
 #include "D3D9Client.h"
 #include "VectorHelpers.h"
@@ -20,6 +20,12 @@
 #include <cctype>
 #include <unordered_map>
 
+#include <cstring>
+#include <algorithm>
+#include <filesystem>
+#include <sstream>
+#include <iomanip>
+
 extern D3D9Client* g_client;
 extern unordered_map<MESHHANDLE, class SketchMesh*> MeshMap;
 
@@ -28,7 +34,7 @@ DWORD BuildDate()
 	const char *months[] = { "???","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 	char month[8];
 	unsigned int day = 0, year = 0;
-	assert(sscanf_s(__DATE__, "%s %u %u", month, 8, &day, &year) == 3);
+	assert(std::sscanf(__DATE__, "%s %u %u", month, 8, &day, &year) == 3);
 	DWORD m = 0;
 	for (DWORD i = 1; i <= 12; i++) if (strncmp(month, months[i], 3) == 0) { m = i; break; }
 	assert(m != 0);
@@ -58,7 +64,7 @@ WORD crc16(const char *data, int length)
 const char *_PTR(const void *p)
 {
 	static long i = 0; static char buf[8][32];	i++;
-	sprintf_s(buf[i & 0x7], 32, PTR_FMT_STRING, LONG_PTR(p));
+    std::snprintf(buf[i & 0x7], 32, PTR_FMT_STRING, LONG_PTR(p));
 	return buf[i & 0x7];
 }
 
@@ -379,7 +385,7 @@ int fgets2(char *buf, int cmax, FILE *file, DWORD param)  //bool bEquality, bool
 
 	if (fgets(buf, cmax, file)==NULL) return -1;
 
-	int num = lstrlen(buf);
+	int num = std::strlen(buf);
 
 	if (num==(cmax-1)) LogErr("Insufficient buffer size in fgets2() size=%d, string=(%s)",cmax,buf);
 
@@ -397,7 +403,7 @@ int fgets2(char *buf, int cmax, FILE *file, DWORD param)  //bool bEquality, bool
 		}
 	}
 
-	num = lstrlen(buf);
+	num = std::strlen(buf);
 	if (num==0) return 0;
 
 	// Remove spaces from the end of the line
@@ -410,7 +416,7 @@ int fgets2(char *buf, int cmax, FILE *file, DWORD param)  //bool bEquality, bool
 	// Remove spaces from the front of the line
 	while (buf[0]==' ') strremchr(buf,0);
 
-	num = lstrlen(buf);
+	num = std::strlen(buf);
 	if (num==0) return 0;
 
 	// Remove repeatitive spaces if exists. (double trible spaces and so on)
@@ -423,7 +429,7 @@ int fgets2(char *buf, int cmax, FILE *file, DWORD param)  //bool bEquality, bool
 		else i++;
 	}
 
-	num = lstrlen(buf);
+	num = std::strlen(buf);
 	if (num==0) return 0;
 
 	// Remove spaces from both sides of '=' if exists
@@ -436,7 +442,11 @@ int fgets2(char *buf, int cmax, FILE *file, DWORD param)  //bool bEquality, bool
 		}
 	}
 
-	if (bUpper) _strupr_s(buf, strlen(buf));
+	if (bUpper) std::transform(buf, buf + std::strlen(buf),
+                               buf,
+                               [](char c) {
+                                   return static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+                               });
 
 	// Done
 	if (bEql) return 2;
@@ -470,7 +480,10 @@ std::string &trim (std::string &s) {
 
 // uppercase complete string
 void toUpper (std::string &s) {
-	std::transform(s.begin(), s.end(), s.begin(), std::toupper);
+	std::transform(s.begin(), s.end(), s.begin(), 
+                   [](char in) {
+                       return static_cast<char>(std::toupper(static_cast<unsigned char>(in)));
+                   });;
 }
 
 // lowercase complete string
@@ -903,16 +916,25 @@ LPDIRECT3DPIXELSHADER9 CompilePixelShader(LPDIRECT3DDEVICE9 pDev, const char *fi
 	if (options) crc = crc16(options, strlen(options));
 
 	string path(file);
-	char filename[MAX_PATH];
+    std::filesystem::path filename_path {};
+    std::ostringstream filename {};
 
 	string last = path.substr(path.find_last_of("\\/") + 1);
-	sprintf_s(filename, MAX_PATH, "Cache/D3D9Client/Shaders/%s_%s_%hX_%s.bin", name, function, crc, last.c_str());
+    filename << name << "_" << function << "_"
+             << std::hex << std::uppercase << crc << "_" << last
+             << ".bin";
+
+    filename_path = std::filesystem::path{"Cache"} /
+        "D3D9Client" /
+        "Shaders" /
+        filename.str();
 
 	if (Config->ShaderCacheUse)
 	{
 		// Browse Shader Cache --------------------
 		//
-		HANDLE hCacheRead = CreateFile(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        /* TODO(jec0:  Redo with fstreams or something.
+		HANDLE hCacheRead = CreateFile(filename_path.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
 		if (hCacheRead != INVALID_HANDLE_VALUE) {
 			FILETIME cacheWrite, mainWrite;
@@ -945,6 +967,7 @@ LPDIRECT3DPIXELSHADER9 CompilePixelShader(LPDIRECT3DDEVICE9 pDev, const char *fi
 				return pShader;
 			}
 		}
+        */
 	}
 
 
@@ -959,10 +982,9 @@ LPDIRECT3DPIXELSHADER9 CompilePixelShader(LPDIRECT3DDEVICE9 pDev, const char *fi
 
 	if (options) {
 		int m = 0;
-		int l = lstrlen(options) + 1;
-		str = new char[l];
-		strcpy_s(str, l, options);
-		tok = strtok(str,";, ");
+        std::string str = options;
+        str += '\0'; // Extra null character for strtok()
+		tok = strtok(str.data(),";, ");
 		while (tok!=NULL && m<16) {
 			if (strcmp(tok, "PARTIAL") == 0) flags |= D3DXSHADER_PARTIALPRECISION;
 			if (strcmp(tok, "DISASM") == 0) bDisassemble = true;
@@ -976,13 +998,14 @@ LPDIRECT3DPIXELSHADER9 CompilePixelShader(LPDIRECT3DDEVICE9 pDev, const char *fi
 
 	if (pErrors) {
 		LogErr("Compiling a Shader [%s] function [%s] Failed:\n %s", file, function, (char*)pErrors->GetBufferPointer());
+        /* TODO(jec)
 		MessageBoxA(0, (char*)pErrors->GetBufferPointer(), "Failed to compile a shader", 0);
 		FatalAppExitA(0, "Failed to compile shader code. Exiting...");
+        */
 	}
 
 	if (!pCode) {
 		LogErr("Failed to compile a shader [%s] [%s]", file, function);
-		SAFE_DELETEA(str);
 		return NULL;
 	}
 
@@ -991,6 +1014,7 @@ LPDIRECT3DPIXELSHADER9 CompilePixelShader(LPDIRECT3DDEVICE9 pDev, const char *fi
 	//
 	if (Config->ShaderCacheUse)
 	{
+        /* TODO(jec) Use standard file facilities
 		HANDLE hCache = CreateFile(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hCache != INVALID_HANDLE_VALUE) {
 			DWORD bytesWritten;
@@ -1004,16 +1028,20 @@ LPDIRECT3DPIXELSHADER9 CompilePixelShader(LPDIRECT3DDEVICE9 pDev, const char *fi
 			LogErr("CreateShaderCache: CreateFile Error: 0x%X", GetLastError());
 			LogErr("Path=[%s]", filename);
 		}
+        */
 	}
 
 
 	if (bDisassemble && pCode) {
 		LPD3DXBUFFER pBuffer = NULL;
 		if (D3DXDisassembleShader((DWORD*)pCode->GetBufferPointer(), true, NULL, &pBuffer) == S_OK) {
-			FILE *fp = NULL;
-			char name[256];
-			sprintf_s(name, 256, "%s_%s_asm.html", RemovePath(file), function);
-			if (!fopen_s(&fp, name, "w")) {
+            std::filesystem::path name {file};
+            name = name.filename();
+            name += "_";
+            name += function;
+            name += "_asm.html";
+			FILE *fp = fopen(name.c_str(), "w");
+			if (fp) {
 				fwrite(pBuffer->GetBufferPointer(), 1, pBuffer->GetBufferSize(), fp);
 				fclose(fp);
 			}
@@ -1025,7 +1053,6 @@ LPDIRECT3DPIXELSHADER9 CompilePixelShader(LPDIRECT3DDEVICE9 pDev, const char *fi
 
 	SAFE_RELEASE(pCode);
 	SAFE_RELEASE(pErrors);
-	SAFE_DELETEA(str);
 
 	return pShader;
 }
@@ -1043,16 +1070,26 @@ LPDIRECT3DVERTEXSHADER9 CompileVertexShader(LPDIRECT3DDEVICE9 pDev, const char *
 	if (options) crc = crc16(options, strlen(options));
 
 	string path(file);
-	char filename[MAX_PATH];
-
 	string last = path.substr(path.find_last_of("\\/") + 1);
-	sprintf_s(filename, MAX_PATH, "Cache/D3D9Client/Shaders/%s_%s_%hX_%s.bin", name, function, crc, last.c_str());
+
+    std::filesystem::path filename_path {};
+    std::ostringstream filename {};
+    filename << name << "_"
+             << function << "_"
+             << std::hex << std::uppercase << crc << "_"
+             << last << ".bin";
+
+    filename_path = std::filesystem::path {"Cache"} /
+        "D3D9Client" /
+        "Shaders" /
+        filename.str();
 
 	if (Config->ShaderCacheUse)
 	{
 		// Browse Shader Cache --------------------
 		//
-		HANDLE hCacheRead = CreateFile(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        /* TODO(jec): Rework with std facilities
+		HANDLE hCacheRead = CreateFile(filename_path.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
 		if (hCacheRead != INVALID_HANDLE_VALUE) {
 			FILETIME cacheWrite, mainWrite;
@@ -1081,13 +1118,14 @@ LPDIRECT3DVERTEXSHADER9 CompileVertexShader(LPDIRECT3DDEVICE9 pDev, const char *
 			CloseHandle(hCacheRead);
 
 			if (pShader) {
-				//LogOapi("Shader Created From Cache: %s", filename);
+				//LogOapi("Shader Created From Cache: %s", filename_path.c_str());
 				return pShader;
 			}
 		}
+        */
 	}
 
-	char *str = NULL;
+    std::string str {};
 	char *tok = NULL;
 
 	D3DXMACRO macro[32];
@@ -1095,10 +1133,9 @@ LPDIRECT3DVERTEXSHADER9 CompileVertexShader(LPDIRECT3DDEVICE9 pDev, const char *
 
 	if (options) {
 		int m = 0;
-		int l = lstrlen(options) + 1;
-		str = new char[l];
-		strcpy_s(str, l, options);
-		tok = strtok(str,";, ");
+        str = options;
+        str += '\0'; // Extra token for strtok
+		tok = strtok(str.data(),";, ");
 		while (tok!=NULL && m<16) {
 			macro[m++].Name = tok;
 			tok = strtok(NULL, ";, ");
@@ -1111,13 +1148,14 @@ LPDIRECT3DVERTEXSHADER9 CompileVertexShader(LPDIRECT3DDEVICE9 pDev, const char *
 
 	if (pErrors) {
 		LogErr("Compiling a Shader [%s] function [%s] Failed:\n %s", file, function, (char*)pErrors->GetBufferPointer());
+        /* TODO(jec)
 		MessageBoxA(0, (char*)pErrors->GetBufferPointer(), "Failed to compile a shader", 0);
 		FatalAppExitA(0, "Failed to compile shader code. Exiting...");
+        */
 	}
 
 	if (!pCode) {
 		LogErr("Failed to compile a shader [%s] [%s]", file, function);
-		SAFE_DELETEA(str);
 		return NULL;
 	}
 
@@ -1126,7 +1164,8 @@ LPDIRECT3DVERTEXSHADER9 CompileVertexShader(LPDIRECT3DDEVICE9 pDev, const char *
 	//
 	if (Config->ShaderCacheUse)
 	{
-		HANDLE hCache = CreateFile(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        /* TODO(jec):  Rework with std facilities
+		HANDLE hCache = CreateFile(filename_path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 		if (hCache != INVALID_HANDLE_VALUE) {
 			DWORD bytesWritten;
@@ -1140,25 +1179,15 @@ LPDIRECT3DVERTEXSHADER9 CompileVertexShader(LPDIRECT3DDEVICE9 pDev, const char *
 			LogErr("CreateShaderCache: CreateFile Error: 0x%X", GetLastError());
 			LogErr("Path=[%s]", filename);
 		}
+        */
 	}
 
 	HR(pDev->CreateVertexShader((DWORD*)pCode->GetBufferPointer(), &pShader));
 
 	SAFE_RELEASE(pCode);
 	SAFE_RELEASE(pErrors);
-	SAFE_DELETEA(str);
 
 	return pShader;
-}
-
-// ============================================================================
-//
-const char *RemovePath(const char *in)
-{
-	int len = lstrlen(in);
-	const char *cptr = in;
-	for (int i=0;i<len;i++) if (in[i]=='\\' || in[i]=='/') cptr = &in[i+1];
-	return cptr;
 }
 
 // ============================================================================
@@ -1384,6 +1413,11 @@ void D3D9Light::UpdateLight(const LightEmitter *_le, const class vObject *vo)
 
 // Planet Texture Loader ------------------------------------------------------------------------------
 //
+/* TODO(jec):  Compat definitions for ddraw */
+#ifndef CALLBACK
+#define CALLBACK
+#endif
+
 #include <ddraw.h>
 #pragma pack(push, 1)
 typedef struct _DDDESC2_x64
@@ -1396,19 +1430,19 @@ typedef struct _DDDESC2_x64
 	{
 		LONG            lPitch;                 // distance to start of next line (return value only)
 		DWORD           dwLinearSize;           // Formless late-allocated optimized surface size
-	} DUMMYUNIONNAMEN(1);
+	} DUMMYUNIONNAME1;
 	union
 	{
 		DWORD           dwBackBufferCount;      // number of back buffers requested
 		DWORD           dwDepth;                // the depth if this is a volume texture 
-	} DUMMYUNIONNAMEN(5);
+	} DUMMYUNIONNAME5;
 	union
 	{
 		DWORD           dwMipMapCount;          // number of mip-map levels requestde
 												// dwZBufferBitDepth removed, use ddpfPixelFormat one instead
 		DWORD           dwRefreshRate;          // refresh rate (used when display mode is described)
 		DWORD           dwSrcVBHandle;          // The source used in VB::Optimize
-	} DUMMYUNIONNAMEN(2);
+	} DUMMYUNIONNAME2;
 	DWORD               dwAlphaBitDepth;        // depth of alpha buffer requested
 	DWORD               dwReserved;             // reserved
 	DWORD               lpSurface;              // pointer to the associated surface memory
@@ -1416,7 +1450,7 @@ typedef struct _DDDESC2_x64
 	{
 		DDCOLORKEY      ddckCKDestOverlay;      // color key for destination overlay use
 		DWORD           dwEmptyFaceColor;       // Physical color for empty cubemap faces
-	} DUMMYUNIONNAMEN(3);
+	} DUMMYUNIONNAME3;
 	DDCOLORKEY          ddckCKDestBlt;          // color key for destination blt use
 	DDCOLORKEY          ddckCKSrcOverlay;       // color key for source overlay use
 	DDCOLORKEY          ddckCKSrcBlt;           // color key for source blt use
@@ -1424,7 +1458,7 @@ typedef struct _DDDESC2_x64
 	{
 		DDPIXELFORMAT   ddpfPixelFormat;        // pixel format description of the surface
 		DWORD           dwFVF;                  // vertex format description of vertex buffers
-	} DUMMYUNIONNAMEN(4);
+	} DUMMYUNIONNAME4;
 	DDSCAPS2            ddsCaps;                // direct draw surface capabilities
 	DWORD               dwTextureStage;         // stage in multitexture cascade
 } DDSURFACEDESC2_x64;
@@ -1434,13 +1468,13 @@ int LoadPlanetTextures(const char* fname, LPDIRECT3DTEXTURE9* ppdds, DWORD flags
 {
 	_TRACE;
 
-	char path[MAX_PATH];
+    std::filesystem::path path_ {};
 
-	if (g_client->TexturePath(fname, path)) {
+	if (g_client->TexturePath(fname, path_)) {
 
-		FILE* f;
+		FILE* f = fopen(path_.c_str(), "rb");
 
-		if (fopen_s(&f, path, "rb")) return 0;
+		if (!f) return 0;
 
 		int ntex = 0;
 		char* buffer, * location;
@@ -1687,7 +1721,10 @@ D3DXCOLOR SketchMesh::GetMaterial(DWORD idx)
 ShaderClass::ShaderClass(LPDIRECT3DDEVICE9 pDev, const char* file, const char* vs, const char* ps, const char *name, const char* options) :
 	pPS(), pVS(), pPSCB(NULL), pVSCB(NULL), pDev(pDev), fn(file), psn(ps), vsn(vs), sn(name)
 {
-	for (int i = 0; i < ARRAYSIZE(pTextures); i++) pTextures[i] = {0};
+	for (int i = 0; i < (sizeof(pTextures) / sizeof(pTextures[0])); i++) {
+        pTextures[i] = {0};
+    }
+
 	pPS = CompilePixelShader(pDev, file, ps, name, options, &pPSCB);
 	pVS = CompileVertexShader(pDev, file, vs, name, options, &pVSCB);
 }
@@ -1705,7 +1742,7 @@ ShaderClass::~ShaderClass()
 
 void ShaderClass::ClearTextures()
 {
-	for (int idx = 0; idx < ARRAYSIZE(pTextures); idx++)
+	for (int idx = 0; idx < (sizeof(pTextures) / sizeof(pTextures[0])); idx++)
 	{
 		pTextures[idx].pAssigned = NULL;
 		pTextures[idx].pTex = NULL;
@@ -1729,7 +1766,7 @@ void ShaderClass::UpdateTextures()
 {
 	// Set textures and samplers -----------------------------------------------
 	//
-	for (int idx = 0; idx < ARRAYSIZE(pTextures); idx++)
+	for (int idx = 0; idx < (sizeof(pTextures) / sizeof(pTextures[0])); idx++)
 	{
 		int sid = idx > 15 ? idx - 16 + D3DVERTEXTEXTURESAMPLER0 : idx;
 

@@ -15,6 +15,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <filesystem>
 
 // This construct is used to get the right size independent of the union padding
 #define REPARSE_DATA_BUFFER_HEADER_SIZE offsetof(REPARSE_DATA_BUFFER, GenericReparseBuffer)
@@ -58,13 +59,14 @@ namespace junction {
 // Junction methods
 	bool CreateJunctionPoint(LPCSTR origin, LPCSTR junction)
 	{
-		char* buffer = new char[_MAX_PATH];
+        std::filesystem::path buffer {};
 
-		GetFullPathName(origin, 256, buffer, NULL);
+        buffer = std::filesystem::absolute(origin);
 
 		// Prepend \??\ to path to mark it as not-for-parsing
 		// and convert char -> w_char
 		std::string str(buffer);
+        /* TODO(jec):  Do we need to do this with std::filesystem
 		std::wstring nativeTarget = L"\\??\\" + std::wstring( str.begin(), str.end() );
 
 		delete[] buffer;
@@ -73,7 +75,10 @@ namespace junction {
 		if (nativeTarget[ nativeTarget.length()-1 ] != L'\\') {
 			nativeTarget += L'\\';
 		}
+        */
 
+
+        /* TODO(jec):  Is any of this doing anything besides making the link?
 		//
 		// O.K. Now let's fill the REPARSE_DATA_BUFFER
 		//
@@ -112,38 +117,38 @@ namespace junction {
 		if (!DeviceIoControl(hDir.Handle, FSCTL_SET_REPARSE_POINT, reparseBuffer, (unsigned int) size, NULL, 0, &bytesReturned, NULL)) {
 			return false; // Error issuing DeviceIoControl FSCTL_SET_REPARSE_POINT
 		}
+        */
 
-		return true;
+        std::error_code ec {};
+        std::filesystem::create_directory_symlink(buffer, junction, ec);
+		return bool{ec};
 	}
 
 
-	bool TargetDirectoryExists(LPCSTR path, DWORD attributes/* = 0*/)
+	bool TargetDirectoryExists(LPCSTR path, DWORD /*attributes = 0*/)
 	{
-		if (attributes == 0) {
-			attributes = ::GetFileAttributes(path);
-		}
-		if (attributes == INVALID_FILE_ATTRIBUTES) {
-			return false; // Doesn't exist
-		}
-		if ((attributes & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY) {
-			return false; // Not a directory
-		}
-		return true;
+        std::filesystem::path path_ {path};
+        if (!std::filesystem::exists(path_)) {
+            return false;
+        }
+        if (!std::filesystem::is_directory(path_)) {
+            return false;
+        }
+        return true;
 	}
 
 
-	bool IsDirectoryJunction(LPCSTR path, DWORD attributes/* = 0*/)
+	bool IsDirectoryJunction(LPCSTR path, DWORD /*attributes = 0*/)
 	{
-		if (attributes == 0) {
-			attributes = ::GetFileAttributes(path);
-		}
-		if (attributes == INVALID_FILE_ATTRIBUTES) {
-			return false; // Doesn't exist
-		}
-		if ((attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT)) != (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT)) {
-			return false; // Not a directory or not a reparse point
-		}
-		return true;
+        std::filesystem::path path_ {path};
+        if (!std::filesystem::exists(path_)) {
+            return false;
+        }
+        if (!(std::filesystem::is_directory(path_) &&
+              std::filesystem::is_symlink(path_))) {
+            return false;
+        }
+        return true;
 	}
 
 } // end-of namespace junction

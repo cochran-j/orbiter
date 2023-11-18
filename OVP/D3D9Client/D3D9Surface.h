@@ -15,6 +15,8 @@
 #include <d3d9.h>
 #include <d3dx9.h>
 
+#include <filesystem>
+
 #define	MAP_NORMAL			0
 #define	MAP_SPECULAR		1
 #define	MAP_EMISSION		2
@@ -40,7 +42,7 @@ SURFHANDLE			NatCreateSurface(int width, int height, DWORD flags);
 SURFHANDLE			NatGetMipSublevel(SURFHANDLE hSrf, int level);
 bool				NatGenerateMipmaps(SURFHANDLE hSrf);
 SURFHANDLE			NatCompressSurface(SURFHANDLE hSurface, DWORD flags);
-bool				NatCreateName(char* out, int mlen, const char* fname, const char* id);
+bool				NatCreateName(std::filesystem::path& out, const std::filesystem::path& fname, const char* id);
 DWORD				NatConvertFormat_DX_to_OAPI(DWORD Format);
 DWORD				NatConvertFormat_OAPI_to_DX(DWORD Format);
 const char*			NatUsage(DWORD Usage);
@@ -93,7 +95,7 @@ public:
 	DWORD					GetSizeInBytes();
 	DWORD*					GetClientFlags();
 
-	const char*				GetName() const { return name; }
+	const char*				GetName() const { return name.c_str(); }
 	void					SetName(const char*);
 	HDC						GetDC();
 	void					ReleaseDC(HDC);
@@ -133,7 +135,7 @@ public:
 
 	// -------------------------------------------------------------------------------
 
-	char					name[128];				// Surface name
+    std::string				name;				    // Surface name
 	SURFHANDLE				hOrigin;
 	D3DSURFACE_DESC			desc;					// Surface size and format description
 	D3DRESOURCETYPE			type;					// Resource type

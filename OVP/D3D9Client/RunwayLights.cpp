@@ -16,8 +16,9 @@
 #include "BeaconArray.h"
 #include "D3D9Config.h"
 #include "D3D9Util.h"
-#include "vBase.h"
+#include "VBase.h"
 #include <vector>
+#include <cstdio>
 
 RunwayLights::RunwayLights(class vBase *_vB, const class Scene *scn)
 {
@@ -33,7 +34,7 @@ RunwayLights::RunwayLights(class vBase *_vB, const class Scene *scn)
 	apr_length = 257.0;
 	iCategory = 0;
 	nPAPI = 0;
-	hObj = vB->GetObjectA();
+	hObj = vB->GetObject();
 	nVASI = 0;
 	bSingleEnded = false;
 	bDisp2 = false;
@@ -746,9 +747,8 @@ int RunwayLights::CreateRunwayLights(class vBase *vB, const class Scene *scn, co
 	int numRunwayLights = 0;
 	std::vector<RunwayLights*> lights;
 	char cbuf[256];
-	
-	FILE* file = NULL;
-	fopen_s(&file, filename, "r");
+
+	FILE* file = std::fopen(filename, "r");
 
 	if (file == NULL) {
 		LogErr("Could not open %s file.", filename);
@@ -1001,8 +1001,7 @@ int TaxiLights::CreateTaxiLights(OBJHANDLE base, const class Scene *scn, const c
 	std::vector<TaxiLights*> lights;
 	char cbuf[256];
 	
-	FILE* file = NULL;
-	fopen_s(&file, filename, "r");
+	FILE* file = std::fopen(filename, "r");
 
 	if (file == NULL) {
 		LogErr("Could not open %s file.", filename);

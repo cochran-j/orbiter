@@ -21,6 +21,8 @@
 #include "D3D9Effect.h"
 #include "D3D9Config.h"
 
+#include <cstring>
+
 using namespace oapi;
 
 HazeManager::HazeManager (const D3D9Client *gclient, const vPlanet *vplanet) : D3D9Effect()
@@ -366,7 +368,9 @@ void HazeManager2::RenderSkySegment(D3DXMATRIX &wmat, double rad, double dmin, d
 	float h2 = -float(rad * cos(dmax)); 
 
 	ShaderParams sprm;
-	memcpy_s(&sprm.mWorld, sizeof(sprm.mWorld), &wmat, sizeof(wmat));
+    static_assert(sizeof(sprm.mWorld) == sizeof(wmat),
+                  "Matrices incompatible");
+    std::memcpy(&sprm.mWorld, &wmat, sizeof(sprm.mWorld));
 	sprm.vTexOff = FVECTOR4(r1, r2, h1, h2);
 	
 	int xres = xreslvl[index];
@@ -409,7 +413,9 @@ void HazeManager2::RenderRing(VECTOR3 cpos, VECTOR3 cdir, double rad, double hra
 	D3DMAT_FromAxisT(&mW, ptr(_D3DXVECTOR3(ux)), ptr(_D3DXVECTOR3(ur)), ptr(_D3DXVECTOR3(uy)));
 
 	ShaderParams sprm;
-	memcpy_s(&sprm.mWorld, sizeof(sprm.mWorld), &mW, sizeof(mW));
+    static_assert(sizeof(sprm.mWorld) == sizeof(mW),
+                  "Matrices incompatible");
+    std::memcpy(&sprm.mWorld, &mW, sizeof(sprm.mWorld));
 	sprm.vTexOff = FVECTOR4(r1, r2, h1, h2);
 	sprm.fAlpha = float(qw);
 

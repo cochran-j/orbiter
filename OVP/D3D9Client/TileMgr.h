@@ -20,6 +20,12 @@
 #include "Mesh.h"
 #include "Spherepatch.h"
 
+#include <string>
+#include <mutex>
+#include <thread>
+#include <future>
+#include <atomic>
+
 #define MAXQUEUE 10
 
 #pragma pack(push,1)
@@ -56,7 +62,8 @@ typedef struct {
 
 class D3D9Config;
 class vPlanet;
-
+class TileBuffer;
+class CSphereManager;
 
 class TileManager : public D3D9Effect {
 
@@ -151,7 +158,7 @@ protected:
 	D3DCOLOR cAmbient;
 	const vPlanet *vp;               // the planet visual
 	OBJHANDLE obj;                   // the planet object
-	char *objname;                   // the name of the planet (for identifying texture files)
+    std::string objname;                   // the name of the planet (for identifying texture files)
 	DWORD tilever;                   // file version for tile textures
 	int maxlvl;                      // max LOD level
 	int maxbaselvl;                  // max LOD level, capped at 8
@@ -247,24 +254,24 @@ public:
 	static bool ShutDown();
 	static void HoldThread(bool bHold);
 
-	static HANDLE hQueueMutex; // Tile loading queue access mutex
+	static std::mutex hQueueMutex; // Tile loading queue access mutex
 
 private:
-	static HANDLE hLoadThread; // LoadTile ThreadProc handle
-	static HANDLE hStopThread; // Thread kill signal handle
+	static std::thread hLoadThread; // LoadTile ThreadProc handle
+	static std::promise<void> hStopThread; // Thread kill signal handle
 
 	static void TerminateLoadThread(); // Terminates the LoadTile thread
 
 	bool DeleteTile (TILEDESC *tile);
 
 	static HRESULT ReadDDSSurface (LPDIRECT3DDEVICE9 pDev, const char *fname, LONG_PTR ofs, LPDIRECT3DTEXTURE9* pTex, bool bManaged);
-	static DWORD WINAPI LoadTile_ThreadProc (void*);
+	static void LoadTile_ThreadProc (void*, std::future<void> stopThread);
 	// the thread function loading tile textures on demand
 
 	const oapi::D3D9Client *gc;      // the client
 	bool bLoadMip;  // load mipmaps for tiles if available
 
-	static bool bHoldThread;
+	static std::atomic<bool> bHoldThread;
 	static int nqueue, queue_in, queue_out;
 	DWORD nbuf;     // buffer size;
 	DWORD nused;    // number of active entries

@@ -12,6 +12,8 @@
 #include <d3dx9.h>
 #include <memory>
 #include <stack>
+#include <mutex>
+#include <string>
 #include "DrawAPI.h"
 
 using namespace oapi;
@@ -555,7 +557,7 @@ public:
 
 	LPD3DXMATRIX WorldMatrix();
 	DWORD GetLineHeight(); ///< Return height of a character in the currently selected font with "internal leading"
-	const char *GetName() const { return name; }
+	const char *GetName() const { return name.c_str(); }
 	LPDIRECT3DSURFACE9 GetRenderTarget() const { return pTgt; }
 	bool IsStillDrawing() const { return bBeginDraw; }
 	void LoadDefaults();
@@ -652,18 +654,17 @@ private:
 
 	// -------------------------------------------------------------------------
 	bool  _isSaveBuffer;   ///< Flag indicating that the 'save buffer' can be used
-	char* _saveBuffer;     ///< 'Save' string buffer  (null-terminated @ len)
-	int   _saveBufferSize; ///< Current size of the 'save' string buffer
+    std::string _saveBuffer;     ///< 'Save' string buffer  (null-terminated @ len)
 
 	void        ToSaveBuffer (const char *str, int len);        ///< Store len sized string into internal 'save' buffer
 	inline void ReleaseSaveBuffer ();                           ///< Mark the buffer as "not save"
 	void        WrapOneLine (char* str, int len, int maxWidth); ///< Wraps one text line at maxLenght pixels
 	// -------------------------------------------------------------------------
-	char name[32];
+    std::string name;
 
 	void Log(const char *format, ...) const;
 	static FILE *log;
-	static CRITICAL_SECTION LogCrit;
+	static std::mutex LogCrit;
 	static std::map< MESHHANDLE, class SketchMesh*> MeshMap;
 	static WORD *Idx;				// List of indices
 	static SkpVtx *Vtx;		// List of vertices

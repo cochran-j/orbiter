@@ -17,10 +17,12 @@
 #include "DebugControls.h"
 #include "VectorHelpers.h"
 
+/* TODO(jec)
 #pragma warning(push)
 #pragma warning(disable : 4838)
 #include <xnamath.h>
 #pragma warning(pop)
+*/
 
 using namespace oapi;
 
@@ -206,7 +208,7 @@ void D3D9Mesh::Null(const char *meshName /* = NULL */)
 
 	memset(Locals, 0, sizeof(LightStruct) * Config->MaxLights());
 	memset(LightList, 0, sizeof(LightList));
-	strcpy_s(this->name, ARRAYSIZE(this->name), meshName ? meshName : "???");
+    this->name = meshName ? meshName : "???";
 }
 
 // ===========================================================================================
@@ -327,7 +329,7 @@ D3D9Mesh::D3D9Mesh(MESHHANDLE hMesh, const D3D9Mesh &hTemp)
 
 	if (nGrp == 0) return;
 
-	strcpy_s(name, ARRAYSIZE(name), hTemp.name);
+    name = hTemp.name;
 
 	// Use Template's Vertex Data directly, no need for a local copy unless locally modified. 
 	pBuf = hTemp.pBuf;
@@ -403,7 +405,7 @@ void D3D9Mesh::Release()
 void D3D9Mesh::ReLoadMeshFromHandle(MESHHANDLE hMesh)
 {
 	const char* meshn = oapiGetMeshFilename(hMesh);
-	strcpy_s(name, 128, meshn ? meshn : "???");
+    name = meshn ? meshn : "???";
 
 	// Relese buffers, Tex, Mtrl and Grp counts may have changed.
 	SAFE_DELETEA(Tex);
@@ -465,7 +467,7 @@ void D3D9Mesh::ReLoadMeshFromHandle(MESHHANDLE hMesh)
 void D3D9Mesh::LoadMeshFromHandle(MESHHANDLE hMesh, D3DXVECTOR3 *reorig, float *scale)
 {
 	const char* meshn = oapiGetMeshFilename(hMesh);
-	strcpy_s(name, 128, meshn ? meshn : "???");
+    name = meshn ? meshn : "???";
 
 	nGrp = oapiMeshGroupCount(hMesh);
 
@@ -514,14 +516,16 @@ void D3D9Mesh::ReloadTextures()
 //
 void D3D9Mesh::SetName(const char *name_)
 {
-	if (name_) strcpy_s(this->name, ARRAYSIZE(this->name), name_);
+	if (name_) this->name = name_;
 }
 
 // ===========================================================================================
 //
 void D3D9Mesh::SetName(UINT idx)
 {
-	if ((strncmp(name, "???", 3) == 0) || (name[0] == 0)) sprintf_s(name, ARRAYSIZE(name), "MeshIdx-%u", idx);
+	if ((name == "???") || name.empty()) {
+        name = "MeshIdx-" + std::to_string(idx);
+    }
 }
 
 // ===========================================================================================
@@ -587,7 +591,9 @@ void D3D9Mesh::ProcessInherit()
 			}
 		}
 	}
+    /* TODO(jec)
 	if (bPopUp) MessageBoxA(NULL, "Invalid Mesh Detected", "D3D9Client Error:",MB_OK);
+    */
 }
 
 
@@ -629,6 +635,7 @@ void D3D9Mesh::UpdateTangentSpace(NMVERTEX *pVrt, WORD *pIdx, DWORD nVtx, DWORD 
 
 	if (bTextured) {
 
+        /* TODO(jec)
 		XMVECTOR *ta = (XMVECTOR*)_aligned_malloc(sizeof(__m128)*(nVtx+1), 16);
 		XMVECTOR zero = XMVectorSet(0, 0, 0, 0);
 		for (DWORD i = 0; i < nVtx; i++) ta[i] = zero;
@@ -670,8 +677,10 @@ void D3D9Mesh::UpdateTangentSpace(NMVERTEX *pVrt, WORD *pIdx, DWORD nVtx, DWORD 
 		}
 
 		_aligned_free(ta);
+        */
 	}
 	else {
+        /* TODO(jec)
 		for (DWORD i=0;i<nVtx; i++) {
 			D3DXVECTOR3 n = D3DXVECTOR3(pVrt[i].nx,  pVrt[i].ny,  pVrt[i].nz);
 			D3DXVECTOR3 t = Perpendicular(&n);
@@ -680,6 +689,7 @@ void D3D9Mesh::UpdateTangentSpace(NMVERTEX *pVrt, WORD *pIdx, DWORD nVtx, DWORD 
 			pVrt[i].ty = t.y;
 			pVrt[i].tz = t.z;
 		}
+        */
 	}
 }
 
@@ -3020,6 +3030,7 @@ void D3D9Mesh::RenderBoundingBox(const LPD3DXMATRIX pW)
 
 void D3D9Mesh::BoundingBox(const NMVERTEX *vtx, DWORD n, D9BBox *box)
 {
+    /* TODO(jec)
 	XMVECTOR mi, mx;
 	mi = mx = XMLoadFloat3((XMFLOAT3 *)&vtx[0].x);
 	for (DWORD i = 1; i < n; i++) {
@@ -3029,6 +3040,7 @@ void D3D9Mesh::BoundingBox(const NMVERTEX *vtx, DWORD n, D9BBox *box)
 	}
 	XMStoreFloat4((XMFLOAT4 *)&box->min.x, XMVectorSetW(mi, 0));
 	XMStoreFloat4((XMFLOAT4 *)&box->max.x, XMVectorSetW(mx, 0));
+    */
 }
 
 // ===========================================================================================

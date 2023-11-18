@@ -8,9 +8,10 @@
 #include "MaterialMgr.h"
 #include "D3D9Surface.h"
 #include "OapiExtension.h"
-#include "vVessel.h"
+#include "VVessel.h"
 
-
+#include <cstring>
+#include <filesystem>
 
 // ===========================================================================================
 //
@@ -163,31 +164,34 @@ bool MatMgr::LoadConfiguration(bool bAppend)
 	_TRACE;
 
 	char cbuf[256];
-	char path[256];
+    std::filesystem::path path_{};
 	char classname[256];
 	char meshname[64];
 	char shadername[64];
 
-	OBJHANDLE hObj = vObj->GetObjectA();
+	OBJHANDLE hObj = vObj->GetObject();
 
 	if (oapiGetObjectType(hObj)!=OBJTP_VESSEL) return false; 
 
 	const char *cfgdir = OapiExtension::GetConfigDir();
 
 	VESSEL *vessel = oapiGetVesselInterface(hObj);
-	strcpy_s(classname, 256, vessel->GetClassNameA());
+    std::strncpy(classname, vessel->GetClassName(), 256);
 	parse_vessel_classname(classname);
 
 	AutoFile file;
 
 	if (file.IsInvalid()) {
-		sprintf_s(path, 256, "%sGC\\%s.cfg", cfgdir, classname);
-		fopen_s(&file.pFile, path, "r");	
+        path_ = cfgdir;
+        path_ += "GC";
+        path_ /= classname;
+        path_ += ".cfg";
+        file.pFile = std::fopen(path_.c_str(), "r");
 	}
 
 	if (file.IsInvalid()) return true;
 
-	LogAlw("Reading a custom configuration file for a vessel %s (%s)", vessel->GetName(), vessel->GetClassNameA());
+	LogAlw("Reading a custom configuration file for a vessel %s (%s)", vessel->GetName(), vessel->GetClassName());
 	
 	DWORD n = 0;
 	int mat_idx = -1;
@@ -199,7 +203,7 @@ bool MatMgr::LoadConfiguration(bool bAppend)
 		// --------------------------------------------------------------------------------------------
 		if (!strncmp(cbuf, "MESH", 4)) {
 			mat_idx = -1;
-			if (sscanf_s(cbuf, "MESH %s", meshname, 64)!=1) LogErr("Invalid Line in (%s): %s", path, cbuf);
+			if (std::sscanf(cbuf, "MESH %s", meshname)!=1) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 			if (strncmp(meshname, "???", 3) == 0) meshname[0] = 0;
 			if (HasMesh(meshname) && bAppend) meshname[0] = 0; // Mesh is loaded already skip all entries related to it.
 			continue;
@@ -211,7 +215,7 @@ bool MatMgr::LoadConfiguration(bool bAppend)
 		// --------------------------------------------------------------------------------------------
 		if (!strncmp(cbuf, "SHADER", 6)) {
 			MeshConfig[meshname].shader = SHADER_NULL;
-			if (sscanf_s(cbuf, "SHADER %s", shadername, 64) != 1) LogErr("Invalid Line in (%s): %s", path, cbuf);
+			if (std::sscanf(cbuf, "SHADER %s", shadername, 64) != 1) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 			for (auto x : Shaders)
 				if (string(shadername) == x.name) {
 					MeshConfig[meshname].shader = x.id;
@@ -222,7 +226,7 @@ bool MatMgr::LoadConfiguration(bool bAppend)
 
 		// --------------------------------------------------------------------------------------------
 		if (!strncmp(cbuf, "MATERIAL", 8)) {
-			if (sscanf_s(cbuf, "MATERIAL %d", &mat_idx)!=1) LogErr("Invalid Line in (%s): %s", path, cbuf);
+			if (std::sscanf(cbuf, "MATERIAL %d", &mat_idx)!=1) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 			continue;
 		}
 
@@ -233,7 +237,7 @@ bool MatMgr::LoadConfiguration(bool bAppend)
 
 		// --------------------------------------------------------------------------------------------
 		if (!strncmp(cbuf, "SPECULAR", 8)) {
-			if (sscanf_s(cbuf, "SPECULAR %f %f %f %f", &a, &b, &c, &d)!=4) LogErr("Invalid Line in (%s): %s", path, cbuf);
+			if (std::sscanf(cbuf, "SPECULAR %f %f %f %f", &a, &b, &c, &d)!=4) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 			Mat.Specular = D3DXVECTOR4(a, b, c, d);
 			Mat.ModFlags |= D3D9MATEX_SPECULAR;
 			continue;
@@ -241,7 +245,7 @@ bool MatMgr::LoadConfiguration(bool bAppend)
 
 		// --------------------------------------------------------------------------------------------
 		if (!strncmp(cbuf, "DIFFUSE", 7)) {
-			if (sscanf_s(cbuf, "DIFFUSE %f %f %f %f", &a, &b, &c, &d)!=4) LogErr("Invalid Line in (%s): %s", path, cbuf);
+			if (std::sscanf(cbuf, "DIFFUSE %f %f %f %f", &a, &b, &c, &d)!=4) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 			Mat.Diffuse = D3DXVECTOR4(a, b, c, d);
 			Mat.ModFlags |= D3D9MATEX_DIFFUSE;
 			continue;
@@ -249,7 +253,7 @@ bool MatMgr::LoadConfiguration(bool bAppend)
 
 		// --------------------------------------------------------------------------------------------
 		if (!strncmp(cbuf, "EMISSIVE", 8)) {
-			if (sscanf_s(cbuf, "EMISSIVE %f %f %f", &a, &b, &c)!=3) LogErr("Invalid Line in (%s): %s", path, cbuf);
+			if (std::sscanf(cbuf, "EMISSIVE %f %f %f", &a, &b, &c)!=3) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 			Mat.Emissive = D3DXVECTOR3(a, b, c);
 			Mat.ModFlags |= D3D9MATEX_EMISSIVE;
 			continue;
@@ -257,7 +261,7 @@ bool MatMgr::LoadConfiguration(bool bAppend)
 
 		// --------------------------------------------------------------------------------------------
 		if (!strncmp(cbuf, "EMISSION2", 9)) {
-			if (sscanf_s(cbuf, "EMISSION2 %f %f %f", &a, &b, &c) != 3) LogErr("Invalid Line in (%s): %s", path, cbuf);
+			if (std::sscanf(cbuf, "EMISSION2 %f %f %f", &a, &b, &c) != 3) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 			Mat.Emission2 = D3DXVECTOR3(a, b, c);
 			Mat.ModFlags |= D3D9MATEX_EMISSION2;
 			continue;
@@ -265,7 +269,7 @@ bool MatMgr::LoadConfiguration(bool bAppend)
 
 		// --------------------------------------------------------------------------------------------
 		if (!strncmp(cbuf, "AMBIENT", 7)) {
-			if (sscanf_s(cbuf, "AMBIENT %f %f %f", &a, &b, &c)!=3) LogErr("Invalid Line in (%s): %s", path, cbuf);
+			if (std::sscanf(cbuf, "AMBIENT %f %f %f", &a, &b, &c)!=3) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 			Mat.Ambient = D3DXVECTOR3(a, b, c);
 			Mat.ModFlags |= D3D9MATEX_AMBIENT;
 			continue;
@@ -273,7 +277,7 @@ bool MatMgr::LoadConfiguration(bool bAppend)
 
 		// --------------------------------------------------------------------------------------------
 		if (!strncmp(cbuf, "REFLECT", 7)) {
-			if (sscanf_s(cbuf, "REFLECT %f %f %f", &a, &b, &c) != 3) LogErr("Invalid Line in (%s): %s", path, cbuf);
+			if (std::sscanf(cbuf, "REFLECT %f %f %f", &a, &b, &c) != 3) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 			Mat.Reflect = D3DXVECTOR3(a, b, c);
 			Mat.ModFlags |= D3D9MATEX_REFLECT;
 			continue;
@@ -281,7 +285,7 @@ bool MatMgr::LoadConfiguration(bool bAppend)
 
 		// --------------------------------------------------------------------------------------------
 		if (!strncmp(cbuf, "FRESNEL", 7)) {
-			if (sscanf_s(cbuf, "FRESNEL %f %f %f", &a, &b, &c) != 3) LogErr("Invalid Line in (%s): %s", path, cbuf);
+			if (std::sscanf(cbuf, "FRESNEL %f %f %f", &a, &b, &c) != 3) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 			if (b < 10.0f) b = 1024.0f;
 			Mat.Fresnel = D3DXVECTOR3(a, c, b);
 			Mat.ModFlags |= D3D9MATEX_FRESNEL;
@@ -290,27 +294,27 @@ bool MatMgr::LoadConfiguration(bool bAppend)
 
 		// --------------------------------------------------------------------------------------------
 		if (!strncmp(cbuf, "ROUGHNESS", 9)) {
-			int cnt = sscanf_s(cbuf, "ROUGHNESS %f %f", &a, &b);
+			int cnt = std::sscanf(cbuf, "ROUGHNESS %f %f", &a, &b);
 			if (cnt == 1) Mat.Roughness = D3DXVECTOR2(a, 1.0f);
 			else if (cnt == 2)  Mat.Roughness = D3DXVECTOR2(a, b);
-			else LogErr("Invalid Line in (%s): %s", path, cbuf);
+			else LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 			Mat.ModFlags |= D3D9MATEX_ROUGHNESS;
 			continue;
 		}
 
 		// --------------------------------------------------------------------------------------------
 		if (!strncmp(cbuf, "SMOOTHNESS", 10)) {
-			int cnt = sscanf_s(cbuf, "SMOOTHNESS %f %f", &a, &b);
+			int cnt = std::sscanf(cbuf, "SMOOTHNESS %f %f", &a, &b);
 			if (cnt == 1) Mat.Roughness = D3DXVECTOR2(a, 1.0f);
 			else if (cnt == 2)  Mat.Roughness = D3DXVECTOR2(a, b);
-			else LogErr("Invalid Line in (%s): %s", path, cbuf);
+			else LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 			Mat.ModFlags |= D3D9MATEX_ROUGHNESS;
 			continue;
 		}
 
 		// --------------------------------------------------------------------------------------------
 		if (!strncmp(cbuf, "METALNESS", 9)) {
-			if (sscanf_s(cbuf, "METALNESS %f", &a) != 1) LogErr("Invalid Line in (%s): %s", path, cbuf);
+			if (std::sscanf(cbuf, "METALNESS %f", &a) != 1) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 			Mat.Metalness = a;
 			Mat.ModFlags |= D3D9MATEX_METALNESS;
 			continue;
@@ -328,28 +332,31 @@ bool MatMgr::SaveConfiguration()
 	_TRACE;
 	bool bIfStatement = false;
 
-	char path[256];
+    std::filesystem::path path_ {};
 	char classname[256];
-	
-	
-	OBJHANDLE hObj = vObj->GetObjectA();
+
+
+	OBJHANDLE hObj = vObj->GetObject();
 
 	if (oapiGetObjectType(hObj)!=OBJTP_VESSEL) return false; 
 
 	VESSEL *vessel = oapiGetVesselInterface(hObj);
 	const char *cfgdir = OapiExtension::GetConfigDir();
 
-	strcpy_s(classname, 256, vessel->GetClassNameA());
+    std::strncpy(classname, vessel->GetClassName(), 256);
 	parse_vessel_classname(classname);
 
 	AutoFile file;
-	sprintf_s(path, 256, "%sGC\\%s.cfg", cfgdir, classname);
+    path_ = cfgdir;
+    path_ += "GC";
+    path_ /= classname;
+    path_ += ".cfg";
 	
 	// If the target file contains configurations those are not loaded into the editor,
 	// Load them before overwriting the file
 	LoadConfiguration(true);
 
-	fopen_s(&file.pFile, path, "w");
+    file.pFile = std::fopen(path_.c_str(), "w");
 
 	if (file.IsInvalid()) {
 		LogErr("Failed to write a file");
@@ -399,28 +406,32 @@ bool MatMgr::LoadCameraConfig()
 	_TRACE;
 
 	char cbuf[256];
-	char path[256];
+    std::filesystem::path path_ {};
 	char classname[256];
 
-	OBJHANDLE hObj = vObj->GetObjectA();
+	OBJHANDLE hObj = vObj->GetObject();
 
 	if (oapiGetObjectType(hObj)!=OBJTP_VESSEL) return false; 
 
 	const char *cfgdir = OapiExtension::GetConfigDir();
-	
+
 	VESSEL *vessel = oapiGetVesselInterface(hObj);
-	strcpy_s(classname, 256, vessel->GetClassNameA());
+    std::strncpy(classname, vessel->GetClassName(), 256);
 	parse_vessel_classname(classname);
 
 	AutoFile file;
 
-	sprintf_s(path, 256, "%sGC\\%s_ecam.cfg", cfgdir, classname);
-	fopen_s(&file.pFile, path, "r");	
-	
+    path_ = cfgdir;
+    path_ += "GC";
+    path_ /= classname;
+    path_ += "_ecam.cfg";
+
+    file.pFile = std::fopen(path_.c_str(), "r");
+
 	if (file.IsInvalid()) return true;
 
-	LogAlw("Reading a camera configuration file for a vessel %s (%s)", vessel->GetName(), vessel->GetClassNameA());
-	
+	LogAlw("Reading a camera configuration file for a vessel %s (%s)", vessel->GetName(), vessel->GetClassName());
+
 	DWORD iattc = 0;
 	DWORD idock = 0;
 	DWORD camera = 0;
@@ -428,8 +439,8 @@ bool MatMgr::LoadCameraConfig()
 	BYTE attclist[256];
 	BYTE docklist[256];
 
-	while(fgets2(cbuf, 256, file.pFile, 0x08)>=0) 
-	{	
+	while(fgets2(cbuf, 256, file.pFile, 0x08)>=0)
+	{
 		float a, b, c;
 		DWORD id;
 
@@ -450,7 +461,7 @@ bool MatMgr::LoadCameraConfig()
 		
 		// --------------------------------------------------------------------------------------------
 		if (!strncmp(cbuf, "BEGIN_CAMERA", 12)) {
-			if (sscanf_s(cbuf, "BEGIN_CAMERA %u", &camera)!=1) LogErr("Invalid Line in (%s): %s", path, cbuf);
+			if (std::sscanf(cbuf, "BEGIN_CAMERA %u", &camera)!=1) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 			camera = 0; // For now just one camera
 			pCamera[camera].flags = 0; // Clear default flags
 			continue;
@@ -458,28 +469,28 @@ bool MatMgr::LoadCameraConfig()
 
 		// --------------------------------------------------------------------------------------------
 		if (!strncmp(cbuf, "LPOS", 4)) {
-			if (sscanf_s(cbuf, "LPOS %g %g %g", &a, &b, &c)!=3) LogErr("Invalid Line in (%s): %s", path, cbuf);
+			if (std::sscanf(cbuf, "LPOS %g %g %g", &a, &b, &c)!=3) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 			pCamera[camera].lPos = D3DXVECTOR3(a,b,c);
 			continue;
 		}
 
 		// --------------------------------------------------------------------------------------------
 		if (!strncmp(cbuf, "OMITATTC", 8)) {
-			if (sscanf_s(cbuf, "OMITATTC %u", &id)!=1) LogErr("Invalid Line in (%s): %s", path, cbuf);
+			if (std::sscanf(cbuf, "OMITATTC %u", &id)!=1) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 			attclist[iattc++] = BYTE(id);
 			continue;
 		}
 
 		// --------------------------------------------------------------------------------------------
 		if (!strncmp(cbuf, "OMITDOCK", 8)) {
-			if (sscanf_s(cbuf, "OMITDOCK %u", &id)!=1) LogErr("Invalid Line in (%s): %s", path, cbuf);
+			if (std::sscanf(cbuf, "OMITDOCK %u", &id)!=1) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 			docklist[idock++] = BYTE(id);
 			continue;
 		}
 
 		// --------------------------------------------------------------------------------------------
 		if (!strncmp(cbuf, "CLIPDIST", 8)) {
-			if (sscanf_s(cbuf, "CLIPDIST %g", &a)!=1) LogErr("Invalid Line in (%s): %s", path, cbuf);
+			if (std::sscanf(cbuf, "CLIPDIST %g", &a)!=1) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 			pCamera[camera].near_clip = a;
 			continue;
 		}
@@ -502,7 +513,7 @@ bool MatMgr::LoadCameraConfig()
 			continue;
 		}
 
-		if (cbuf[0]!=';') LogErr("Invalid Line in (%s): %s", path, cbuf);
+		if (cbuf[0]!=';') LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 	}
 
 	return true;

@@ -15,23 +15,32 @@
 #include "VideoTab.h"
 #include "AABBUtil.h"
 #include "D3D9Config.h"
+/* TODO(jec)
 #include "Commctrl.h"
+*/
 #include "Junction.h"
 #include "OapiExtension.h"
 #include <vector>
 #include <sstream>
+/* TODO(jec)
 #include <richedit.h>
+*/
+
+#include <filesystem>
+#include <cstdio>
 
 using namespace oapi;
 
 const UINT IDC_SCENARIO_TREE = (oapiGetOrbiterVersion() >= 111105) ? 1090 : 1088;
 
-BOOL CALLBACK EnumChildProc(HWND hwnd, LPARAM lParam)
+BOOL EnumChildProc(HWND hwnd, LPARAM lParam)
 {
+    /* TODO(jec)
 	if (GetDlgItem(hwnd, IDC_SCENARIO_TREE)) {
 		*(HWND*)lParam = hwnd; 
 		return false;
 	}
+    */
 	return true;
 }
 
@@ -63,6 +72,7 @@ BOOL VideoTab::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	GraphicsClient::VIDEODATA *data = gclient->GetVideoData();
 
+    /* TODO(jec)
 	switch (uMsg) {
 
 	case WM_INITDIALOG:
@@ -154,6 +164,7 @@ BOOL VideoTab::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	}
+    */
 	return FALSE;
 }
 
@@ -170,9 +181,11 @@ void VideoTab::Initialise()
 	data->forceenum = false;
 	data->trystencil = false;
 
+    /* TODO(jec)
 	SendDlgItemMessage(hTab, IDC_VID_DEVICE, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessageA(hTab, IDC_VID_MODE, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessage(hTab, IDC_VID_BPP, CB_RESETCONTENT, 0, 0);
+    */
 
 
 	ScanAtmoCfgs();
@@ -193,10 +206,14 @@ void VideoTab::Initialise()
 
 		for (int i=0;i<nAdapter;i++) {
 			d3dObject->GetAdapterIdentifier(i, 0, &info);
+            /* TODO(jec)
 			SendDlgItemMessageA(hTab, IDC_VID_DEVICE, CB_ADDSTRING, 0, (LPARAM)info.Description);
+            */
 		}
 
+        /* TODO(jec)
 		SendDlgItemMessage(hTab, IDC_VID_DEVICE, CB_SETCURSEL, data->deviceidx, 0);
+        */
 
 		d3dObject->GetAdapterDisplayMode(data->deviceidx, &curMode);
 
@@ -204,12 +221,15 @@ void VideoTab::Initialise()
 		
 		for (UINT k=0;k<nModes;k++) {
 			d3dObject->EnumAdapterModes(data->deviceidx, D3DFMT_X8R8G8B8, k, &mode); 
-			sprintf_s(cbuf,32,"%u x %u  %uHz", mode.Width, mode.Height, mode.RefreshRate);
+            std::snprintf(cbuf,32,"%u x %u  %uHz", mode.Width, mode.Height, mode.RefreshRate);
 			LogAlw("Index:%u %u x %u  %uHz (%u)", k, mode.Width, mode.Height, mode.RefreshRate, mode.Format);
+            /* TODO(jec)
 			SendDlgItemMessageA(hTab, IDC_VID_MODE, CB_ADDSTRING, 0, (LPARAM)cbuf);
 			SendDlgItemMessageA(hTab, IDC_VID_MODE, CB_SETITEMDATA, k, (LPARAM)(mode.Height<<16 | mode.Width));
+            */
 		}
 
+        /* TODO(jec)
 		SendDlgItemMessageA(hTab, IDC_VID_BPP, CB_ADDSTRING, 0, (LPARAM)"True Full Screen (no alt-tab)");
 		SendDlgItemMessageA(hTab, IDC_VID_BPP, CB_ADDSTRING, 0, (LPARAM)"Full Screen Window");
 		SendDlgItemMessageA(hTab, IDC_VID_BPP, CB_ADDSTRING, 0, (LPARAM)"Window with Taskbar");
@@ -224,13 +244,15 @@ void VideoTab::Initialise()
 		
 		SetWindowText(GetDlgItem(hTab, IDC_VID_WIDTH), std::to_string(data->winw).c_str());
 		SetWindowText(GetDlgItem(hTab, IDC_VID_HEIGHT), std::to_string(data->winh).c_str());
+        */
 
 		aspect_idx = 0;
 		
 		if (data->winw == (4*data->winh)/3 || data->winh == (3*data->winw)/4)	aspect_idx = 1;
 		else if (data->winw == (16*data->winh)/10 || data->winh == (10*data->winw)/16) aspect_idx = 2;
 		else if (data->winw == (16*data->winh)/9 || data->winh == (9*data->winw)/16) aspect_idx = 3;
-		
+	
+        /* TODO(jec)
 		SendDlgItemMessage(hTab, IDC_VID_ASPECT, BM_SETCHECK, aspect_idx ? BST_CHECKED : BST_UNCHECKED, 0);
 		if (aspect_idx) aspect_idx--;
 		SendDlgItemMessage(hTab, IDC_VID_4X3+aspect_idx, BM_SETCHECK, BST_CHECKED, 0);
@@ -238,6 +260,7 @@ void VideoTab::Initialise()
 		SendDlgItemMessage(hTab, IDC_VID_STENCIL,  BM_SETCHECK, data->trystencil, 0); // GDI Compatibility mode
 		SendDlgItemMessage(hTab, IDC_VID_ENUM,     BM_SETCHECK, data->forceenum, 0);  
 		SendDlgItemMessage(hTab, IDC_VID_PAGEFLIP, BM_SETCHECK, data->pageflip, 0);	  // Full scrren Window
+                                                                                        */
 		
 		SAFE_RELEASE(d3dObject);
 
@@ -245,9 +268,11 @@ void VideoTab::Initialise()
 
 		SelectFullscreen(data->fullscreen);
 
+        /* TODO(jec)
 		ShowWindow (GetDlgItem (hTab, IDC_VID_INFO), SW_SHOW);
 
 		SetWindowText(GetDlgItem(hTab, IDC_VID_INFO), "Advanced");
+        */
 	}
 }
 
@@ -257,7 +282,9 @@ void VideoTab::Initialise()
 void VideoTab::SelectMode(DWORD index)
 {
 	GraphicsClient::VIDEODATA *data = gclient->GetVideoData();
+    /* TODO(jec)
 	SendDlgItemMessage(hTab, IDC_VID_MODE, CB_GETITEMDATA, index, 0);
+    */
 	data->modeidx = index + data->modeidx&0xFF00;
 }
 
@@ -289,18 +316,25 @@ void VideoTab::SelectAdapter(DWORD index)
 
 		d3dObject->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &curMode);
 
+        /* TODO(jec)
 		SendDlgItemMessage(hTab, IDC_VID_MODE, CB_RESETCONTENT, 0, 0);
+        */
 
 		DWORD nModes = d3dObject->GetAdapterModeCount(index, D3DFMT_X8R8G8B8);
 
 		for (DWORD k=0;k<nModes;k++) {
 			d3dObject->EnumAdapterModes(index, D3DFMT_X8R8G8B8, k, &mode); 
+            /* TODO(jec)
 			sprintf_s(cbuf,32,"%u x %u %uHz", mode.Width, mode.Height, mode.RefreshRate);
+            
 			SendDlgItemMessageA(hTab, IDC_VID_MODE, CB_ADDSTRING, 0, (LPARAM)cbuf);
 			SendDlgItemMessageA(hTab, IDC_VID_MODE, CB_SETITEMDATA, k, (LPARAM)(mode.Height<<16 | mode.Width));
+            */
 		}
 
+        /* TODO(jec)
 		SendDlgItemMessage(hTab, IDC_VID_MODE, CB_SETCURSEL, data->modeidx&0xFF, 0);
+        */
 
 		SAFE_RELEASE(d3dObject);
 	}
@@ -311,6 +345,7 @@ void VideoTab::SelectAdapter(DWORD index)
 void VideoTab::SelectFullscreen(bool bFull)
 {
 
+    /* TODO(jec)
 	SetWindowText(GetDlgItem(hTab, IDC_VID_ENUM), "(unused)");
 	SetWindowText(GetDlgItem(hTab, IDC_VID_STENCIL), "(unused)");
 	SetWindowText(GetDlgItem(hTab, IDC_VID_PAGEFLIP), "Multiple displays");
@@ -345,6 +380,7 @@ void VideoTab::SelectFullscreen(bool bFull)
 		EnableWindow(GetDlgItem(hTab, IDC_VID_PAGEFLIP), false);
 		EnableWindow(GetDlgItem(hTab, IDC_VID_BPP), false);
 	}
+    */
 }
 
 
@@ -354,6 +390,7 @@ static int aspect_hfac[3] = {3,10,9};
 
 void VideoTab::SelectWidth ()
 {
+    /* TODO(jec)
 	if (SendDlgItemMessage (hTab, IDC_VID_ASPECT, BM_GETCHECK, 0, 0) == BST_CHECKED) {
 		char cbuf[32];
 		int w, h, wfac = aspect_wfac[aspect_idx], hfac = aspect_hfac[aspect_idx];
@@ -364,6 +401,7 @@ void VideoTab::SelectWidth ()
 			SetWindowText (GetDlgItem (hTab, IDC_VID_HEIGHT), std::to_string(h).c_str());
 		}
 	}
+    */
 }
 
 // ==============================================================
@@ -371,6 +409,7 @@ void VideoTab::SelectWidth ()
 
 void VideoTab::SelectHeight ()
 {
+    /* TODO(jec)
 	if (SendDlgItemMessage (hTab, IDC_VID_ASPECT, BM_GETCHECK, 0, 0) == BST_CHECKED) {
 		char cbuf[32];
 		int w, h, wfac = aspect_wfac[aspect_idx], hfac = aspect_hfac[aspect_idx];
@@ -381,6 +420,7 @@ void VideoTab::SelectHeight ()
 			SetWindowText (GetDlgItem (hTab, IDC_VID_WIDTH), std::to_string(w).c_str());
 		}
 	}
+    */
 }
 
 // ==============================================================
@@ -392,6 +432,7 @@ void VideoTab::UpdateConfigData()
 	GraphicsClient::VIDEODATA *data = gclient->GetVideoData();
 
 	// device parameters
+    /* TODO(jec)
 	data->deviceidx  = (int)SendDlgItemMessageA(hTab, IDC_VID_DEVICE, CB_GETCURSEL, 0, 0);
 	data->modeidx    = (int)SendDlgItemMessage(hTab, IDC_VID_MODE, CB_GETCURSEL, 0, 0) + ((int)SendDlgItemMessageA(hTab, IDC_VID_BPP, CB_GETCURSEL, 0, 0)<<8);
 	data->fullscreen = (SendDlgItemMessage (hTab, IDC_VID_FULL, BM_GETCHECK, 0, 0) == BST_CHECKED);
@@ -402,15 +443,19 @@ void VideoTab::UpdateConfigData()
 
 	GetWindowText(GetDlgItem(hTab, IDC_VID_WIDTH),  cbuf, 32); data->winw = atoi(cbuf);
 	GetWindowText(GetDlgItem(hTab, IDC_VID_HEIGHT), cbuf, 32); data->winh = atoi(cbuf);	
+    */
 
 
 	HWND hChild = NULL;
+    /* TODO(jec)
 	HWND hRoot = GetAncestor(hTab, GA_ROOT);
 
 	EnumChildWindows(hRoot, EnumChildProc, (LPARAM)&hChild);
+    */
 
 	if (hChild) {
 
+        /* TODO(jec)
 		HWND hTree = GetDlgItem(hChild, IDC_SCENARIO_TREE);
 
 		if (hTree==NULL) {
@@ -457,6 +502,7 @@ void VideoTab::UpdateConfigData()
 		gclient->SetScenarioName(path);
 
 		LogAlw("Scenario = %s", path.c_str());
+        */
 	}
 	else {
 		LogErr("FAILED to get a handle of a scenario dialog");
@@ -472,9 +518,10 @@ void VideoTab::UpdateConfigData()
 // ***************************************************************************************************
 
 
-INT_PTR CALLBACK VideoTab::SetupDlgProcWrp(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR VideoTab::SetupDlgProcWrp(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static class VideoTab *VTab = NULL;
+    /* TODO(jec)
 	switch (uMsg) {
 		case WM_INITDIALOG: 
 			VTab = (class VideoTab *)lParam;
@@ -486,14 +533,16 @@ INT_PTR CALLBACK VideoTab::SetupDlgProcWrp(HWND hWnd, UINT uMsg, WPARAM wParam, 
 			if (VTab) VTab->SetupDlgProc(hWnd, uMsg, wParam, lParam);
 			break;
 	}
+    */
 	return false;
 }
 
 
 
-INT_PTR CALLBACK VideoTab::SetupDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR VideoTab::SetupDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 
+    /* TODO(jec)
 	if (uMsg==WM_HSCROLL) {
 		if (LOWORD(wParam)==TB_THUMBTRACK) {
 			char lbl[32];
@@ -539,6 +588,7 @@ INT_PTR CALLBACK VideoTab::SetupDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 			EndDialog (hWnd, 0);
 			break;
 	}
+    */
 	
 	return false;
 }
@@ -573,72 +623,89 @@ void VideoTab::InitSetupDialog(HWND hWnd)
 
 	// AA -----------------------------------------
 
+    /* TODO(jec)
 	SendDlgItemMessage(hWnd, IDC_AA, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessageA(hWnd, IDC_AA, CB_ADDSTRING, 0, (LPARAM)"None");
 	if (aamax>=2)  SendDlgItemMessageA(hWnd, IDC_AA, CB_ADDSTRING, 0, (LPARAM)"2x");
 	if (aamax>=4)  SendDlgItemMessageA(hWnd, IDC_AA, CB_ADDSTRING, 0, (LPARAM)"4x");
 	if (aamax>=8)  SendDlgItemMessageA(hWnd, IDC_AA, CB_ADDSTRING, 0, (LPARAM)"8x");
+    */
 	
 
 	// AF -----------------------------------------
 
+    /* TODO(jec)
 	SendDlgItemMessage(hWnd, IDC_AF, CB_RESETCONTENT, 0, 0);
 	if (caps.MaxAnisotropy>=2) SendDlgItemMessageA(hWnd, IDC_AF, CB_ADDSTRING, 0, (LPARAM)"2x");
 	if (caps.MaxAnisotropy>=4) SendDlgItemMessageA(hWnd, IDC_AF, CB_ADDSTRING, 0, (LPARAM)"4x");
 	if (caps.MaxAnisotropy>=8) SendDlgItemMessageA(hWnd, IDC_AF, CB_ADDSTRING, 0, (LPARAM)"8x");
 	if (caps.MaxAnisotropy>=12) SendDlgItemMessageA(hWnd, IDC_AF, CB_ADDSTRING, 0, (LPARAM)"12x");
 	if (caps.MaxAnisotropy>=16) SendDlgItemMessageA(hWnd, IDC_AF, CB_ADDSTRING, 0, (LPARAM)"16x");
+    */
 	
 
 	// DEBUG --------------------------------------
 
+    /* TODO(jec)
 	SendDlgItemMessage(hWnd, IDC_DEBUG, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessageA(hWnd, IDC_DEBUG, CB_ADDSTRING, 0, (LPARAM)"0");
 	SendDlgItemMessageA(hWnd, IDC_DEBUG, CB_ADDSTRING, 0, (LPARAM)"1");
 	SendDlgItemMessageA(hWnd, IDC_DEBUG, CB_ADDSTRING, 0, (LPARAM)"2");
 	SendDlgItemMessageA(hWnd, IDC_DEBUG, CB_ADDSTRING, 0, (LPARAM)"3");
 	SendDlgItemMessageA(hWnd, IDC_DEBUG, CB_ADDSTRING, 0, (LPARAM)"4");
+    */
 	
 	// SKETCHPAD --------------------------------------
 
+    /* TODO(jec)
 	SendDlgItemMessage(hWnd, IDC_FONT, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessageA(hWnd, IDC_FONT, CB_ADDSTRING, 0, (LPARAM)"Crisp");
 	SendDlgItemMessageA(hWnd, IDC_FONT, CB_ADDSTRING, 0, (LPARAM)"Antialiased");
 	SendDlgItemMessageA(hWnd, IDC_FONT, CB_ADDSTRING, 0, (LPARAM)"Cleartype");
+    */
 	
 	// ENVMAP MODE --------------------------------------
 
+    /* TODO(jec)
 	SendDlgItemMessage(hWnd, IDC_ENVMODE, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessageA(hWnd, IDC_ENVMODE, CB_ADDSTRING, 0, (LPARAM)"Disable (Debug)");
 	SendDlgItemMessageA(hWnd, IDC_ENVMODE, CB_ADDSTRING, 0, (LPARAM)"Planet Only");
 	SendDlgItemMessageA(hWnd, IDC_ENVMODE, CB_ADDSTRING, 0, (LPARAM)"Full Scene");
 	SendDlgItemMessage(hWnd, IDC_ENVMODE, CB_SETCURSEL, 0, 0);
+    */
 
 	// CUSTOM CAMERA MODE --------------------------------------
 
+    /* TODO(jec)
 	SendDlgItemMessage(hWnd, IDC_CAMMODE, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessageA(hWnd, IDC_CAMMODE, CB_ADDSTRING, 0, (LPARAM)"Disable");
 	SendDlgItemMessageA(hWnd, IDC_CAMMODE, CB_ADDSTRING, 0, (LPARAM)"Enabled");
 	SendDlgItemMessage(hWnd, IDC_ENVMODE, CB_SETCURSEL, 0, 0);
+    */
 
 	// ENVMAP FACES --------------------------------------
 
+    /* TODO(jec)
 	SendDlgItemMessage(hWnd, IDC_ENVFACES, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessageA(hWnd, IDC_ENVFACES, CB_ADDSTRING, 0, (LPARAM)"Light");
 	SendDlgItemMessageA(hWnd, IDC_ENVFACES, CB_ADDSTRING, 0, (LPARAM)"Medimum");
 	SendDlgItemMessageA(hWnd, IDC_ENVFACES, CB_ADDSTRING, 0, (LPARAM)"Heavy");
 	SendDlgItemMessage(hWnd, IDC_ENVFACES, CB_SETCURSEL, 0, 0);
+    */
 
 	// TEXTURE MIPMAP POLICY --------------------------------------
 
+    /* TODO(jec)
 	SendDlgItemMessage(hWnd, IDC_TEXMIPS, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessageA(hWnd, IDC_TEXMIPS, CB_ADDSTRING, 0, (LPARAM)"Load as defined");
 	SendDlgItemMessageA(hWnd, IDC_TEXMIPS, CB_ADDSTRING, 0, (LPARAM)"Autogen missing");
 	SendDlgItemMessageA(hWnd, IDC_TEXMIPS, CB_ADDSTRING, 0, (LPARAM)"Autogen all");
 	SendDlgItemMessage(hWnd, IDC_TEXMIPS, CB_SETCURSEL, 0, 0);
+    */
 
 	// MICROTEX FILTER --------------------------------------------
 
+    /* TODO(jec)
 	SendDlgItemMessage(hWnd,  IDC_MICROFILTER, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessageA(hWnd, IDC_MICROFILTER, CB_ADDSTRING, 0, (LPARAM)"Point (Fast/Good)");
 	SendDlgItemMessageA(hWnd, IDC_MICROFILTER, CB_ADDSTRING, 0, (LPARAM)"Linear (Fast/Bad)");
@@ -647,56 +714,70 @@ void VideoTab::InitSetupDialog(HWND hWnd)
 	SendDlgItemMessageA(hWnd, IDC_MICROFILTER, CB_ADDSTRING, 0, (LPARAM)"Anisotropic 8x");
 	SendDlgItemMessageA(hWnd, IDC_MICROFILTER, CB_ADDSTRING, 0, (LPARAM)"Anisotropic 16x (Slow/Best)");
 	SendDlgItemMessage(hWnd,  IDC_MICROFILTER, CB_SETCURSEL, 0, 0);
+    */
 	
 	// MICROTEX FILTER --------------------------------------------
 
+    /* TODO(jec)
 	SendDlgItemMessage(hWnd,  IDC_MICROMODE, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessageA(hWnd, IDC_MICROMODE, CB_ADDSTRING, 0, (LPARAM)"Disabled");
 	SendDlgItemMessageA(hWnd, IDC_MICROMODE, CB_ADDSTRING, 0, (LPARAM)"Enabled");
 	SendDlgItemMessage(hWnd,  IDC_MICROMODE, CB_SETCURSEL, 0, 0);
+    */
 
 
 	// MICROTEX BLEND MODE -----------------------------------------
-	
+
+    /* TODO(jec)
 	SendDlgItemMessage(hWnd,  IDC_BLENDMODE, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessageA(hWnd, IDC_BLENDMODE, CB_ADDSTRING, 0, (LPARAM)"Soft light");
 	SendDlgItemMessageA(hWnd, IDC_BLENDMODE, CB_ADDSTRING, 0, (LPARAM)"Normal light");
 	SendDlgItemMessageA(hWnd, IDC_BLENDMODE, CB_ADDSTRING, 0, (LPARAM)"Hard light");
 	SendDlgItemMessage(hWnd,  IDC_BLENDMODE, CB_SETCURSEL, 0, 0);
+    */
 
 	// TILE MIPMAP POLICY -----------------------------------------
 
+    /* TODO(jec)
 	SendDlgItemMessage(hWnd, IDC_MIPMAPS, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessageA(hWnd, IDC_MIPMAPS, CB_ADDSTRING, 0, (LPARAM)"None");
 	SendDlgItemMessageA(hWnd, IDC_MIPMAPS, CB_ADDSTRING, 0, (LPARAM)"Low level only");
 	SendDlgItemMessage(hWnd, IDC_MIPMAPS, CB_SETCURSEL, 0, 0);
+    */
 
 	// ARCHIVE METHOD ------------------------------------------
 
+    /* TODO(jec)
 	SendDlgItemMessage(hWnd, IDC_ARCHIVE, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessageA(hWnd, IDC_ARCHIVE, CB_ADDSTRING, 0, (LPARAM)"Cache only");
 	SendDlgItemMessageA(hWnd, IDC_ARCHIVE, CB_ADDSTRING, 0, (LPARAM)"Archive only");
 	SendDlgItemMessageA(hWnd, IDC_ARCHIVE, CB_ADDSTRING, 0, (LPARAM)"Cache & Archive");
 	SendDlgItemMessage(hWnd, IDC_ARCHIVE, CB_SETCURSEL, 0, 0);
+    */
 
 	// POSTPROCESSING METHOD ------------------------------------------
 
+    /* TODO(jec)
 	SendDlgItemMessage(hWnd, IDC_POSTPROCESS, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessageA(hWnd, IDC_POSTPROCESS, CB_ADDSTRING, 0, (LPARAM)"None");
 	SendDlgItemMessageA(hWnd, IDC_POSTPROCESS, CB_ADDSTRING, 0, (LPARAM)"Light glow");
 	SendDlgItemMessage(hWnd, IDC_POSTPROCESS, CB_SETCURSEL, 0, 0);
+    */
 
 	// Local Lights -----------------------------------------
 
+    /* TODO(jec)
 	SendDlgItemMessage(hWnd, IDC_LIGHTCONFIG, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessageA(hWnd, IDC_LIGHTCONFIG, CB_ADDSTRING, 0, (LPARAM)"None");
 	SendDlgItemMessageA(hWnd, IDC_LIGHTCONFIG, CB_ADDSTRING, 0, (LPARAM)"4x Partial");
 	SendDlgItemMessageA(hWnd, IDC_LIGHTCONFIG, CB_ADDSTRING, 0, (LPARAM)"4x Full");
 	SendDlgItemMessageA(hWnd, IDC_LIGHTCONFIG, CB_ADDSTRING, 0, (LPARAM)"8x Partial");
 	SendDlgItemMessageA(hWnd, IDC_LIGHTCONFIG, CB_ADDSTRING, 0, (LPARAM)"8x Full");
+    */
 
 	// Shadows -----------------------------------------
 
+    /* TODO(jec)
 	SendDlgItemMessage(hWnd, IDC_SELFSHADOWS, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessageA(hWnd, IDC_SELFSHADOWS, CB_ADDSTRING, 0, (LPARAM)"None");
 	SendDlgItemMessageA(hWnd, IDC_SELFSHADOWS, CB_ADDSTRING, 0, (LPARAM)"Focus + payload");
@@ -714,15 +795,19 @@ void VideoTab::InitSetupDialog(HWND hWnd)
 	SendDlgItemMessageA(hWnd, IDC_TERRAIN, CB_ADDSTRING, 0, (LPARAM)"None");
 	SendDlgItemMessageA(hWnd, IDC_TERRAIN, CB_ADDSTRING, 0, (LPARAM)"Stencil");
 	SendDlgItemMessageA(hWnd, IDC_TERRAIN, CB_ADDSTRING, 0, (LPARAM)"Projected");
+    */
 
 	// gcGUI -----------------------------------------
 	if (Config->gcGUIMode == 1) Config->gcGUIMode = 0;
+    /* TODO(jec)
 	SendDlgItemMessage(hWnd, IDC_GUIMODE, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessageA(hWnd, IDC_GUIMODE, CB_ADDSTRING, 0, (LPARAM)"Disabled");
 	SendDlgItemMessageA(hWnd, IDC_GUIMODE, CB_ADDSTRING, 0, (LPARAM)"(unused)");
 	SendDlgItemMessageA(hWnd, IDC_GUIMODE, CB_ADDSTRING, 0, (LPARAM)"Windowed");
+    */
 
 	// Earth AtmoConfig -------------------------------
+    /* TODO(jec)
 	SendDlgItemMessage(hWnd, IDC_EARTHVISCFG, CB_RESETCONTENT, 0, 0);
 	for (auto x : AtmoCfgs["Earth"]) SendDlgItemMessageA(hWnd, IDC_EARTHVISCFG, CB_ADDSTRING, 0, (LPARAM)x.cfg.c_str());
 	for (int i = 0; i < AtmoCfgs["Earth"].size(); i++) {
@@ -731,11 +816,13 @@ void VideoTab::InitSetupDialog(HWND hWnd)
 			break;
 		}
 	}
+    */
 		
 
 
 	// Write values in controls ----------------
 
+    /* TODO(jec)
 	bool bFS = (SendDlgItemMessage(hTab, IDC_VID_BPP, CB_GETCURSEL, 0, 0)==0 && SendDlgItemMessage(hTab, IDC_VID_FULL, BM_GETCHECK, 0, 0)==BST_CHECKED);
 	bool bGB = (SendDlgItemMessage (hTab, IDC_VID_STENCIL, BM_GETCHECK, 0, 0)==BST_CHECKED);
 
@@ -847,6 +934,7 @@ void VideoTab::InitSetupDialog(HWND hWnd)
 		case 4: SendDlgItemMessage(hWnd, IDC_AA, CB_SETCURSEL, 2, 0); break;
 		case 8: SendDlgItemMessage(hWnd, IDC_AA, CB_SETCURSEL, 3, 0); break;
 	}
+    */
 	
 	SAFE_RELEASE(d3dObject);
 }
@@ -857,6 +945,8 @@ void VideoTab::InitSetupDialog(HWND hWnd)
 void VideoTab::SaveSetupState(HWND hWnd)
 {
 	char cbuf[32];
+
+    /* TODO(jec)
 	// Combo boxes
 	Config->SketchpadFont = (int)SendDlgItemMessage (hWnd, IDC_FONT, CB_GETCURSEL, 0, 0);
 	Config->EnvMapMode	  = (int)SendDlgItemMessage (hWnd, IDC_ENVMODE, CB_GETCURSEL, 0, 0);
@@ -933,6 +1023,7 @@ void VideoTab::SaveSetupState(HWND hWnd)
 	int EASel = (int)SendDlgItemMessage(hWnd, IDC_EARTHVISCFG, CB_GETCURSEL, 0, 0);
 	if (!AtmoCfgs["Earth"][EASel].file.empty()) Config->AtmoCfg["Earth"] = AtmoCfgs["Earth"][EASel].file;
 	else Config->AtmoCfg["Earth"] = "Earth.atm.cfg";
+    */
 }
 
 
@@ -944,12 +1035,14 @@ void VideoTab::CreateSymbolicLinks()
 {
 	// Ask user
 	//
+    /* TODO(jec)
 	int ret = MessageBox(NULL, "This function will create a symbolic links in /Modules/Server/ folder "
 								"as required by some addons like the spacecraft3.dll.\n\n"
 								"Do you want to proceed ?", "D3D9Client Configuration", MB_YESNO);
 	if (ret != IDYES) {
 		return;
 	}
+    */
 
 	std::string result("");
 
@@ -958,13 +1051,19 @@ void VideoTab::CreateSymbolicLinks()
 	result += "Config: ";
 	if (junction::TargetDirectoryExists(OapiExtension::GetConfigDir()))
 	{
-		if (!junction::IsDirectoryJunction("Modules\\Server\\Config"))
+        auto configPath = std::filesystem::path{"Modules"} /
+            "Server" / "Config";
+
+		if (!junction::IsDirectoryJunction(configPath.c_str()))
 		{
-			if (!junction::CreateJunctionPoint(OapiExtension::GetConfigDir(), "Modules\\Server\\Config"))
+			if (!junction::CreateJunctionPoint(OapiExtension::GetConfigDir(), configPath.c_str()))
 			{
+                /* TODO(jec)
 				result += (GetLastError() == ERROR_DIR_NOT_EMPTY)
 						? "OK. A non-empty 'Config' directory already exists."
 						: "FAIL. Could not create link.";
+                */
+                result = "FAIL. Could not create link.";
 			} else {
 				result += "OK. Link created.";
 			}
@@ -983,16 +1082,22 @@ void VideoTab::CreateSymbolicLinks()
 		result += "Sound: ";
 		if (junction::TargetDirectoryExists("Sound"))
 		{
+            auto soundPath = std::filesystem::path {"Modules"} /
+                "Server" / "Sound";
+
 			if (OapiExtension::RunsOrbiterSound40()) {
 				result += "OK. OrbiterSound (4.0) detected. No link necessary.";
 			}
-			else if (!junction::IsDirectoryJunction("Modules\\Server\\Sound"))
+			else if (!junction::IsDirectoryJunction(soundPath.c_str()))
 			{
-				if (!junction::CreateJunctionPoint("Sound", "Modules\\Server\\Sound"))
+				if (!junction::CreateJunctionPoint("Sound", soundPath.c_str()))
 				{
+                    /* TODO(jec)
 					result += (GetLastError() == ERROR_DIR_NOT_EMPTY)
 							? "OK. A non-empty 'Sound' directory already exists."
 							: "FAIL. Could not create link.";
+                    */
+                    result = "FAIL. Could not create link.";
 				}
 				else {
 					result += "OK. Link created.";
@@ -1008,7 +1113,9 @@ void VideoTab::CreateSymbolicLinks()
 		result += "\r\n";
 	}
 
+    /* TODO(jec)
 	MessageBox(NULL, result.c_str(), "D3D9Client Configuration", MB_OK);
+    */
 }
 
 
@@ -1020,9 +1127,10 @@ void VideoTab::CreateSymbolicLinks()
 // Credist Dialog
 // ***************************************************************************************************
 
-INT_PTR CALLBACK VideoTab::CreditsDlgProcWrp(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR VideoTab::CreditsDlgProcWrp(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static class VideoTab *VTab = NULL;
+    /* TODO(jec)
 	switch (uMsg) {
 		case WM_INITDIALOG: 
 			VTab = (class VideoTab *)lParam;
@@ -1031,24 +1139,28 @@ INT_PTR CALLBACK VideoTab::CreditsDlgProcWrp(HWND hWnd, UINT uMsg, WPARAM wParam
 		case WM_COMMAND:
 			if (VTab) VTab->CreditsDlgProc(hWnd, uMsg, wParam, lParam);
 	}
+    */
 	return false;
 }
 
 
 
-INT_PTR CALLBACK VideoTab::CreditsDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR VideoTab::CreditsDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (LOWORD(wParam)) {
 		case IDOK:
 		case IDCANCEL:
 			EndDialog (hWnd, 0);
 			break;
 	}
+    */
 	return false;
 }
 
 void VideoTab::InitCreditsDialog(HWND hWnd)
 {
+    /* TODO(jec):  Use std file API ++ Some kind of dialog control that reads rtf...or maybe a resource
 	HANDLE hFile = CreateFile("Modules/D3D9Client/Credits.rtf", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL); 
 
 	if (hFile==INVALID_HANDLE_VALUE) {
@@ -1067,17 +1179,18 @@ void VideoTab::InitCreditsDialog(HWND hWnd)
 		text.codepage = CP_ACP;
 		SendDlgItemMessageA(hWnd, IDC_CREDITSTEXT, EM_SETTEXTEX, (WPARAM)&text, (LPARAM)credits);
 	}
-	else LogErr("Failed to read a file \\Modules\\D3D9Client\\Credits.rtf Error=%u",GetLastError());
+	else LogErr("Failed to read a file /Modules/D3D9Client/Credits.rtf Error=%u",GetLastError());
 
 	delete []credits;
 	credits = NULL;
 
 	CloseHandle(hFile);
+    */
 }
 
 bool VideoTab::GetConfigName(const char* file, string& cfg, string& planet)
 {
-	string filename = "GC\\" + string(file);
+    auto filename = std::filesystem::path{"GC"} / file;
 	FILEHANDLE hFile = oapiOpenFile(filename.c_str(), FILE_IN_ZEROONFAIL, CONFIG);
 	if (hFile) {
 		char ConfigName[32] = {}; char PlanetName[32] = {};
@@ -1096,26 +1209,25 @@ void VideoTab::ScanAtmoCfgs()
 	_AtmoCfg cfg = { "Default", "Earth.atm.cfg"};
 	AtmoCfgs["Earth"].push_back(cfg);
 
-	WIN32_FIND_DATA FileInformation;
-	string name = string(OapiExtension::GetConfigDir()) + "GC\\*_atm.cfg";
-	HANDLE hFile = FindFirstFileA(name.c_str(), &FileInformation);
+    auto gcPath = std::filesystem::path{OapiExtension::GetConfigDir()} /
+        "GC";
 
-	if (hFile != INVALID_HANDLE_VALUE) {
-		do {
-			if (FileInformation.cFileName[0] != '.') {
-				if (!(FileInformation.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {		
-					string cfgname, planet;
-					if (GetConfigName(FileInformation.cFileName, cfgname, planet)) {
-						_AtmoCfg cfg = { cfgname, FileInformation.cFileName };
-						AtmoCfgs[planet].push_back(cfg);
-					}
-					else oapiWriteLogV("File Not Found [%s]", FileInformation.cFileName);
-				}
-			}
-		}
-		while (FindNextFileA(hFile, &FileInformation) == TRUE);
-		FindClose(hFile);
-	}
+    for (auto& dir_entry : std::filesystem::directory_iterator{gcPath}) {
+        auto found_filename = dir_entry.path().filename().string();
+
+        if (found_filename.rfind("_atm.cfg") == found_filename.size() - 8) {
+            if ((found_filename.front() != '.') &&
+                !dir_entry.is_directory()) {
+
+                string cfgname, planet;
+                if (GetConfigName(found_filename.c_str(), cfgname, planet)) {
+                    _AtmoCfg cfg = { cfgname, found_filename.c_str() };
+                    AtmoCfgs[planet].push_back(cfg);
+                }
+                else oapiWriteLogV("File Not Found [%s]", found_filename.c_str());
+            }
+        }
+    }
 }
 
 

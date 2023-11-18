@@ -6,6 +6,7 @@
 
 #include "OrbiterAPI.h"
 #include "DrawAPI.h"
+#include "DllCompat.h"
 #include <assert.h>
 
 #ifndef __GC_CORE
@@ -896,7 +897,7 @@ public:
 inline gcCore2* gcGetCoreInterface()
 {
 	if (pCoreInterface) return pCoreInterface;
-	HMODULE hModule = GetModuleHandle("D3D9Client.dll");
+	HMODULE hModule = GetModuleHandle("D3D9Client");
 	if (hModule) {
 		__gcBindCoreMethod pBindCoreMethod = (__gcBindCoreMethod)GetProcAddress(hModule, "gcBindCoreMethod");
 		if (pBindCoreMethod) return (pCoreInterface = new gcCore2(pBindCoreMethod));

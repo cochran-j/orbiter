@@ -17,7 +17,15 @@
 #include "OapiExtension.h"
 
 #include <stack>
+/* TODO(jec)
 #include <io.h>
+*/
+#include <filesystem>
+#include <mutex>
+#include <thread>
+#include <future>
+#include <chrono>
+#include <cstring>
 
 // =======================================================================
 // Externals
@@ -28,12 +36,7 @@ int SURF_MAX_PATCHLEVEL2 = 18; // move this somewhere else
 
 bool FileExists(const char* path)
 {
-	bool exists;
-	struct _finddata_t fd;
-	intptr_t fh = _findfirst(path, &fd);
-	if (exists = (fh != -1))
-		_findclose(fh);
-	return exists;
+    return std::filesystem::exists(path);
 }
 
 
@@ -813,37 +816,33 @@ VBMESH *Tile::CreateMesh_hemisphere (int grd, float *elev, double globelev)
 int TileLoader::nqueue = 0;
 int TileLoader::queue_in = 0;
 int TileLoader::queue_out = 0;
-HANDLE TileLoader::hLoadMutex = 0;
+std::mutex TileLoader::hLoadMutex {};
 struct TileLoader::QUEUEDESC TileLoader::queue[MAXQUEUE2] = {0};
 
 TileLoader::TileLoader (const oapi::D3D9Client *gclient)
 	: gc(gclient)
-	, hStopThread(CreateEvent(NULL, FALSE, FALSE, NULL))
+	, hStopThread{}
 	, load_frequency(Config->PlanetLoadFrequency)
 {
-	DWORD id;
 
 	// Initialize statics
 	nqueue = queue_in = queue_out = 0;
-	hLoadMutex = CreateMutex (0, FALSE, NULL);
-	hLoadThread = CreateThread (NULL, 32768, Load_ThreadProc, this, 0, &id);
+    hLoadThread = std::thread{Load_ThreadProc, this, hStopThread.get_future()};
 }
 
 // -----------------------------------------------------------------------
 
 TileLoader::~TileLoader ()
 {
-	if (hLoadThread) LogErr("TileLoader() Not Yet ShutDown()");
+	if (hLoadThread.joinable()) LogErr("TileLoader() Not Yet ShutDown()");
 	TerminateLoadThread();
-	CloseHandle (hLoadMutex);
-	hLoadMutex = NULL;
 }
 
 // -----------------------------------------------------------------------
 
 bool TileLoader::ShutDown()
 {
-	if (hLoadThread) {
+	if (hLoadThread.joinable()) {
 		TerminateLoadThread();
 		return true;
 	}
@@ -854,14 +853,10 @@ bool TileLoader::ShutDown()
 
 void TileLoader::TerminateLoadThread()
 {
-	if (hLoadThread) {
+	if (hLoadThread.joinable()) {
 		// Signal thread to stop and wait for it to happen
-		SetEvent(hStopThread);
-		WaitForSingleObject(hLoadThread, INFINITE); //4000);
-		// Clean up for next run
-		ResetEvent(hStopThread);
-		CloseHandle(hLoadThread);
-		hLoadThread = NULL;
+        hStopThread.set_value();
+        hLoadThread.join();
 	}
 }
 
@@ -962,14 +957,14 @@ bool TileLoader::Unqueue (Tile *tile)
 
 // -----------------------------------------------------------------------
 #ifdef UNDEF
-DWORD WINAPI TileLoader::Load_ThreadProc (void *data)
+void TileLoader::Load_ThreadProc (void *data, std::future<void> stopThread)
 {
 	TileLoader *loader = (TileLoader*)data;
 	DWORD idle = 1000/loader->load_frequency;
 	Tile *tile;
 	bool load;
 
-	while (WAIT_OBJECT_0 != WaitForSingleObject(loader->hStopThread, idle)) {
+	while (stopThread.wait_for(std::chrono::milliseconds{idle}) != std::future_status::ready) {
 
 		WaitForMutex();
 
@@ -997,16 +992,16 @@ DWORD WINAPI TileLoader::Load_ThreadProc (void *data)
 
 		}
 		else {
-			Sleep(1);
+            using namespace std::chono_literals;
+            std::this_thread::sleep_for(1ms);
 		}
 	}
-	return 0;
 }
 #endif
 
 // -----------------------------------------------------------------------
 
-DWORD WINAPI TileLoader::Load_ThreadProc (void *data)
+void TileLoader::Load_ThreadProc (void *data, std::future<void> stopThread)
 {
 	const int tile_packet_size = 8; // max number of tiles to process from queue
 	TileLoader *loader = (TileLoader*)data;
@@ -1017,7 +1012,7 @@ DWORD WINAPI TileLoader::Load_ThreadProc (void *data)
 	LogAlw("TileLoader::Load thread started");
 
 	bool bFirstRun = true;
-	while (bFirstRun || WAIT_OBJECT_0 != WaitForSingleObject(loader->hStopThread, idle))
+	while (bFirstRun || (stopThread.wait_for(std::chrono::milliseconds{idle}) != std::future_status::ready))
 	{
 		bFirstRun = false;
 
@@ -1041,12 +1036,11 @@ DWORD WINAPI TileLoader::Load_ThreadProc (void *data)
 			}
 			ReleaseMutex ();
 		} else {
-			Sleep (idle);
+            std::this_thread::sleep_for (std::chrono::milliseconds{idle});
 		}
 	}
 
 	LogAlw("TileLoader::Load thread terminated");
-	return 0;
 }
 
 // =======================================================================
@@ -1139,13 +1133,15 @@ void TileManager2Base::GlobalInit (class oapi::D3D9Client *gclient)
 
 	loader = new TileLoader (gc);
 
+    /* TODO(jec)
 	hFont  = CreateFont(42, 0, 0, 0, 600, false, false, 0, 0, 0, 2, CLEARTYPE_QUALITY, 49, "Arial");
+    */
 
-	char name[MAX_PATH];
+    std::filesystem::path name {};
 
-	if (gc->TexturePath("D3D9Ocean.dds", name)) D3DXCreateTextureFromFileA(pDev, name, &hOcean);
-	if (gc->TexturePath("cloud1.dds", name)) D3DXCreateTextureFromFileA(pDev, name, &hCloudMicro);
-	if (gc->TexturePath("cloud1_norm.dds", name)) D3DXCreateTextureFromFileA(pDev, name, &hCloudMicroNorm);
+	if (gc->TexturePath("D3D9Ocean.dds", name)) D3DXCreateTextureFromFileA(pDev, name.c_str(), &hOcean);
+	if (gc->TexturePath("cloud1.dds", name)) D3DXCreateTextureFromFileA(pDev, name.c_str(), &hCloudMicro);
+	if (gc->TexturePath("cloud1_norm.dds", name)) D3DXCreateTextureFromFileA(pDev, name.c_str(), &hCloudMicroNorm);
 }
 
 // -----------------------------------------------------------------------
@@ -1159,7 +1155,9 @@ bool TileManager2Base::ShutDown()
 
 void TileManager2Base::GlobalExit ()
 {
+    /* TODO(jec)
 	DeleteObject(hFont); hFont = NULL;
+    */
 	delete loader;
 }
 
@@ -1357,7 +1355,8 @@ void TileManager2Base::TileLabel(LPDIRECT3DTEXTURE9 tex, int lvl, int ilat, int 
 	HR(pSurf->GetDC(&hDC));
 
 	char label[256];
-	sprintf_s(label, 256, "%02d-%06d-%06d.dds", lvl+4, ilat, ilng);
+    std::snprintf(label, 256, "%02d-%06d-%06d.dds", lvl+4, ilat, ilng);
+    /* TODO(jec)
 	HFONT hOld = (HFONT)SelectObject(hDC, GetDebugFont());
 	TextOut(hDC, 16, 16, label, lstrlen(label));
 	SetBkMode(hDC, TRANSPARENT);
@@ -1367,6 +1366,7 @@ void TileManager2Base::TileLabel(LPDIRECT3DTEXTURE9 tex, int lvl, int ilat, int 
 	SelectObject(hDC, GetStockObject (BLACK_PEN));
 	Rectangle(hDC, 1, 1, desc.Width-2, desc.Height-2);
 	SelectObject(hDC, hOld);
+    */
 
 	HR(pSurf->ReleaseDC(hDC));
 	pSurf->Release();

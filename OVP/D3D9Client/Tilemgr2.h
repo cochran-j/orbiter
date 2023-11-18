@@ -23,6 +23,10 @@
 #include <stack>
 #include <vector>
 #include <list>
+#include <mutex>
+#include <thread>
+#include <future>
+
 
 #define NPOOLS 32
 #define MAXQUEUE2 20
@@ -241,8 +245,8 @@ public:
 	void Unqueue (TileManager2Base *mgr);
 	// removes all tiles of a manager from the load queue (caller must own hLoadMutex)
 
-	inline static DWORD WaitForMutex() { return ::WaitForSingleObject (hLoadMutex, INFINITE); }
-	inline static BOOL ReleaseMutex() { return ::ReleaseMutex (hLoadMutex); }
+	inline static DWORD WaitForMutex() { hLoadMutex.lock(); return 0; }
+	inline static BOOL ReleaseMutex() { hLoadMutex.unlock(); return TRUE; }
 
 private:
 	void TerminateLoadThread(); // Terminates the Load thread
@@ -253,10 +257,10 @@ private:
 
 	const oapi::D3D9Client *gc; // the client
 	static int nqueue, queue_in, queue_out;
-	HANDLE hLoadThread; // Load ThreadProc handle
-	HANDLE hStopThread; // Thread kill signal handle
-	static HANDLE hLoadMutex;
-	static DWORD WINAPI Load_ThreadProc (void*);
+    std::thread hLoadThread; // Load ThreadProc handle
+    std::promise<void> hStopThread; // Thread kill signal handle
+	static std::mutex hLoadMutex;
+	static void Load_ThreadProc (void*, std::future<void> stopThread);
 	int load_frequency;
 };
 

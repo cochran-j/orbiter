@@ -21,15 +21,31 @@
 
 
 #include <d3d9.h>
+/* TODO(jec): Compatibility definitions for d3dx9.h */
+#define LF_FACESIZE 32
+struct TEXTMETRICA;
+struct TEXTMETRICW;
+#define STDAPI
+#define DECLARE_INTERFACE_IID_(type, base, iid) DECLARE_INTERFACE_(type, base)
+using LPGUID = void*;
+struct IStream;
+struct GLYPHMETRICSFLOAT;
+using DOUBLE = double;
+
 #include <d3dx9.h>
 #include "WindowMgr.h"
 #include "windows.h"
+/* TODO(jec)
 #include "WindowsX.h"
+*/
 #include "resource.h"
 #include "OapiExtension.h"
 #include "D3D9Config.h"
 #include "Log.h"
 #include "D3D9Client.h"
+
+#include <cstring>
+#include <filesystem>
 
 #define APPNODE(x) ((Node *)x)
 
@@ -80,34 +96,41 @@ inline FVECTOR4 _Colour(DWORD dwABGR)
 }
 // ===============================================================================================
 //
-LRESULT CALLBACK SideBarWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT SideBarWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (g_pWM) {
 		SideBar *pBar = g_pWM->GetSideBar(hWnd);
 		if (pBar) return pBar->SideBarWndProc(hWnd, uMsg, wParam, lParam);
 	}
+    /* TODO(jec)
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+    */
+    return FALSE;
 }
 // ===============================================================================================
 //
-INT_PTR CALLBACK DummyDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR DummyDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		return true;
 	}
+    */
 	return false;
 }
 
 
 // ===============================================================================================
 //
-INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TDOO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		return true;
 	}
+    */
 	return false;
 }
 
@@ -166,29 +189,34 @@ Node::Node(SideBar *pSB, const char *label, HWND hDlg, DWORD color, Node *pP) :
 	pSB(pSB), pParent(pP), hBmp(NULL), hDlg(hDlg), pApp(NULL), bOpen(true), bClose(false)
 {
 
+    /* TODO(jec)
 	memset(&bm, 0, sizeof(BITMAP));
+    */
 
 	WindowManager *pMgr = pSB->GetWM();
 
 	pSB->AddWindow(this);
 
-	if (label) Label = _strdup(label);
-	else Label = NULL;
+    if (label) Label = label;
+    else Label.clear();
 
 	HBITMAP hTit;
 
 	if ((pParent == NULL) && (Config->gcGUIMode == 3) && hDlg) return;	// No Title Bar
 
+    /* TODO(jec)
 	if (pParent == NULL) hTit = pMgr->GetBitmap(gcGUI::BM_TITLE);
 	else {
 		hTit = pMgr->GetBitmap(gcGUI::BM_SUBTITLE);
 		pApp = pParent->pApp;
 	}
+    */
 
 	FVECTOR4 clr = _Colour(color);
 	FVECTOR4 white = _Colour(0xFFFFFFFF);
 
 	HDC hDC = pSB->GetDC();
+    /* TODO(jec)
 	HDC hSrc = CreateCompatibleDC(hDC);
 	HDC hTgt = CreateCompatibleDC(hDC);
 
@@ -196,9 +224,11 @@ Node::Node(SideBar *pSB, const char *label, HWND hDlg, DWORD color, Node *pP) :
 	GetObject(hTit, sizeof(BITMAP), &bm);
 	
 	hBmp = CreateCompatibleBitmap(hDC, bm.bmWidth, bm.bmHeight);
+    */
 
 	pSB->ReleaseDC(hDC);
 
+    /* TODO(jec)
 	SelectObject(hSrc, hTit);
 	SelectObject(hTgt, hBmp);
 
@@ -215,14 +245,16 @@ Node::Node(SideBar *pSB, const char *label, HWND hDlg, DWORD color, Node *pP) :
 
 	DeleteDC(hSrc);
 	DeleteDC(hTgt);
+    */
 }
 
 // ===============================================================================================
 //
 Node::~Node()
 {
+    /* TODO(jec)
 	if (hBmp) DeleteObject(hBmp);
-	if (Label) delete[] Label;
+    */
 }
 
 // ===============================================================================================
@@ -236,7 +268,9 @@ void Node::SetApp(gcGUIApp *_pApp)
 //
 void Node::ReColorize(DWORD color)
 {
+    /* TODO(jec)
 	memset(&bm, 0, sizeof(BITMAP));
+    */
 
 	WindowManager *pMgr = pSB->GetWM();
 
@@ -244,13 +278,16 @@ void Node::ReColorize(DWORD color)
 
 	if ((pParent == NULL) && (Config->gcGUIMode == 3) && hDlg) return;	// No Title Bar
 
+    /* TODO(jec)
 	if (pParent == NULL) hTit = pMgr->GetBitmap(gcGUI::BM_TITLE);
 	else hTit = pMgr->GetBitmap(gcGUI::BM_SUBTITLE);
+    */
 
 	FVECTOR4 clr = _Colour(color);
 	FVECTOR4 white = _Colour(0xFFFFFFFF);
 
 	HDC hDC = pSB->GetDC();
+    /* TODO(jec)
 	HDC hSrc = CreateCompatibleDC(hDC);
 	HDC hTgt = CreateCompatibleDC(hDC);
 
@@ -259,9 +296,11 @@ void Node::ReColorize(DWORD color)
 	if (hBmp) DeleteObject(hBmp);
 
 	hBmp = CreateCompatibleBitmap(hDC, bm.bmWidth, bm.bmHeight);
+    */
 
 	pSB->ReleaseDC(hDC);
 
+    /* TODO(jec)
 	SelectObject(hSrc, hTit);
 	SelectObject(hTgt, hBmp);
 
@@ -278,6 +317,7 @@ void Node::ReColorize(DWORD color)
 
 	DeleteDC(hSrc);
 	DeleteDC(hTgt);
+    */
 }
 
 
@@ -286,10 +326,14 @@ void Node::ReColorize(DWORD color)
 int Node::CellSize()
 {
 	int y = 0;
+    /* TODO(jec)
 	if (hBmp) y += bm.bmHeight;
+    */
 	if (bOpen && hDlg) {
 		RECT r;
+        /* TODO(jec)
 		GetWindowRect(hDlg, &r);
+        */
 		y += (r.bottom - r.top);
 	}
 	return y;
@@ -311,14 +355,18 @@ int Node::Paint(HDC hDC, int y)
 		
 	if (hBmp) {
 		if (pParent) {
+            /* TODO(jec)
 			SelectObject(hDC, pMgr->GetSubTitleFont());
 			SetTextColor(hDC, pMgr->cfg.txt_sub_clr);
+            */
 			wof = pMgr->cfg.txt_sub_x;
 			hof = pMgr->cfg.txt_sub_y;
 		}
 		else {
+            /* TODO(jec)
 			SelectObject(hDC, pMgr->GetAppTitleFont());
 			SetTextColor(hDC, pMgr->cfg.txt_main_clr);
+            */
 			wof = pMgr->cfg.txt_main_x;
 			hof = pMgr->cfg.txt_main_y;
 		}
@@ -329,6 +377,7 @@ int Node::Paint(HDC hDC, int y)
 	//
 	if (hBmp) {
 		
+        /* TODO(jec)
 		HDC hSr = CreateCompatibleDC(hDC);
 		int z = width - bm.bmHeight - 3;
 
@@ -338,22 +387,25 @@ int Node::Paint(HDC hDC, int y)
 		SelectObject(hSr, hBmp);
 		BitBlt(hDC, x, y, width - 10,  bm.bmHeight, hSr, 0, 0, SRCCOPY);
 		BitBlt(hDC, width - 10 - x, y, 10, bm.bmHeight, hSr, bm.bmWidth - 10, 0, SRCCOPY);	
-		TextOut(hDC, wof, y + hof, Label, lstrlen(Label));
-		
+		TextOut(hDC, wof, y + hof, Label.c_str(), Label.size());
+
 		DeleteDC(hSr);
 
 		if (bOpen) PaintIcon(hDC, x, y, 0);
 		else PaintIcon(hDC, x, y, 1);
 		if (bClose) PaintIcon(hDC, z, y, 2);
-			
+
 		y += bm.bmHeight;
+        */
 	}
 
 	pos = { x, y };
 	
 	if (bOpen && hDlg) {
 		RECT r;
+        /* TODO(jec)
 		GetWindowRect(hDlg, &r);
+        */
 		y += (r.bottom - r.top);
 	}
 
@@ -368,11 +420,12 @@ void Node::PaintIcon(HDC hDC, int x, int y, int id)
 	WindowManager *pMgr = pSB->GetWM();
 	DWORD yell = RGB(255, 255, 0); 
 	DWORD mang = RGB(255, 0, 255); 
-	
+
 	HBITMAP hIco = pMgr->GetBitmap(gcGUI::BM_ICONS);
 
 	if (hIco) {
 		DWORD ck = 0, sx = 0;
+        /* TODO(jec)
 		BITMAP ic;
 		GetObject(hIco, sizeof(BITMAP), &ic);
 
@@ -388,6 +441,7 @@ void Node::PaintIcon(HDC hDC, int x, int y, int id)
 		int yo = (bm.bmHeight - ic.bmHeight) / 2;
 		TransparentBlt(hDC, x, y + yo, ic.bmHeight, ic.bmHeight, hSr, sx, 0, ic.bmHeight, ic.bmHeight, ck);
 		DeleteDC(hSr);
+        */
 	}
 }
 
@@ -402,10 +456,12 @@ int Node::Spacer(HDC hDC, int y)
 
 	int width = pSB->GetWidth();
 	int h = CellSize();
-	
+
+    /* TODO(jec)
 	SelectObject(hDC, (HBRUSH)GetStockObject(GRAY_BRUSH));
 	SelectObject(hDC, (HPEN)GetStockObject(NULL_PEN));
 	Rectangle(hDC, 0, y, width + 1, y + h + 1);
+    */
 	
 	return y + h;
 }
@@ -416,7 +472,9 @@ int Node::Spacer(HDC hDC, int y)
 void Node::Move()
 {
 	if (!hDlg) return;
+    /* TODO(jec)
 	SetWindowPos(hDlg, NULL, pos.x, pos.y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+    */
 }
 
 
@@ -432,7 +490,7 @@ void Node::Move()
 //
 WindowManager::WindowManager(HWND hAppMainWindow, HINSTANCE _hInst, bool bWindowed)
 {
-	char path[256];
+    std::filesystem::path path_ {};
 	char cbuf[256];
 
 	g_pWM = NULL;
@@ -448,13 +506,16 @@ WindowManager::WindowManager(HWND hAppMainWindow, HINSTANCE _hInst, bool bWindow
 	hIcons = hTitle = hSub = NULL;
 
 	RECT rMain;
+    /* TODO(jec)
 	GetClientRect(hAppMainWindow, &rMain);
+    */
 
 	AutoFile file;
 
 	if (file.IsInvalid()) {
-		sprintf_s(path, 256, "%sgcGUI.cfg", OapiExtension::GetConfigDir());
-		fopen_s(&file.pFile, path, "r");
+        path_ = std::filesystem::path{OapiExtension::GetConfigDir()} /
+            "gcGUI.cfg";
+        file.pFile = std::fopen(path_.c_str(), "r");
 	}
 
 	if (!file.IsInvalid()) {
@@ -466,7 +527,7 @@ WindowManager::WindowManager(HWND hAppMainWindow, HINSTANCE _hInst, bool bWindow
 		{
 			// --------------------------------------------------------------------------------------------
 			if (!strncmp(cbuf, "RESOLUTION", 10)) {
-				if (sscanf_s(cbuf, "RESOLUTION %d %d", &q, &w) != 2) LogErr("Invalid Line in (%s): %s", path, cbuf);
+				if (std::sscanf(cbuf, "RESOLUTION %d %d", &q, &w) != 2) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 				if (q < rMain.bottom && rMain.bottom < w) bFound = true;
 				continue;
 			}
@@ -476,62 +537,62 @@ WindowManager::WindowManager(HWND hAppMainWindow, HINSTANCE _hInst, bool bWindow
 
 			// --------------------------------------------------------------------------------------------
 			if (!strncmp(cbuf, "FONT_MAIN", 9)) {
-				if (sscanf_s(cbuf, "FONT_MAIN \"%[^\"]\" %d %d", cfg.fnt_main, 32, &cfg.txt_main_size, &cfg.txt_main_weight) != 3) LogErr("Invalid Line in (%s): %s", path, cbuf);
+				if (std::sscanf(cbuf, "FONT_MAIN \"%[^\"]\" %d %d", cfg.fnt_main, 32, &cfg.txt_main_size, &cfg.txt_main_weight) != 3) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 				continue;
 			}
 			// --------------------------------------------------------------------------------------------
 			if (!strncmp(cbuf, "FONT_SUB", 8)) {
-				if (sscanf_s(cbuf, "FONT_SUB \"%[^\"]\" %d %d", cfg.fnt_sub, 32, &cfg.txt_sub_size, &cfg.txt_sub_weight) != 3) LogErr("Invalid Line in (%s): %s", path, cbuf);
+				if (std::sscanf(cbuf, "FONT_SUB \"%[^\"]\" %d %d", cfg.fnt_sub, 32, &cfg.txt_sub_size, &cfg.txt_sub_weight) != 3) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 				continue;
 			}
 			// --------------------------------------------------------------------------------------------
 			if (!strncmp(cbuf, "MAIN_OFS", 8)) {
-				if (sscanf_s(cbuf, "MAIN_OFS %d %d", &cfg.txt_main_x, &cfg.txt_main_y) != 2) LogErr("Invalid Line in (%s): %s", path, cbuf);
+				if (std::sscanf(cbuf, "MAIN_OFS %d %d", &cfg.txt_main_x, &cfg.txt_main_y) != 2) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 				continue;
 			}
 			// --------------------------------------------------------------------------------------------
 			if (!strncmp(cbuf, "SUB_OFS", 7)) {
-				if (sscanf_s(cbuf, "SUB_OFS %d %d", &cfg.txt_sub_x, &cfg.txt_sub_y) != 2) LogErr("Invalid Line in (%s): %s", path, cbuf);
+				if (std::sscanf(cbuf, "SUB_OFS %d %d", &cfg.txt_sub_x, &cfg.txt_sub_y) != 2) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 				continue;
 			}
 			// --------------------------------------------------------------------------------------------
 			if (!strncmp(cbuf, "MAIN_BMP", 8)) {
-				if (sscanf_s(cbuf, "MAIN_BMP %s", cfg.bmp_main, 32) != 1) LogErr("Invalid Line in (%s): %s", path, cbuf);
+				if (std::sscanf(cbuf, "MAIN_BMP %s", cfg.bmp_main, 32) != 1) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 				continue;
 			}
 			// --------------------------------------------------------------------------------------------
 			if (!strncmp(cbuf, "SUB_BMP", 7)) {
-				if (sscanf_s(cbuf, "SUB_BMP %s", cfg.bmp_sub, 32) != 1) LogErr("Invalid Line in (%s): %s", path, cbuf);
+				if (std::sscanf(cbuf, "SUB_BMP %s", cfg.bmp_sub, 32) != 1) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 				continue;
 			}
 			// --------------------------------------------------------------------------------------------
 			if (!strncmp(cbuf, "ICON_BMP", 8)) {
-				if (sscanf_s(cbuf, "ICON_BMP %s", cfg.bmp_icon, 32) != 1) LogErr("Invalid Line in (%s): %s", path, cbuf);
+				if (std::sscanf(cbuf, "ICON_BMP %s", cfg.bmp_icon, 32) != 1) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 				continue;
 			}
 			// --------------------------------------------------------------------------------------------
 			if (!strncmp(cbuf, "MAIN_CLR", 8)) {
-				if (sscanf_s(cbuf, "MAIN_CLR %X", &cfg.txt_main_clr) != 1) LogErr("Invalid Line in (%s): %s", path, cbuf);
+				if (std::sscanf(cbuf, "MAIN_CLR %X", &cfg.txt_main_clr) != 1) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 				continue;
 			}
 			// --------------------------------------------------------------------------------------------
 			if (!strncmp(cbuf, "SUB_CLR", 7)) {
-				if (sscanf_s(cbuf, "SUB_CLR %X", &cfg.txt_sub_clr) != 1) LogErr("Invalid Line in (%s): %s", path, cbuf);
+				if (std::sscanf(cbuf, "SUB_CLR %X", &cfg.txt_sub_clr) != 1) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 				continue;
 			}
 			// --------------------------------------------------------------------------------------------
 			if (!strncmp(cbuf, "SCROLL", 6)) {
-				if (sscanf_s(cbuf, "SCROLL %d", &cfg.scroll) != 1) LogErr("Invalid Line in (%s): %s", path, cbuf);
+				if (std::sscanf(cbuf, "SCROLL %d", &cfg.scroll) != 1) LogErr("Invalid Line in (%s): %s", path_.c_str(), cbuf);
 				continue;
 			}
 		}
 		if (bFound == false) {
-			LogErr("Configuration not found (%s)", path);
+			LogErr("Configuration not found (%s)", path_.c_str());
 			return;
 		}
 	}
 	else {
-		LogErr("Configuration not found (%s)", path);
+		LogErr("Configuration not found (%s)", path_.c_str());
 		return;
 	}
 
@@ -541,6 +602,7 @@ WindowManager::WindowManager(HWND hAppMainWindow, HINSTANCE _hInst, bool bWindow
 	// Create window class for sidebars
 	//
 	DWORD flags = 0;
+    /* TODO(jec)
 	if (Config->gcGUIMode == 1) flags |= CS_NOCLOSE;
 
 	WNDCLASS wc; 
@@ -565,6 +627,7 @@ WindowManager::WindowManager(HWND hAppMainWindow, HINSTANCE _hInst, bool bWindow
 	wc.lpszClassName = "Floater";
 
 	RegisterClass(&wc);
+    */
 
 	// ----------------------------------
 
@@ -572,24 +635,32 @@ WindowManager::WindowManager(HWND hAppMainWindow, HINSTANCE _hInst, bool bWindow
 	hTitle = g_client->gcReadImageFromFile(cfg.bmp_main);
 	hSub = g_client->gcReadImageFromFile(cfg.bmp_sub);
 
+    /* TODO(jec)
 	hAppFont = CreateFont(cfg.txt_main_size, 0, 0, 0, cfg.txt_main_weight, false, false, 0, 0, 0, 2, CLEARTYPE_QUALITY, 49, cfg.fnt_main);
 	hSubFont = CreateFont(cfg.txt_sub_size, 0, 0, 0, cfg.txt_sub_weight, false, false, 0, 0, 0, 2, CLEARTYPE_QUALITY, 49, cfg.fnt_sub);
 	
 	if (!hAppFont) LogErr("Font Not Found [%s]", cfg.fnt_main);
 	if (!hSubFont) LogErr("Font Not Found [%s]", cfg.fnt_sub);
+    */
 
 	// ----------------------------------
 
 
 	// Smaple dialog for a proper size and scaling
 	//
+    /* TODO(jec)
 	HWND hDlg = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_MESHDEBUG), hAppMainWindow, DummyDlgProc, 0);
+    */
 
 	RECT r;
+    /* TODO(jec)
 	GetWindowRect(hDlg, &r);
+    */
 	width = (r.right - r.left);
 
+    /* TODO(jec)
 	DestroyWindow(hDlg);
+    */
 
 
 	if (Config->gcGUIMode == 1) {
@@ -607,7 +678,9 @@ WindowManager::WindowManager(HWND hAppMainWindow, HINSTANCE _hInst, bool bWindow
 		OpenTestClbk(this);
 	}*/
 
+    /* TODO(jec)
 	SetFocus(hAppMainWindow);
+    */
 
 	// Must be last one
 	g_pWM = this;
@@ -621,7 +694,8 @@ WindowManager::~WindowManager()
 	oapiUnregisterCustomCmd(Cmd);
 
 	for(SideBar* sb : sbList) delete sb;
-	
+
+    /* TODO(jec)
 	UnregisterClass("SideBarWnd", hInst);
 	UnregisterClass("Floater", hInst);
 
@@ -630,6 +704,7 @@ WindowManager::~WindowManager()
 	if (hIcons) DeleteObject(hIcons);
 	if (hAppFont) DeleteObject(hAppFont);
 	if (hSubFont) DeleteObject(hSubFont);
+    */
 }
 
 
@@ -650,11 +725,13 @@ bool WindowManager::IsOK() const
 //
 HBITMAP	WindowManager::GetBitmap(int id) const
 {
+    /* TODO(jec)
 	switch (id) {
 	case gcGUI::BM_TITLE: return hTitle;
 	case gcGUI::BM_SUBTITLE: return hSub;
 	case gcGUI::BM_ICONS: return hIcons;
 	}
+    */
 	return NULL;
 }
 
@@ -690,7 +767,9 @@ HNODE WindowManager::RegisterApplication(gcGUIApp *pPtr, const char *label, HWND
 	
 	if (Config->gcGUIMode == 3) {
 		HWND hWnd = pSB->GetHWND();
+        /* TODO(jec)
 		SetWindowText(hWnd, label);
+        */
 	}
 
 	Node *pAp = new Node(pSB, label, hDlg, color, NULL);
@@ -725,9 +804,8 @@ void WindowManager::UpdateStatus(HNODE hNode, const char *label, HWND hDlg, DWOR
 {
 	Node *pAp = APPNODE(hNode);
 	pAp->hDlg = hDlg;
-	if (pAp->Label) delete[] pAp->Label;
-	if (label) pAp->Label = _strdup(label);
-	else pAp->Label = NULL;
+	if (label) pAp->Label = label;
+	else pAp->Label.clear();
 	if (color != 0) pAp->ReColorize(color);
 	SideBar *pSB = pAp->GetSideBar();
 	pSB->RescaleWindow();
@@ -748,9 +826,11 @@ void WindowManager::DisplayWindow(HNODE hNode, bool bShow)
 				pSB->ManageButtons();
 				pSB->Sort();
 				pSB->RescaleWindow();
+                /* TODO(jec)
 				ShowWindow(pSB->GetHWND(), SW_SHOW);
+                */
 			}
-			else ShowWindow(pSB->GetHWND(), SW_HIDE);
+			else /* TODO(jec) ShowWindow(pSB->GetHWND(), SW_HIDE)*/;
 		}
 	}
 }
@@ -926,7 +1006,9 @@ SideBar *WindowManager::NewSideBar(Node *pAN)
 void WindowManager::ReleaseSideBar(SideBar *pSB)
 {
 	pSB->SetState(gcGUI::INACTIVE);
+    /* TODO(jec)
 	ShowWindow(pSB->GetHWND(), SW_HIDE);
+    */
 }
 
 
@@ -971,9 +1053,11 @@ SideBar* WindowManager::StartDrag(Node *pAN, int x, int y)
 	y -= ptOffset.y;
 
 	pSBNew->ResetWindow(x, y);
-	
+
+    /* TODO(jec)
 	InvalidateRect(pSBNew->GetHWND(), NULL, true);
 	InvalidateRect(pSBOld->GetHWND(), NULL, true);
+    */
 
 	return pSBNew;
 }
@@ -1001,16 +1085,20 @@ void WindowManager::Drag(int x, int y)
 		x -= ptOffset.x;
 		y -= ptOffset.y;
 
-		RECT rect; 
+		RECT rect;
+        /* TODO(jec)
 		SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
 		int t = sbDrag->GetTopNode()->bm.bmHeight;
+        */
 
 		if (x < rect.left) x = rect.left;
 		if (y < rect.top) y = rect.top;
 		if ((x + w) > rect.right) x = rect.right - w;
+        /* TODO(jec)
 		if ((y + t) > rect.bottom) y = rect.bottom - t;
 
 		SetWindowPos(hBar, HWND_TOP, x, y, w, h, SWP_SHOWWINDOW);
+        */
 	}
 }
 
@@ -1020,7 +1108,9 @@ void WindowManager::Drag(int x, int y)
 void WindowManager::MouseMoved(int x, int y)
 {
 	RECT r;
+    /* TODO(jec)
 	if (hMainWnd) GetClientRect(hMainWnd, &r);
+    */
 	int w = r.right - r.left;
 	int h = r.bottom - r.top;
 	int q = (width * 3) / 2;
@@ -1035,7 +1125,9 @@ void WindowManager::MouseMoved(int x, int y)
 //
 void WindowManager::EndDrag()
 {
+    /* TODO(jec0
 	if (sbDrag) InvalidateRect(sbDrag->GetHWND(), NULL, true);
+    */
 	sbDrag = NULL;
 	sbDragSrc = NULL;
 }
@@ -1054,7 +1146,9 @@ SideBar *WindowManager::FindDestination()
 		if (sb->IsInactive()) continue;
 		if (sb != sbDrag) {
 			RECT out;
+            /* TODO(jec)
 			IntersectRect(&out, ptr(sb->GetRect()), ptr(sbDrag->GetRect()));
+            */
 			int a = (out.right - out.left) * (out.bottom - out.top);
 			if (a > z) { z = a;	sbDest = sb; }
 		}
@@ -1078,6 +1172,7 @@ SideBar *WindowManager::FindDestination()
 bool WindowManager::MainWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static int xpos, ypos;
+    /* TODO(jec)
 	switch (uMsg) {
 
 	case WM_MOUSELEAVE:
@@ -1110,6 +1205,7 @@ bool WindowManager::MainWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		MouseMoved(xpos, ypos);
 		break;
 	}
+    */
 
 	return false;
 }
@@ -1150,7 +1246,9 @@ SideBar::SideBar(class WindowManager *_pMgr, DWORD _state)
 	bWin = pMgr->IsWindowed();
 
 	RECT r;
+    /* TODO(jec)
 	GetClientRect(hMainWnd, &r);
+    */
 	height = (r.bottom - r.top) - ypos;
 
 	DWORD exstyle = 0;
@@ -1161,8 +1259,10 @@ SideBar::SideBar(class WindowManager *_pMgr, DWORD _state)
 		if (state == gcGUI::DS_LEFT) xref = -width;
 		if (state == gcGUI::DS_FLOAT) xref = width, height = width;
 		if (bWin) {
+            /* TODO(jec)
 			if (state == gcGUI::DS_FLOAT) style = WS_CLIPSIBLINGS;
 			else style = WS_CHILD | WS_CLIPSIBLINGS;
+            */
 		} else style = 0;
 	}
 
@@ -1175,25 +1275,33 @@ SideBar::SideBar(class WindowManager *_pMgr, DWORD _state)
 		state = gcGUI::DS_FLOAT;
 		xref = width;
 		exstyle = 0;
+        /* TODO(jec)
 		if (bWin) style = WS_CAPTION | WS_SYSMENU;
 		else style = WS_CAPTION | WS_SYSMENU;
+        */
 	}
 
 	if (state == gcGUI::DS_FLOAT) width += 2, height += 1; // Border
 
+    /* TODO(jec)
 	if (state == gcGUI::DS_FLOAT) hBar = CreateWindowExA(exstyle, "Floater", "Float", style, xref, ypos, width, height, hMainWnd, NULL, hInst, 0);
 	else					      hBar = CreateWindowExA(exstyle, "SideBarWnd", "Dock", style, xref, ypos, width, height, hMainWnd, NULL, hInst, 0);
 
 	SetWindowLong(hBar, GWL_STYLE, style);	// Make it bordeless
+    */
 
 	if (Config->gcGUIMode == 3) {
 		RECT w, c;
+        /* TODO(jec)
 		GetWindowRect(hBar, &w);
 		GetClientRect(hBar, &c);
+        */
 		title_height = (w.bottom - w.top) - c.bottom;
 	}
 
+    /* TODO(jec)
 	if (Config->gcGUIMode == 1) ShowWindow(hBar, SW_SHOW);
+    */
 }
 
 
@@ -1203,11 +1311,15 @@ SideBar::~SideBar()
 {	
 	for (Node *v : wList)
 	{
+        /* TODO(jec)
 		if (v->hDlg) DestroyWindow(v->hDlg);
+        */
 		delete v;
 	}
 	wList.clear();
+    /* TODO(jec)
 	DestroyWindow(hBar);
+    */
 }
 
 
@@ -1242,7 +1354,9 @@ void SideBar::ManageButtons()
 void SideBar::Invalidate()
 {
 	ManageButtons();
+    /* TODO(jec)
 	InvalidateRect(hBar, NULL, true);
+    */
 }
 
 
@@ -1253,7 +1367,9 @@ void SideBar::ResetWindow(int x, int y)
 	if (state == gcGUI::DS_FLOAT) {
 		height = ComputeLength() + title_height + 1;
 	}
+    /* TODO(jec)
 	SetWindowPos(hBar, NULL, x, y, width, height, SWP_NOZORDER | SWP_SHOWWINDOW);
+    */
 }
 
 
@@ -1262,7 +1378,9 @@ void SideBar::ResetWindow(int x, int y)
 RECT SideBar::GetRect() const
 {
 	RECT r = { 0, 0, 0, 0 };
+    /* TODO(jec)
 	if (hBar) GetWindowRect(hBar, &r);
+    */
 	return r;
 }
 
@@ -1306,7 +1424,9 @@ void SideBar::Animate()
 	if (bOpening && anim_state >= 0.9999f) {
 		if (bValidate) {
 			bIsOpen = true;
+            /* TODO(jec)
 			InvalidateRect(hBar, NULL, TRUE);
+            */
 			bFirstTime = false;
 		}
 		bValidate = false;
@@ -1332,9 +1452,11 @@ void SideBar::Animate()
 	if (state == gcGUI::DS_LEFT) x = xref + int(as * float(width));
 
 
+    /* TODO(jec)
 	if (GetWindowLong(hBar, GWL_STYLE)&WS_CHILD) bFirstTime = true;
 
 	MoveWindow(hBar, x, ypos, width, height, bFirstTime);
+    */
 }
 
 
@@ -1344,7 +1466,9 @@ void SideBar::AddWindow(Node *pAp, bool bSetupOnly)
 {
 	bFirstTime = true;	// Enable Full redraw
 	pAp->pSB = this;
+    /* TODO(jec)
 	if (pAp->hDlg) SetParent(pAp->hDlg, hBar);
+    */
 	if (!bSetupOnly) wList.push_back(pAp);
 }
 
@@ -1378,7 +1502,9 @@ void SideBar::RescaleWindow()
 	if (state == gcGUI::DS_FLOAT) {
 		height = ComputeLength() + title_height + 1;
 	}
+    /* TODO(jec)
 	SetWindowPos(hBar, NULL, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_SHOWWINDOW);
+    */
 }
 
 
@@ -1397,8 +1523,8 @@ void SideBar::GetVisualList(vector<Node*> &tmp)
 {
 	if (Config->gcGUIMode == 3) {
 		for (Node* ap : wList) if (ap->hDlg) tmp.push_back(ap);
-	} 
-	else 
+	}
+	else
 	{
 		for (Node* ap : wList) {
 			Node* pPar = ap->pParent;
@@ -1569,6 +1695,7 @@ LRESULT SideBar::SideBarWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
 	HWND hMain = pMgr->GetMainWindow();
 
+    /* TODO(jec)
 	switch(uMsg) {
 
 	case WM_KEYDOWN:
@@ -1751,6 +1878,8 @@ LRESULT SideBar::SideBarWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
 
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+    */
+    return FALSE;
 }
 
 
@@ -1788,35 +1917,47 @@ void SideBar::PaintWindow()
 
 	GetVisualList(drawList);
 
+    /* TODO(jec)
 	PAINTSTRUCT ps;
 	HDC hDC = BeginPaint(hBar, &ps);
+    */
 
 	int y = rollpos;
+    /* TODO(jec)
 	SetBkMode(hDC, TRANSPARENT);
+    */
 
 	tInsert *pIns = pMgr->InsertList();
 	map<Node*, Node*> &wIns = pIns->List;
 
 	bool bInsert = (pIns->pTgt == this) && (wIns.size() > 0);
-	
+
 	if (bInsert) for (auto &var : wIns)
 	{
+        /* TODO(jec)
 		if (var.second == NULL) y = var.first->Spacer(hDC, y);
+        */
 	}
 
 	for (Node* ap : drawList)
 	{
 		if (ap != drawList.front()) if (ap->pParent == NULL) {
 			RECT fr = { 0, y, width, y + 3 };
+            /* TODO(jec)
 			FillRect(hDC, &fr, (HBRUSH)GetStockObject(BLACK_BRUSH));
+            */
 			y += 3;
 		}
 
+        /* TODO(jec)
 		y = ap->Paint(hDC, y);
+        */
 
 		if (bInsert) for (auto &var : wIns)
 		{
+            /* TODO(jec)
 			if (var.second == ap) y = var.first->Spacer(hDC, y);
+            */
 		}
 	}
 
@@ -1824,18 +1965,24 @@ void SideBar::PaintWindow()
 	wndlen = y - rollpos;
 
 	if (state == gcGUI::DS_FLOAT) {
+        /* TODO(jec)
 		SelectObject(hDC, (HBRUSH)GetStockObject(NULL_BRUSH));
 		SelectObject(hDC, (HPEN)GetStockObject(BLACK_PEN));
 		Rectangle(hDC, 0, 0, width, height);
+        */
 	} else {
 		if (y < height) {
+            /* TODO(jec)
 			SelectObject(hDC, (HBRUSH)GetStockObject(DKGRAY_BRUSH));
 			SelectObject(hDC, (HPEN)GetStockObject(NULL_PEN));
 			Rectangle(hDC, 0, y, width + 1, height + 1);
+            */
 		}
 	}
 
+    /* TODO(jec)
 	EndPaint(hBar, &ps);
+    */
 
 	// Move dialogs in place
 	for (Node* ap : wList) {
@@ -1844,8 +1991,12 @@ void SideBar::PaintWindow()
 		
 		if (bFound && ap->hDlg) {
 			if (ap->bOpen) ap->Move();
+            /* TODO(jec)
 			else ShowWindow(ap->hDlg, SW_HIDE);	
+            */
 		}
+        /* TODO(jec)
 		else if (ap->hDlg) ShowWindow(ap->hDlg, SW_HIDE);
+        */
 	}
 }

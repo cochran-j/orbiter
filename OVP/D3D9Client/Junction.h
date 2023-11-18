@@ -12,7 +12,7 @@
 #ifndef __JUNCTION_H
 #define __JUNCTION_H
 
-#include <Windows.h>
+#include <windows.h>
 
 /**
  * \brief Junction point handling API.

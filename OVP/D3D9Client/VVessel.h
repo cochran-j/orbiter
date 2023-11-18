@@ -15,7 +15,9 @@
 #include <unordered_set>
 #include <vector>
 
-class oapi::D3D9Client;
+namespace oapi {
+    class D3D9Client;
+}
 
 typedef struct {
 	float fdata;

@@ -26,8 +26,8 @@
 #include "VPlanet.h"
 #include "VBase.h"
 #include "SurfMgr.h"
-#include "surfmgr2.h"
-#include "cloudmgr2.h"
+#include "Surfmgr2.h"
+#include "Cloudmgr2.h"
 #include "CloudMgr.h"
 #include "HazeMgr.h"
 #include "RingMgr.h"
@@ -36,6 +36,10 @@
 #include "VectorHelpers.h"
 #include "OapiExtension.h"
 #include "IProcess.h"
+
+#include <filesystem>
+#include <algorithm>
+#include <cctype>
 
 using namespace oapi;
 
@@ -92,20 +96,17 @@ std::unordered_map<OBJHANDLE, std::unordered_map<int, std::unordered_map<int, st
 std::unordered_map<OBJHANDLE, std::vector<FlatShape*>> g_ShapeStore;
 std::unordered_map<OBJHANDLE, bool> g_ShapesLoaded;
 
-std::vector<std::string> EnumerateDirectory(std::string directory, std::string filter)
+std::vector<std::string> EnumerateDirectory(std::string directory, std::string ext)
 {
 	std::vector<std::string> result;
-	std::string search_path = directory + "\\" + filter;
-	WIN32_FIND_DATA fd;
-	HANDLE hFind = ::FindFirstFile(search_path.c_str(), &fd);
-	if (hFind != INVALID_HANDLE_VALUE)
-	{
-		do
-		{
-			if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) result.push_back(fd.cFileName);
-		} while (::FindNextFile(hFind, &fd));
-		::FindClose(hFind);
-	}
+    auto search_path = std::filesystem::path{directory};
+    for (auto& dir_entry : std::filesystem::directory_iterator{search_path}) {
+        if (dir_entry.path().extension() == ext) {
+            if (!dir_entry.is_directory()) {
+                result.push_back(dir_entry.path().filename());
+            }
+        }
+    }
 	return result;
 }
 
@@ -137,37 +138,44 @@ void GetTilePixelPosition(int lvl, double lat, double lng, TilePixelPosition& po
 
 void ProcessPlanetFlats(OBJHANDLE hPlanet)
 {
-	char name[MAX_PATH];
-	char fname[MAX_PATH];
-	oapiGetObjectName(hPlanet, name, ARRAYSIZE(name) - 6);
-	sprintf_s(fname, ARRAYSIZE(fname), "%s\\Flat", name);
-	g_client->TexturePath(fname, name);
-	auto files = EnumerateDirectory(name, "*.flt");
+    std::string name {}; name.resize(256);
+    std::filesystem::path fname {};
+    std::filesystem::path fname_texpath {};
+
+	oapiGetObjectName(hPlanet, name.data(), name.size() - 6);
+    fname = std::filesystem::path{name} / "Flat";
+	g_client->TexturePath(fname, fname_texpath);
+	auto files = EnumerateDirectory(fname_texpath, "flt");
 	// Load all planet shapes
 	for (auto file : files)
 	{
 		auto radius = oapiGetSize(hPlanet);
-		sprintf_s(fname, ARRAYSIZE(fname), "%s\\%s", name, file.c_str());
-		auto f = fopen(fname, "r");
+        fname = fname_texpath / file;
+		auto f = fopen(fname.c_str(), "r");
 		if (f != 0)
 		{
 			while (!feof(f))
 			{
 				int height, dim1, dim2, falloff, read;
 				double lat, lng, phi;
-				if ((read = fscanf(f, "%s %d %lf %lf %d %d %lf %d", fname, &height, &lng, &lat, &dim1, &dim2, &phi, &falloff)) < 5) continue; // Skip incomplete lines
-				if (fname[0] == '/' && fname[1] == '/') continue; // Skip commented lines
-				_strlwr(fname);
+                char cbuf[256];
+				if ((read = fscanf(f, "%s %d %lf %lf %d %d %lf %d", cbuf, &height, &lng, &lat, &dim1, &dim2, &phi, &falloff)) < 5) continue; // Skip incomplete lines
+				if (cbuf[0] == '/' && cbuf[1] == '/') continue; // Skip commented lines
+                std::transform(cbuf, cbuf + sizeof(cbuf), cbuf,
+                        [](char in) {
+                            return static_cast<char>(std::tolower(static_cast<unsigned char>(in)));
+                        });
+
 				if (read < 6)	dim2 = dim1; // Fallback for one dimension only
 				if (read < 7)	phi = 0;     // Fallback for no angle given
 				if (read < 8)	falloff = 0; // Fallback for no falloff given
 				auto decdeg = radius * cos(lat * RAD) * 2 * PI;
 				decdeg = 360 / decdeg;
-				if (strcmp(fname, "ellipse") == 0)
+				if (strcmp(cbuf, "ellipse") == 0)
 				{
 					g_ShapeStore[hPlanet].push_back(new FlatShape{ lat ,lng , (double)dim1 * decdeg, (double)dim2 * decdeg, cos(-phi * RAD),sin(-phi * RAD), (double)falloff / 100, height, 1 });
 				}
-				else if (strcmp(fname, "rect") == 0)
+				else if (strcmp(cbuf, "rect") == 0)
 				{
 					g_ShapeStore[hPlanet].push_back(new FlatShape{ lat ,lng , (double)dim1 * decdeg / 2, (double)dim2 * decdeg / 2, cos(-phi * RAD),sin(-phi * RAD), (double)falloff / 100, height, 4 });
 				}
@@ -898,8 +906,8 @@ bool vPlanet::Render(LPDIRECT3DDEVICE9 dev)
 		DWORD displ  = *(DWORD*)gc->GetConfigParam(CFGPRM_GETDISPLAYMODE);
 		vObject *vSel =  DebugControls::GetVisual();
 		if (vSel && displ>0) {
-			if (vSel->GetObjectA()) {
-				if (oapiGetObjectType(vSel->GetObjectA())==OBJTP_VESSEL) return false;
+			if (vSel->GetObject()) {
+				if (oapiGetObjectType(vSel->GetObject())==OBJTP_VESSEL) return false;
 			}
 		}
 	}
@@ -1419,17 +1427,16 @@ void vPlanet::LoadMicroTextures(LPDIRECT3DDEVICE9 pDev)
 	{
 		for (auto &x : body.second.Level)
 		{
-			char file_path[MAX_PATH];
-			sprintf_s(file_path, MAX_PATH, "Textures/%s", x.file);
+            auto file_path = std::filesystem::path{"Textures"} / x.file;
 			
 			// If texture is not loaded, load it
 			if (MicroTextures.find(x.file) == MicroTextures.end()) {
-				if (D3DXCreateTextureFromFileA(pDev, file_path, &x.pTex) == S_OK) {
+				if (D3DXCreateTextureFromFileA(pDev, file_path.c_str(), &x.pTex) == S_OK) {
 					LogAlw("Microtexture [%s] loaded", x.file);
 					MicroTextures[x.file] = x.pTex;
 				}
 				else {
-					LogErr("Failed to read microtexture [%s] for [%s]", file_path, body.first.c_str());
+					LogErr("Failed to read microtexture [%s] for [%s]", file_path.c_str(), body.first.c_str());
 					MicroTextures[x.file] = NULL;
 				}
 			}
