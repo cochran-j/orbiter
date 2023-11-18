@@ -22,10 +22,12 @@
 
 #define STRICT
 #define ORBITER_MODULE
-#include "orbitersdk.h"
+#include "Orbitersdk.h"
 #include "LuaInline.h"
+/* TODO(jec)
 #include <direct.h>
 #include <process.h>
+*/
 
 // ==============================================================
 // class InterpreterList::Environment: implementation
@@ -34,23 +36,25 @@ InterpreterList::Environment::Environment()
 {
 	cmd = NULL;
 	singleCmd = false;
-	hThread = NULL;
+	hThread = std::thread{};
 	interp = CreateInterpreter ();
 }
 
 InterpreterList::Environment::~Environment()
 {
 	if (interp) {
-		if (hThread) {
+		if (hThread.joinable()) {
 			termInterp = true;
 			interp->Terminate();
 			interp->EndExec(); // give the thread opportunity to close
 
+            /* TODO(jec)
 			if (WaitForSingleObject (hThread, 1000) != 0) {
 				oapiWriteLog((char*)"LuaInline: timeout while waiting for interpreter thread");
 				TerminateThread (hThread, 0);
 			}
 			CloseHandle (hThread);
+            */
 		}
 		delete interp;
 	}
@@ -62,7 +66,9 @@ Interpreter *InterpreterList::Environment::CreateInterpreter ()
 	termInterp = false;
 	interp = new Interpreter ();
 	interp->Initialise();
+    /* TODO(jec)
 	hThread = (HANDLE)_beginthreadex (NULL, 4096, &InterpreterThreadProc, this, 0, &id);
+    */
 	return interp;
 }
 
@@ -87,7 +93,9 @@ unsigned int WINAPI InterpreterList::Environment::InterpreterThreadProc (LPVOID 
 		interp->EndExec();  // return control
 	}
 	interp->EndExec();  // return mutex (is this necessary?)
+    /* TODO(jec)
 	_endthreadex(0);
+    */
 	return 0;
 }
 

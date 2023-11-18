@@ -3,8 +3,25 @@
 
 #define INTERPRETER_IMPLEMENTATION
 
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "Interpreter.h"
 #include "VesselAPI.h"
+
+
+static bool caseInsensitiveEquals(const std::string_view& str1,
+                                  const std::string_view& str2) {
+
+    return std::equal(str1.begin(), str1.end(),
+                      str2.begin(), str2.end(),
+                      [](char c1, char c2) {
+                          return std::tolower(static_cast<unsigned char>(c1)) ==
+                                 std::tolower(static_cast<unsigned char>(c2));
+                      });
+}
+
 
 /***
 Vessel class: Lua access to VESSEL objects
@@ -2316,7 +2333,7 @@ int Interpreter::v_set_elements (lua_State *L)
 		lua_getfield (L, 3, "frame");
 		if (lua_isstring (L, -1)) {
 			const char *framestr = lua_tostring (L, -1);
-			if (!_stricmp (framestr, "equ")) frame = FRAME_EQU;
+			if (caseInsensitiveEquals(framestr, "equ")) frame = FRAME_EQU;
 		}
 		lua_pop (L, 1);
 	}

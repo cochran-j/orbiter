@@ -3,6 +3,10 @@
 
 #define INTERPRETER_IMPLEMENTATION
 
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "Interpreter.h"
 #include "VesselAPI.h"
 #include "MFDAPI.h"
@@ -11,6 +15,19 @@
 
 using std::min;
 using std::max;
+
+
+static bool caseInsensitiveEquals(const std::string_view& str1,
+                                  const std::string_view& str2) {
+
+    return std::equal(str1.begin(), str1.end(),
+                      str2.begin(), str2.end(),
+                      [](char c1, char c2) {
+                          return std::tolower(static_cast<unsigned char>(c1)) ==
+                                 std::tolower(static_cast<unsigned char>(c2));
+                      });
+}
+
 
 /***
 Module oapi: General Orbiter API interface functions
@@ -62,16 +79,20 @@ Interpreter::Interpreter ()
 	lua_pushlightuserdata (L, this);
 	lua_setfield (L, LUA_REGISTRYINDEX, "interp");
 
+    /* TODO(jec)  std::mutex
 	hExecMutex = CreateMutex (NULL, TRUE, NULL);
 	hWaitMutex = CreateMutex (NULL, FALSE, NULL);
+    */
 }
 
 Interpreter::~Interpreter ()
 {
 	lua_close (L);
 
+    /* TODO(jec)
 	if (hExecMutex) CloseHandle (hExecMutex);
 	if (hWaitMutex) CloseHandle (hWaitMutex);
+    */
 }
 
 void Interpreter::Initialise ()
@@ -559,15 +580,19 @@ void Interpreter::WaitExec (DWORD timeout)
 {
 	// Called by orbiter thread or interpreter thread to wait its turn
 	// Orbiter waits for the script for 1 second to return
+    /* TODO(jec)
 	WaitForSingleObject (hWaitMutex, timeout); // wait for synchronisation mutex
 	WaitForSingleObject (hExecMutex, timeout); // wait for execution mutex
 	ReleaseMutex (hWaitMutex);              // release synchronisation mutex
+    */
 }
 
 void Interpreter::EndExec ()
 {
 	// called by orbiter thread or interpreter thread to hand over control
+    /* TODO(jec)
 	ReleaseMutex (hExecMutex);
+    */
 }
 
 void Interpreter::frameskip (lua_State *L)
@@ -605,7 +630,10 @@ int Interpreter::RunChunk (const char *chunk, int n)
 					term_strout(error, true);
 				}
 				else {
-					oapiWriteLogError(error);
+                    /* NOTE(jec):  variadic macros cannot have zero variadic
+                     *             arguments.
+                     */
+					oapiWriteLogError("Lua %s", error);
 				}
 				is_busy = false;
 				return res;
@@ -642,7 +670,7 @@ void Interpreter::LoadAPI ()
 		//{"api", help_api},
 		{NULL, NULL}
 	};
-	for (int i = 0; i < ARRAYSIZE(glob) && glob[i].name; i++) {
+	for (int i = 0; i < (sizeof(glob)/sizeof(glob[0])) && glob[i].name; i++) {
 		lua_pushcfunction (L, glob[i].func);
 		lua_setglobal (L, glob[i].name);
 	}
@@ -2632,7 +2660,7 @@ int Interpreter::oapi_set_cameramode (lua_State *L)
 	ASSERT_STRING(L,-1);
 	strcpy(modestr, lua_tostring(L,-1));
 	lua_pop(L,1);
-	if (!_stricmp(modestr, "ground")) {
+	if (caseInsensitiveEquals(modestr, "ground")) {
 
 		lua_getfield(L,1,"ref");
 		ASSERT_STRING(L,-1);
@@ -2668,7 +2696,7 @@ int Interpreter::oapi_set_cameramode (lua_State *L)
 		lua_pop(L,1);
 		cm = new CameraMode_Ground();
 
-	} else if (!_stricmp(modestr, "track")) {
+	} else if (caseInsensitiveEquals(modestr, "track")) {
 
 		lua_getfield(L,1,"trackmode");
 		ASSERT_STRING(L,-1);
@@ -2695,7 +2723,7 @@ int Interpreter::oapi_set_cameramode (lua_State *L)
 		lua_pop(L,1);
 		cm = new CameraMode_Track();
 
-	} else if (!_stricmp(modestr, "cockpit")) {
+	} else if (caseInsensitiveEquals(modestr, "cockpit")) {
 
 		lua_getfield(L,1,"cockpitmode");
 		if (lua_isstring(L,-1)) {
@@ -2791,7 +2819,7 @@ int Interpreter::oapi_create_animationcomponent (lua_State *L)
 	}
 	lua_pop(L,1); // pop table of group indices
 
-	if (!_stricmp(typestr, "rotation")) {
+	if (caseInsensitiveEquals(typestr, "rotation")) {
 		lua_getfield(L,1,"ref");
 		ASSERT_VECTOR(L,-1);
 		VECTOR3 ref = lua_tovector(L,-1);
@@ -2805,13 +2833,13 @@ int Interpreter::oapi_create_animationcomponent (lua_State *L)
 		double angle = lua_tonumber(L,-1);
 		lua_pop(L,1);
 		trans = new MGROUP_ROTATE(mesh,grp,ngrp,ref,axis,(float)angle);
-	} else if (!_stricmp(typestr, "translation")) {
+	} else if (caseInsensitiveEquals(typestr, "translation")) {
 		lua_getfield(L,1,"shift");
 		ASSERT_VECTOR(L,-1);
 		VECTOR3 shift = lua_tovector(L,-1);
 		lua_pop(L,1);
 		trans = new MGROUP_TRANSLATE(mesh,grp,ngrp,shift);
-	} else if (!_stricmp(typestr, "scaling")) {
+	} else if (caseInsensitiveEquals(typestr, "scaling")) {
 		lua_getfield(L,1,"ref");
 		ASSERT_VECTOR(L,-1);
 		VECTOR3 ref = lua_tovector(L,-1);
@@ -3675,8 +3703,8 @@ int Interpreter::skp_get_charsize (lua_State *L)
 	oapi::Sketchpad *skp = lua_tosketchpad (L,1);
 	ASSERT_SYNTAX(skp, "Invalid sketchpad object");
 	DWORD size = skp->GetCharSize ();
-	lua_pushnumber(L, LOWORD(size));
-	lua_pushnumber(L, HIWORD(size));
+	lua_pushnumber(L, (size & 0x0000FFFFU));
+	lua_pushnumber(L, ((size & 0xFFFF0000U) >> 16));
 	return 2;
 }
 

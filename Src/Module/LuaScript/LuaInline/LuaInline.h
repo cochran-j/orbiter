@@ -23,6 +23,8 @@
 #ifndef __LUAINLINE_H
 #define __LUAINLINE_H
 
+#include <thread>
+
 #include "Interpreter.h"
 
 // ==============================================================
@@ -35,7 +37,7 @@ public:
 		~Environment();
 		Interpreter *CreateInterpreter ();
 		Interpreter *interp;  // interpreter instance
-		HANDLE hThread;       // interpreter thread
+        std::thread hThread;       // interpreter thread
 		bool termInterp;      // interpreter kill flag
 		bool singleCmd;       // terminate after single command
 		char *cmd;            // interpreter command

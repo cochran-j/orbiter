@@ -13,6 +13,9 @@ extern "C" {
 #include "OrbiterAPI.h"
 #include "VesselAPI.h" // for TOUCHDOWNVTX
 
+/* TODO(jec):  Windows compatibility definitions */
+#define INFINITE 0xFFFFFFFF
+
 #define PRMTP_NIL           0x01
 #define PRMTP_NUMBER        0x02
 #define PRMTP_BOOLEAN       0x04

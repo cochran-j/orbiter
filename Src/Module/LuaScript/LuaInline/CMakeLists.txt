@@ -14,7 +14,8 @@ target_include_directories(LuaInline
 )
 
 target_link_libraries(LuaInline
-	${ORBITER_LIB}
+    # TODO(jec)
+    # ${ORBITER_LIB}
 	${ORBITER_SDK_LIB}
 	LuaInterpreter
 	lua
