@@ -195,7 +195,7 @@ if(BUILD_ORBITER_DX7)
     set(ORBITER_LIB $<TARGET_LINKER_FILE:Orbiter>)
 else()
 	set(OrbiterTgt Orbiter_server)
-    set(ORBITER_LIB $<TARGET_LINKER_FILE:Orbiter_server>)
+    set(ORBITER_LIB Orbiter_server_objects)
 endif()
 
 # =====================================================================================

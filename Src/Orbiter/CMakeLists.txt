@@ -8,7 +8,7 @@ endif()
 # On UNIX-like, use -r to build relocatable executables.  This allows us to
 # link the plugin DLLs to the executable.
 if (UNIX)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -r")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpie")
 endif()
 
 # Sources for all Orbiter executable targets
@@ -276,9 +276,14 @@ endif()
 # Orbiter executable (graphics server version)
 if(BUILD_ORBITER_SERVER)
 
+    add_library(Orbiter_server_objects
+        OBJECT
+        ${common_src}
+    )
+
 	add_executable(Orbiter_server
-		${common_src}
-	 )
+        ${common_src}
+    )
 
     if(MSVC)
         set_target_properties(Orbiter_server
@@ -292,27 +297,48 @@ if(BUILD_ORBITER_SERVER)
 		RUNTIME_OUTPUT_DIRECTORY ${ORBITER_BINARY_MODULE_DIR}/Server
 		OUTPUT_NAME Orbiter
 		VS_DEBUGGER_WORKING_DIRECTORY ${ORBITER_BINARY_ROOT_DIR}
-		COMPILE_DEFINITIONS "NOGRAPHICS;DIRECTINPUT_VERSION=0x0800"
 		FOLDER Core
 	)
 
-	target_include_directories(Orbiter_server PUBLIC
+	target_include_directories(Orbiter_server_objects PUBLIC
 		${Orbiter_includes}
 	)
 
-    target_compile_definitions(Orbiter_server PUBLIC
-        ${Orbiter_defines}
+    target_include_directories(Orbiter_server PUBLIC
+        ${Orbiter_includes}
     )
 
-	target_link_libraries(Orbiter_server
+    target_compile_definitions(Orbiter_server_objects PUBLIC
+        ${Orbiter_defines}
+        NOGRAPHICS
+        DIRECTINPUT_VERSION=0x0800
+    )
+
+    target_compile_definitions(Orbiter_server PUBLIC
+        ${Orbiter_defines}
+        NOGRAPHICS
+        DIRECTINPUT_VERSION=0x0800
+    )
+
+	target_link_libraries(Orbiter_server_objects
 		${Orbiter_common_libs}
 		${Orbiter_server_libs}
         ${Orbiter_dinput_libs}
 	)
 
-	add_dependencies(Orbiter_server
+    target_link_libraries(Orbiter_server
+        ${Orbiter_common_libs}
+        ${Orbiter_server_libs}
+        ${Orbiter_dinput_libs}
+    )
+
+	add_dependencies(Orbiter_server_objects
 		${Orbiter_depends}
 	)
+
+    add_dependencies(Orbiter_server
+        ${Orbiter_depends}
+    )
 
 	# Installation: Orbiter executable (graphics-server versions)
 	install(TARGETS
@@ -327,23 +353,23 @@ if(BUILD_ORBITER_SERVER)
 			ENABLE_EXPORTS 1
 		)
 		# ...we have to use the NG version to export the API links
-		install(FILES $<TARGET_LINKER_FILE:Orbiter_server>
-			DESTINATION ${ORBITER_INSTALL_SDK_DIR}/lib
-		)
+        # TODO(jec):  Don't want to do this?
+        install(FILES $<TARGET_LINKER_FILE:Orbiter_server>
+           DESTINATION ${ORBITER_INSTALL_SDK_DIR}/lib
+        )
 		# ...and copy Orbiter.exe into build dir (not install dir) so that tests work
-		add_custom_command(TARGET Orbiter_server
-			POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:Orbiter_server> ${ORBITER_BINARY_ROOT_DIR}
-		)
+        add_custom_command(TARGET Orbiter_server
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:Orbiter_server> ${ORBITER_BINARY_ROOT_DIR}
+        )
 	endif()
-	
 endif()
 
 # Copy library to its Orbitersdk/lib location so that external project integrated into the build can find it
 add_custom_command(TARGET ${OrbiterTgt}
 	POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${ORBITER_BINARY_SDK_DIR}/lib
-	COMMAND ${CMAKE_COMMAND} -E copy ${ORBITER_LIB} ${ORBITER_BINARY_SDK_DIR}/lib/ 
+    #COMMAND ${CMAKE_COMMAND} -E copy ${ORBITER_LIB} ${ORBITER_BINARY_SDK_DIR}/lib/ 
 )
 
 string(TIMESTAMP DATE "%d %b %Y")
