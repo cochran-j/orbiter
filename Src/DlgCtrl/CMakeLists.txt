@@ -7,14 +7,21 @@ add_library(DlgCtrl STATIC
 	DlgCtrlSwitch.cpp
 )
 
-target_include_directories(DlgCtrl
-	PUBLIC ${CMAKE_SOURCE_DIR}/Orbitersdk/include
+target_include_directories(DlgCtrl PUBLIC
+    ${CMAKE_SOURCE_DIR}/Orbitersdk/include
+    ${WIN32_INCLUDE_DIR}
 )
 
 set_target_properties(DlgCtrl
 	PROPERTIES
 	FOLDER Core
 )
+
+if(UNIX)
+    target_compile_options(DlgCtrl
+        PUBLIC -fpic
+    )
+endif()
 
 # Copy library to its Orbitersdk/lib location so that external project integrated into the build can find it
 add_custom_command(TARGET DlgCtrl

@@ -8,7 +8,8 @@ extern GDIRES g_GDI;
 static void OnPaint (HWND hWnd);
 static void OnLButtonDown (HWND hWnd, int x, int y);
 
-LRESULT FAR PASCAL MsgProc_Switch (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+/* DLG
+INT_PTR MsgProc_Switch (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg) {
 	case WM_CREATE:
@@ -24,9 +25,11 @@ LRESULT FAR PASCAL MsgProc_Switch (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	}
 	return DefWindowProc (hWnd, uMsg, wParam, lParam);
 }
+*/
 
 void OnPaint (HWND hWnd)
 {
+    /* DLG
 	PAINTSTRUCT ps;
 	RECT r;
 	POINT pt[6];
@@ -105,10 +108,12 @@ void OnPaint (HWND hWnd)
 		}
 	}
 	EndPaint (hWnd, &ps);
+    */
 }
 
 void OnLButtonDown (HWND hWnd, int x, int y)
 {
+    /* DLG
 	RECT r;
 	GetClientRect (hWnd, &r);
 	int pos = (int)GetWindowLongPtr (hWnd, 0);
@@ -127,19 +132,23 @@ void OnLButtonDown (HWND hWnd, int x, int y)
 		InvalidateRect (hWnd, NULL, TRUE);
 		PostMessage (GetParent (hWnd), WM_COMMAND, MAKEWPARAM(GetDlgCtrlID (hWnd), BN_CLICKED), npos);
 	}
+    */
 }
 
 void oapiSetSwitchParams (HWND hCtrl, SWITCHPARAM *sp, bool redraw)
 {
+    /* DLG
 	DWORD flag = 0;
 	if (sp->mode  == SWITCHPARAM::THREESTATE) flag |= 0x1;
 	if (sp->align == SWITCHPARAM::HORIZONTAL) flag |= 0x4;
 	SetWindowLongPtr (hCtrl, 0, 0);
 	SetWindowLongPtr (hCtrl, 4, flag);
+    */
 }
 
 int oapiSetSwitchState (HWND hCtrl, int state, bool redraw)
 {
+    /* DLG
 	if (state < 0 || state > 2) return -1;
 	if (state == 2) {
 		DWORD flag = (DWORD)GetWindowLongPtr (hCtrl, 4);
@@ -148,9 +157,12 @@ int oapiSetSwitchState (HWND hCtrl, int state, bool redraw)
 	SetWindowLongPtr (hCtrl, 0, state);
 	if (redraw) InvalidateRect (hCtrl, NULL, TRUE);
 	return state;
+    */
 }
 
 int oapiGetSwitchState (HWND hCtrl)
 {
+    /* DLG
 	return GetWindowLongPtr (hCtrl, 0);
+    */
 }

@@ -3,10 +3,13 @@
 
 #include "DlgCtrl.h"
 
-LRESULT FAR PASCAL MsgProc_PropertyList (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+/* DLG
+INT_PTR MsgProc_PropertyList (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+*/
 
 void RegisterPropertyList (HINSTANCE hInst)
 {
+    /* DLG
 	WNDCLASS wndClass;
 
 	// Register window class for level indicator
@@ -24,14 +27,18 @@ void RegisterPropertyList (HINSTANCE hInst)
 
 	HMODULE hExeInst = GetModuleHandle (NULL);
 	PropertyList::hBmpArrows = LoadBitmap (hExeInst, MAKEINTRESOURCE (286));
+    */
 }
 
 void UnregisterPropertyList (HINSTANCE hInst)
 {
+    /* DLG
 	UnregisterClass ("OrbiterCtrl_PropertyList", hInst);
 	DeleteObject (PropertyList::hBmpArrows);
+    */
 }
 
+/* DLG
 LRESULT FAR PASCAL MsgProc_PropertyList (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	PropertyList *pl;
@@ -56,3 +63,5 @@ LRESULT FAR PASCAL MsgProc_PropertyList (HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	}
 	return DefWindowProc (hWnd, uMsg, wParam, lParam);
 }
+*/
+

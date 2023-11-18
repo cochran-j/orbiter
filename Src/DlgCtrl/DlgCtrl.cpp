@@ -25,6 +25,7 @@ void DragSlider(HWND hWnd, int x, int y);
 
 void oapiRegisterCustomControls (HINSTANCE hInst)
 {
+    /* DLG
 	WNDCLASS wndClass;
 	g_GDI.hPen1 = CreatePen (PS_SOLID, 1, 0x404040);
 	g_GDI.hPen2 = CreatePen (PS_SOLID, 1, GetSysColor (COLOR_3DSHADOW));
@@ -50,6 +51,7 @@ void oapiRegisterCustomControls (HINSTANCE hInst)
 	wndClass.hbrBackground = g_GDI.hBrush2; //(HBRUSH)GetStockObject (NULL_BRUSH);
 	wndClass.lpszClassName = "OrbiterCtrl_Switch";
 	RegisterClass (&wndClass);
+    */
 
 	// Register window class for property list
 	RegisterPropertyList (hInst);
@@ -57,6 +59,7 @@ void oapiRegisterCustomControls (HINSTANCE hInst)
 
 void oapiUnregisterCustomControls (HINSTANCE hInst)
 {
+    /* DLG
 	UnregisterClass ("OrbiterCtrl_Gauge", hInst);
 	UnregisterClass ("OrbiterCtrl_Switch", hInst);
 	UnregisterPropertyList (hInst);
@@ -65,9 +68,11 @@ void oapiUnregisterCustomControls (HINSTANCE hInst)
 	DeleteObject (g_GDI.hPen2);
 	DeleteObject (g_GDI.hBrush1);
 	DeleteObject (g_GDI.hBrush2);
+    */
 }
 
-LRESULT FAR PASCAL MsgProc_Gauge (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+/* DLG
+INT_PTR MsgProc_Gauge (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static HWND hPrevCapt = NULL;
 	switch (uMsg) {
@@ -227,9 +232,11 @@ LRESULT FAR PASCAL MsgProc_Gauge (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	}
 	return DefWindowProc (hWnd, uMsg, wParam, lParam);
 }
+*/
 
 void DragSlider (HWND hWnd, int x, int y)
 {
+    /* DLG
 	RECT r;
 	DWORD bw, gw;
 	int pos;
@@ -253,10 +260,12 @@ void DragSlider (HWND hWnd, int x, int y)
 		SetWindowLongPtr (hWnd, WINOFS_POS, (pos*(rmax-rmin))/gw+rmin);
 		InvalidateRect (hWnd, NULL, TRUE);
 	}
+    */
 }
 
 void oapiSetGaugeParams (HWND hCtrl, GAUGEPARAM *gp, bool redraw)
 {
+    /* DLG
 	SetWindowLongPtr (hCtrl, WINOFS_RMIN, gp->rangemin);
 	SetWindowLongPtr (hCtrl, WINOFS_RMAX, gp->rangemax);
 
@@ -278,10 +287,12 @@ void oapiSetGaugeParams (HWND hCtrl, GAUGEPARAM *gp, bool redraw)
 	SetWindowLongPtr (hCtrl, WINOFS_FLAG, flag);
 
 	if (redraw) InvalidateRect (hCtrl, NULL, TRUE);
+    */
 }
 
 void oapiSetGaugeRange (HWND hCtrl, int rmin, int rmax, bool redraw)
 {
+    /* DLG
 	SetWindowLongPtr (hCtrl, WINOFS_RMIN, rmin);
 	SetWindowLongPtr (hCtrl, WINOFS_RMAX, rmax);
 
@@ -290,10 +301,12 @@ void oapiSetGaugeRange (HWND hCtrl, int rmin, int rmax, bool redraw)
 	else if (pos > rmax) SetWindowLongPtr (hCtrl, WINOFS_POS, rmax);
 
 	if (redraw) InvalidateRect (hCtrl, NULL, TRUE);
+    */
 }
 
 int oapiSetGaugePos (HWND hCtrl, int pos, bool redraw)
 {
+    /* DLG
 	int rmin = GetWindowLongPtr(hCtrl, WINOFS_RMIN);
 	int rmax = GetWindowLongPtr(hCtrl, WINOFS_RMAX);
 	if      (pos < rmin) pos = rmin;
@@ -306,10 +319,13 @@ int oapiSetGaugePos (HWND hCtrl, int pos, bool redraw)
 	}
 
 	return pos;
+    */
+    return 0;
 }
 
 int oapiIncGaugePos (HWND hCtrl, int dpos, bool redraw)
 {
+    /* DLG
 	int rmin = GetWindowLongPtr (hCtrl, WINOFS_RMIN);
 	int rmax = GetWindowLongPtr (hCtrl, WINOFS_RMAX);
 	int pos  = GetWindowLongPtr (hCtrl, WINOFS_POS) + dpos;
@@ -321,11 +337,16 @@ int oapiIncGaugePos (HWND hCtrl, int dpos, bool redraw)
 	if (redraw) InvalidateRect (hCtrl, NULL, TRUE);
 
 	return pos;
+    */
+    return 0;
 }
 
 int oapiGetGaugePos (HWND hCtrl)
 {
+    /* DLG
 	return GetWindowLongPtr (hCtrl, WINOFS_POS);
+    */
+    return 0;
 }
 
 // ==================================================================================
@@ -449,7 +470,9 @@ void PropertyGroup::Expand (bool expand)
 int PropertyList::titleh = 20;
 int PropertyList::itemh = 18;
 int PropertyList::gaph = 6;
+/* DLG
 HBITMAP PropertyList::hBmpArrows = NULL;
+*/
 
 PropertyList::PropertyList ()
 {
@@ -457,10 +480,12 @@ PropertyList::PropertyList ()
 	listh = 0;
 	yofs = 0;
 	valx0 = 0;
+    /* DLG
 	hFontTitle = NULL;
 	hFontItem = NULL;
 	hPenLine = NULL;
 	hBrushTitle = NULL;
+    */
 }
 
 PropertyList::~PropertyList ()
@@ -470,14 +495,17 @@ PropertyList::~PropertyList ()
 			delete pg[i];
 		delete []pg;
 	}
+    /* DLG
 	if (hFontTitle) DeleteObject (hFontTitle);
 	if (hFontItem) DeleteObject (hFontItem);
 	if (hPenLine) DeleteObject (hPenLine);
 	if (hBrushTitle) DeleteObject (hBrushTitle);
+    */
 }
 
 void PropertyList::OnInitDialog (HWND hWnd, int nIDDlgItem)
 {
+    /* DLG
 	hDlg = hWnd;
 	dlgid = nIDDlgItem;
 	hItem = GetDlgItem (hDlg, dlgid);
@@ -498,10 +526,12 @@ void PropertyList::OnInitDialog (HWND hWnd, int nIDDlgItem)
 	hBrushTitle = CreateBrushIndirect (&lb);
 	SetScrollRange (hItem, SB_VERT, 0, 0, FALSE);
 	SetScrollPos (hItem, SB_VERT, 0, FALSE);
+    */
 }
 
 void PropertyList::OnPaint (HWND hWnd)
 {
+    /* DLG
 	HDC hDC;
 	RECT rupd;
 	PAINTSTRUCT ps;
@@ -558,6 +588,7 @@ void PropertyList::OnPaint (HWND hWnd)
 	SelectObject (hDC, hOldPen);
 	SelectObject (hDC, hOldBrush);
 	EndPaint (hWnd, &ps);
+    */
 }
 
 void PropertyList::OnSize (int w, int h)
@@ -569,6 +600,7 @@ void PropertyList::OnSize (int w, int h)
 
 void PropertyList::OnVScroll (unsigned int cmd, int p)
 {
+    /* DLG
 	int pmin, pmax, pos, dpos = 0;
 	pos = GetScrollPos (hItem, SB_VERT);
 	GetScrollRange (hItem, SB_VERT, &pmin, &pmax);
@@ -605,6 +637,7 @@ void PropertyList::OnVScroll (unsigned int cmd, int p)
 			UpdateWindow (hItem);
 		}
 	}
+    */
 }
 
 void PropertyList::OnLButtonDown (int x, int y)
@@ -625,25 +658,32 @@ void PropertyList::OnLButtonDown (int x, int y)
 
 void PropertyList::VScrollTo (int pos)
 {
+    /* DLG
 	int oldpos = yofs/itemh;
 	yofs = pos * itemh;
 	ScrollWindow (hItem, 0, (oldpos-pos)*itemh, NULL, NULL);
 	SetScrollPos (hItem, SB_VERT, pos, TRUE);
 	UpdateWindow (hItem);
+    */
 }
 
 void PropertyList::Move (int x, int y, int w, int h)
 {
+    /* DLG
 	MoveWindow (hItem, x, y, w, h, TRUE);
+    */
 }
 
 void PropertyList::Redraw ()
 {
+    /* DLG
 	InvalidateRect (hItem, NULL, TRUE);
+    */
 }
 
 void PropertyList::Update ()
 {
+    /* DLG
 	HDC hDC = NULL;
 	HFONT hOldFont = NULL;
 
@@ -708,6 +748,7 @@ void PropertyList::Update ()
 		if (hOldFont) SelectObject (hDC, hOldFont);
 		ReleaseDC (hItem, hDC);
 	}
+    */
 }
 
 void PropertyList::SetColWidth (int col, int w)
@@ -811,6 +852,7 @@ PropertyItem *PropertyList::AppendItem (PropertyGroup *g)
 
 void PropertyList::SetListHeight (int h, bool force)
 {
+    /* DLG
 	if (h == listh && !force) return; // nothing to do
 	listh = h;
 	int rmax = 0;
@@ -828,4 +870,5 @@ void PropertyList::SetListHeight (int h, bool force)
 	int pos2 = GetScrollPos (hItem, SB_VERT);
 	if (pos2 != pos)
 		VScrollTo (pos2);
+    */
 }
