@@ -275,7 +275,7 @@ bool orbiter::ConsoleNG::DestroyStatDlg()
 
 DWORD WINAPI InputProc(LPVOID context)
 {
-	DWORD count, c;
+	DWORD count = 0, c;
 	char cbuf[1024];
     /* TODO(jec) Windows console stuff
 	HANDLE hStdI = GetStdHandle(STD_INPUT_HANDLE);
@@ -302,7 +302,9 @@ DWORD WINAPI InputProc(LPVOID context)
 		/* WaitForSingleObject(hMutex, 1000); */
 		cConsoleCmd[0] = 'x';
 		strncpy(cConsoleCmd + 1, cbuf, count);
-		cConsoleCmd[count - 1] = '\0'; // eliminates CR
+        if (count) {
+            cConsoleCmd[count - 1] = '\0'; // eliminates CR
+        }
         hMutex.unlock();
 		/* ReleaseMutex(hMutex); */
 
