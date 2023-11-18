@@ -4,14 +4,21 @@
 #ifndef __DLGMGR_H
 #define __DLGMGR_H
 
+#include <thread>
+
 #define STRICT 1
 #include <windows.h>
+/* jec:  What does this file need with ddraw.h?
 #include <dx7\ddraw.h>
+*/
 
 #include "DialogWin.h"
 #include "Orbiter.h"
 
-class oapi::GraphicsClient;
+namespace oapi {
+    class GraphicsClient;
+}
+
 extern Orbiter *g_pOrbiter;
 
 struct DIALOGENTRY {
@@ -73,6 +80,7 @@ public:
 	{ return OpenDialogEx (hInst, id, hParent, pDlg, 0, context); }
 
 	HWND OpenDialogEx (HINSTANCE hInst, int id, HWND hParent, DLGPROC pDlg, DWORD flag, void *context);
+    HWND OpenChildWindow(HINSTANCE hInst, HWND hParent, void* context);
 
 	bool CloseDialog (HWND hDlg);
 
@@ -123,7 +131,7 @@ private:
 	oapi::GraphicsClient *gc;
 	HWND hWnd;
 
-	static LRESULT FAR PASCAL OrbiterCtrl_Level_MsgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	static LRESULT OrbiterCtrl_Level_MsgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	// MessageHandler for slider custom control
 
 	// ====================================================================
@@ -143,7 +151,7 @@ protected:
 	void AddEntryAsync (HINSTANCE hInst, int id, HWND hParent, DLGPROC pDlg, DWORD flag, void *context);
 
 private:
-	HANDLE hThread;          // thread handle
+    std::thread hThread;          // thread handle
 	DWORD thid;              // dialog thread id
 
 	// ====================================================================

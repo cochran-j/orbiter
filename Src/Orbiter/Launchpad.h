@@ -4,9 +4,21 @@
 #ifndef __LAUNCHPAD_H
 #define __LAUNCHPAD_H
 
+// NOTE(jec):  Missing header with added definitions to compile.
+// This class to be redone with something else.
+/*
 #include <CommCtrl.h>
+*/
+#include <windows.h> // ADD(jec): some compatibility definitions
 #include "OrbiterAPI.h"
 #include "Config.h"
+
+struct MSG;
+using HTREEITEM = void*;
+using LPMSG = MSG*;
+
+INT_PTR WaitPageProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LONG_PTR MsgProc_CopyrightFrame(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -21,8 +33,8 @@ class BuiltinLaunchpadItem;
 RECT GetClientPos (HWND hWnd, HWND hChild);
 void SetClientPos (HWND hWnd, HWND hChild, RECT &r);
 
-INT_PTR CALLBACK AppDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK WaitPageProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR AppDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR WaitPageProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 namespace orbiter {
 
@@ -50,8 +62,7 @@ namespace orbiter {
 
 		inline bool Visible() const { return m_bVisible; }
 
-		bool ConsumeMessage(LPMSG msg);
-		// Consume message msg, if intended for the dialog,
+		bool ConsumeMessage(LPMSG msg); // Consume message msg, if intended for the dialog,
 		// otherwise return false
 
 		const HWND GetWaitWindow() const { return hWait; }
@@ -131,9 +142,9 @@ namespace orbiter {
 		INT_PTR WaitProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		// Dialog message callbacks
 
-		static INT_PTR CALLBACK s_DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-		friend INT_PTR CALLBACK ::WaitPageProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-		friend LONG_PTR FAR PASCAL MsgProc_CopyrightFrame(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		static INT_PTR s_DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		friend INT_PTR WaitPageProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		friend LONG_PTR MsgProc_CopyrightFrame(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 		RECT client0;          // initial client window size
 		RECT copyr0;           // initial copyright box size

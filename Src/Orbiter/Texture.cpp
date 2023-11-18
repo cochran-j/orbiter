@@ -414,7 +414,7 @@ HRESULT ReadDDSSurfaceFromMemory (BYTE *buf, DWORD nbuf, LPDIRECTDRAW7 pDD,
 		} else {
 			DWORD yp;
 			BYTE *pbDest = (BYTE*)ddsd.lpSurface;
-			LONG dataBytesPerRow = ddsd.dwWidth * ddsd.ddpfPixelFormat.dwRGBBitCount / 8;
+			long dataBytesPerRow = ddsd.dwWidth * ddsd.ddpfPixelFormat.dwRGBBitCount / 8;
 			for (yp = 0; yp < ddsd.dwHeight; yp++) {
 				memcpy(pbDest, buf, dataBytesPerRow);
 				buf += dataBytesPerRow;
@@ -813,7 +813,9 @@ HRESULT DDCopyBitmap (LPDIRECTDRAWSURFACE7 pdds, HBITMAP hbm,
 {
     HDC                     hdcImage;
     HDC                     hdc;
+    /* TODO(jec)
     BITMAP                  bm;
+    */
     DDSURFACEDESC2          ddsd;
     HRESULT                 hr;
 
@@ -833,9 +835,11 @@ HRESULT DDCopyBitmap (LPDIRECTDRAWSURFACE7 pdds, HBITMAP hbm,
     //
     // Get size of the bitmap
     //
+    /* TODO(jec)
     GetObject(hbm, sizeof(bm), &bm);
     dx = dx == 0 ? bm.bmWidth : dx;     // Use the passed size, unless zero
     dy = dy == 0 ? bm.bmHeight : dy;
+    */
     //
     // Get size of surface.
     //

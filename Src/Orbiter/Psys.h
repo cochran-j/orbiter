@@ -10,6 +10,9 @@
 #include "Star.h"
 #include "Planet.h"
 
+#include <filesystem>
+#include <string>
+
 class Vessel;
 class SuperVessel;
 struct TimeJumpData;
@@ -198,8 +201,8 @@ public:
 
 	void ActivatePlanetLabels(bool activate);
 
-	intptr_t FindFirst (int type, _finddata_t *fdata, char *fname);
-	intptr_t FindNext (intptr_t fh, _finddata_t *fdata, char *fname);
+	bool FindFirst (const char* extension, std::filesystem::directory_iterator& dir_it, std::string& fname);
+	bool FindNext (const char* extension, std::filesystem::directory_iterator& dir_it, std::string& fname);
 
 private:
 	std::string m_Name; // system's name
@@ -221,7 +224,7 @@ private:
 	std::vector< oapi::GraphicsClient::LABELLIST> m_labelList; ///< list of celestial markers
 	//oapi::GraphicsClient::LABELLIST *labellist;
 	//int nlabellist;
-	std::string m_labelPath; ///< directory containing celestial marker lists for this planetary system
+	std::filesystem::path m_labelPath; ///< directory containing celestial marker lists for this planetary system
 
 	void OutputLoadStatus(const char* bname, OutputLoadStatusCallback outputLoadStatus, void* callbackContext);
 

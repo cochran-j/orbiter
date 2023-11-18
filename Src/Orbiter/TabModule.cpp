@@ -5,13 +5,18 @@
 // ModuleTab class
 //=============================================================================
 
+#include <filesystem>
+
 #include <windows.h>
+/* TODO(jec)
 #include <commctrl.h>
 #include <io.h>
+*/
 #include "Orbiter.h"
 #include "Launchpad.h"
 #include "TabModule.h"
 #include "resource.h"
+#include "DllCompat.h"
 
 using std::max;
 
@@ -50,6 +55,7 @@ orbiter::ModuleTab::~ModuleTab ()
 
 void orbiter::ModuleTab::Create ()
 {
+    /* TODO(jec)
 	hTab = CreateTab (IDD_PAGE_MOD);
 
 	r_lst0 = GetClientPos (hTab, GetDlgItem (hTab, IDC_MOD_TREE)); // REMOVE!
@@ -59,14 +65,17 @@ void orbiter::ModuleTab::Create ()
 	r_bt1 = GetClientPos (hTab, GetDlgItem (hTab, IDC_MOD_BUTTON2));
 	r_bt2 = GetClientPos (hTab, GetDlgItem (hTab, IDC_MOD_DEACTALL));
 	splitListDesc.SetHwnd (GetDlgItem (hTab, IDC_MOD_SPLIT1), GetDlgItem (hTab, IDC_MOD_TREE), GetDlgItem (hTab, IDC_MOD_INFO));
+    */
 }
 
 //-----------------------------------------------------------------------------
 
 BOOL orbiter::ModuleTab::OnInitDialog (HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	SetWindowLongPtr (GetDlgItem (hTab, IDC_MOD_TREE), GWL_STYLE, TVS_DISABLEDRAGDROP | TVS_SHOWSELALWAYS | TVS_NOTOOLTIPS | WS_BORDER | WS_TABSTOP);
 	SetWindowPos (GetDlgItem (hTab, IDC_MOD_TREE), NULL, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOSIZE | SWP_NOZORDER);
+    */
 
 	return FALSE;
 }
@@ -76,11 +85,15 @@ BOOL orbiter::ModuleTab::OnInitDialog (HWND hWnd, WPARAM wParam, LPARAM lParam)
 void orbiter::ModuleTab::GetConfig (const Config *cfg)
 {
 	RefreshLists();
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_MOD_INFO), "Optional Orbiter plugin modules.\r\n\r\nDouble-click on a category to show or hide its entries.\r\n\r\nCheck or uncheck items to activate the corresponding modules.\r\n\r\nSelect an item to see a description of the module function.");
+    */
 	int listw = cfg->CfgWindowPos.LaunchpadModListWidth;
 	if (!listw) {
 		RECT r;
+        /* TODO(jec)
 		GetClientRect (GetDlgItem (hTab, IDC_MOD_TREE), &r);
+        */
 		listw = r.right;
 	}
 	splitListDesc.SetStaticPane (SplitterCtrl::PANE1, listw);
@@ -97,7 +110,9 @@ void orbiter::ModuleTab::SetConfig (Config *cfg)
 
 bool orbiter::ModuleTab::OpenHelp ()
 {
+    /* TODO(jec)
 	OpenTabHelp ("tab_modules");
+    */
 	return true;
 }
 
@@ -120,6 +135,7 @@ BOOL orbiter::ModuleTab::OnSize (int w, int h)
 	int xr = r_lst0.left+wl+wg;
 	int wr = max(10,lstw0+dscw0+dw-wl);
 
+    /* TODO(jec)
 	SetWindowPos (GetDlgItem (hTab, IDC_MOD_SPLIT1), NULL,
 		0, 0, w0+dw, h0+dh,
 		SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOOWNERZORDER|SWP_NOZORDER);
@@ -132,6 +148,7 @@ BOOL orbiter::ModuleTab::OnSize (int w, int h)
 	SetWindowPos (GetDlgItem (hTab, IDC_MOD_DEACTALL), NULL,
 		r_bt2.left, r_bt2.top+dh, 0, 0,
 		SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOOWNERZORDER|SWP_NOZORDER);
+    */
 
 	return NULL;
 }
@@ -147,18 +164,24 @@ void orbiter::ModuleTab::Show ()
 
 void orbiter::ModuleTab::RefreshLists ()
 {
+    /* TODO(jec)
 	HWND hTree = GetDlgItem (hTab, IDC_MOD_TREE);
 	TreeView_DeleteAllItems (hTree);
 
 	TV_INSERTSTRUCT tvis;
 	tvis.item.mask = TVIF_TEXT | TVIF_PARAM;
+    */
 
 	int idx, len;
 	char cbuf[256], catstr[256];
-	struct _finddata_t fdata;
-	intptr_t fh = _findfirst ("Modules\\Plugin\\*.dll", &fdata);
-	if (fh == -1) return; // no files found
-	do {
+    auto modulePath = std::filesystem::path{"Modules"} / "Plugin";
+    for (auto& dir_entry : std::filesystem::directory_iterator{modulePath}) {
+        const auto& filepath = dir_entry.path();
+        if (filepath.extension() != DLL::DLLExt) {
+            continue;
+        }
+
+
 		// add module record
 		MODULEREC **tmp = new MODULEREC*[nmodulerec+1];
 		if (nmodulerec) {
@@ -168,9 +191,9 @@ void orbiter::ModuleTab::RefreshLists ()
 		modulerec = tmp;
 
 		MODULEREC *rec = modulerec[nmodulerec++] = new MODULEREC;
-		len = strlen(fdata.name)-4;
+		len = filepath.stem().string().size();
 		rec->name = new char[len+1];
-		strncpy (rec->name, fdata.name, len);
+		strncpy (rec->name, filepath.stem().c_str(), len);
 		rec->name[len] = '\0';
 		rec->info = 0;
 		rec->active = false;
@@ -186,10 +209,11 @@ void orbiter::ModuleTab::RefreshLists ()
 			rec->locked = true; // modules activated from the command line are not to be unloaded
 		}
 
-		sprintf (cbuf, "Modules\\Plugin\\%s", fdata.name);
-		HMODULE hMod = LoadLibraryEx (cbuf, 0, LOAD_LIBRARY_AS_DATAFILE);
+        /* TODO(jec):  This is LOAD_LIBRARY_AS_DATA_FILE */
+		HMODULE hMod = DLL::LoadDLL(filepath.c_str());
 		if (hMod) {
 			char buf[1024];
+            /* TODO(jec):  Resources
 			// read module info string
 			if (LoadString (hMod, 1000, buf, 1024)) {
 				buf[1023] = '\0';
@@ -202,13 +226,15 @@ void orbiter::ModuleTab::RefreshLists ()
 			} else {
 				strcpy (catstr, "Miscellaneous");
 			}
-			FreeLibrary (hMod);
+            */
+            DLL::UnloadDLL(hMod);
 		}
 
 		if (!strcmp (catstr, "Graphics engines"))
 			continue; // graphics client modules are loaded via the Video tab
 
 		// find the category entry
+        /* TODO(jec)
 		HTREEITEM catItem = GetCategoryItem (catstr);
 
 		// tree view entry
@@ -217,14 +243,15 @@ void orbiter::ModuleTab::RefreshLists ()
 		tvis.hInsertAfter = TVI_SORT;
 		tvis.hParent = catItem;
 		HTREEITEM hti = TreeView_InsertItem (hTree, &tvis);
+        */
 
-	} while (!_findnext (fh, &fdata));
-	_findclose (fh);
+	}
 	counter = 0;
 }
 
 HTREEITEM orbiter::ModuleTab::GetCategoryItem (char *cat)
 {
+    /* TODO(jec)
 	HWND hTree = GetDlgItem (hTab, IDC_MOD_TREE);
 	HTREEITEM root = TreeView_GetRoot (hTree);
 	char cbuf[256];
@@ -246,10 +273,12 @@ HTREEITEM orbiter::ModuleTab::GetCategoryItem (char *cat)
 	tvis.hInsertAfter = TVI_SORT;
 	tvis.hParent = NULL;
 	return TreeView_InsertItem (hTree, &tvis);
+    */
 }
 
 void orbiter::ModuleTab::ExpandCollapseAll (bool expand)
 {
+    /* TODO(jec)
 	HWND hTree = GetDlgItem (hTab, IDC_MOD_TREE);
 	UINT code = (expand ? TVE_EXPAND : TVE_COLLAPSE);
 	TVITEM catitem;
@@ -259,10 +288,12 @@ void orbiter::ModuleTab::ExpandCollapseAll (bool expand)
 		TreeView_Expand (hTree, catitem.hItem, code);
 		catitem.hItem = TreeView_GetNextSibling (hTree, catitem.hItem);
 	}
+    */
 }
 
 void orbiter::ModuleTab::InitActivation ()
 {
+    /* TODO(jec)
 	HWND hTree = GetDlgItem (hTab, IDC_MOD_TREE);
 	TVITEM catitem, subitem;
 	catitem.mask = TVIF_PARAM;
@@ -289,14 +320,16 @@ void orbiter::ModuleTab::InitActivation ()
 		TreeView_SetItemState (hTree, catitem.hItem, 0, TVIS_STATEIMAGEMASK);
 		catitem.hItem = TreeView_GetNextSibling (hTree, catitem.hItem);
 	}
+    */
 
 	ExpandCollapseAll (true);
 }
 
 void orbiter::ModuleTab::ActivateFromList ()
 {
-	const char *path = "Modules\\Plugin";
+	const char *path = "Modules//Plugin";
 
+    /* TODO(jec)
 	HWND hTree = GetDlgItem (hTab, IDC_MOD_TREE);
 	TVITEM catitem, subitem;
 	catitem.mask = TVIF_PARAM;
@@ -329,10 +362,12 @@ void orbiter::ModuleTab::ActivateFromList ()
 		}
 		catitem.hItem = TreeView_GetNextSibling (hTree, catitem.hItem);
 	}
+    */
 }
 
 void orbiter::ModuleTab::DeactivateAll ()
 {
+    /* TODO(jec)
 	HWND hTree = GetDlgItem (hTab, IDC_MOD_TREE);
 	TVITEM catitem, subitem;
 	catitem.mask = NULL;
@@ -347,6 +382,7 @@ void orbiter::ModuleTab::DeactivateAll ()
 		}
 		catitem.hItem = TreeView_GetNextSibling (hTree, catitem.hItem);
 	}
+    */
 	ActivateFromList ();
 }
 
@@ -354,6 +390,7 @@ void orbiter::ModuleTab::DeactivateAll ()
 
 BOOL orbiter::ModuleTab::OnNotify(HWND hDlg, int idCtrl, LPNMHDR pnmh)
 {
+    /* TODO(jec)
 	if (idCtrl == IDC_MOD_TREE) {
 		NM_TREEVIEW* pnmtv = (NM_TREEVIEW FAR*)pnmh;
 		switch (pnmtv->hdr.code) {
@@ -380,6 +417,7 @@ BOOL orbiter::ModuleTab::OnNotify(HWND hDlg, int idCtrl, LPNMHDR pnmh)
 			return 0;
 		}
 	}
+    */
 	return FALSE;
 }
 
@@ -389,6 +427,7 @@ BOOL orbiter::ModuleTab::OnMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 {
 	const int MAXSEL = 100;
 	int i;
+    /* TODO(jec)
 	NM_TREEVIEW *pnmtv;
 
 	switch (uMsg) {
@@ -415,5 +454,6 @@ BOOL orbiter::ModuleTab::OnMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 		return 0;
 	}
+    */
 	return NULL;
 }

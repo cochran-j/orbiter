@@ -8,6 +8,11 @@
 #ifndef __VOBJECT_H
 #define __VOBJECT_H
 
+/* NOTE(jec):  ddraw compat through d3d.h */
+#ifndef CALLBACK
+#define CALLBACK
+#endif
+
 #include <d3d.h>
 #include "Vecmat.h"
 #include "GraphicsAPI.h"

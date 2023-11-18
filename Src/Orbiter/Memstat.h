@@ -4,24 +4,22 @@
 #ifndef __MEMSTAT_H
 #define __MEMSTAT_H
 
-#include <windows.h>
-#include <psapi.h>
+#include <memory>
 
-typedef BOOL (CALLBACK *Proc_GetProcessMemoryInfo)(HANDLE,PPROCESS_MEMORY_COUNTERS,DWORD);
+class MemStat_impl;
 
 class MemStat {
 public:
     MemStat ();
-    ~MemStat ();
+    ~MemStat();
+
+    MemStat(MemStat&&);
+    MemStat& operator=(MemStat&&);
 
     long HeapUsage ();
 
 private:
-    static HMODULE hLib;
-	static bool bLib;
-    HANDLE hProc;
-	Proc_GetProcessMemoryInfo pGetProcessMemoryInfo;
-    bool active;
+    std::unique_ptr<MemStat_impl> pImpl;
 };
 
 #endif // !__MEMSTAT_H

@@ -15,6 +15,11 @@
 #ifndef __CAMERA_H
 #define __CAMERA_H
 
+/* NOTE(jec):  Compatibility definition for d3d.h */
+#ifndef CALLBACK
+#define CALLBACK
+#endif
+
 #include <d3d.h>
 #include <fstream>
 #include "Vecmat.h"

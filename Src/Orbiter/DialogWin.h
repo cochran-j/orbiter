@@ -11,6 +11,13 @@
 #include <windows.h>
 #include "GraphicsAPI.h"
 
+// Compatibility definitions
+using LPNMHDR = void*;
+struct POINTS {
+    SHORT x;
+    SHORT y;
+};
+
 #define WM_USERMESSAGE (WM_USER+10)
 
 const BOOL MSG_DEFAULT = -1;
@@ -73,7 +80,7 @@ public:
 	static bool Create_SetTitleButtonState (DWORD msg, DWORD state);
 
 	// Default message handler
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
 
 protected:
 	static DialogWin *dlg_create;

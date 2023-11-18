@@ -11,7 +11,9 @@
 
 #define STRICT 1
 #include <windows.h>
+/* NOTE(jec):  Missing header:  Appears to be unrequired.
 #include <mmsystem.h>
+*/
 #include "Orbiter.h"
 #include "Body.h"
 #include "Mfd.h"
@@ -41,6 +43,17 @@ struct MFDspec {        // panel MFD specs
 
 // =======================================================================
 // class Pane
+
+class HUD;
+class HUD_Orbit;
+class HUD_Surface;
+class HUD_Docking;
+class Instrument;
+class DefaultPanel;
+class Panel2D;
+class Panel;
+class VirtualCockpit;
+class MenuInfoBar;
 
 class Pane {
 	friend class HUD;

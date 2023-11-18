@@ -3,6 +3,8 @@
 
 #define OAPI_IMPLEMENTATION
 
+#include <filesystem>
+
 #include "Orbiter.h"
 #include "Vessel.h"
 #include "SuperVessel.h"
@@ -15,10 +17,13 @@
 #include "Pane.h"
 #include "State.h"
 #include "MenuInfoBar.h"
+#include "Util.h"
 #include <fstream>
 #include <iomanip>
+/* TODO(jec)
 #include <io.h>
 #include <direct.h>
+*/
 #include <errno.h>
 #include <string>
 
@@ -378,16 +383,16 @@ bool Vessel::FRecorder_Read (const char *scname)
 
 	// open position/velocity stream
 	while (ifs.getline (cbuf, 256)) {
-		if (!_strnicmp (cbuf, "REF", 3)) {
+		if (caseInsensitiveStartsWith(cbuf, "REF")) {
 			ref = g_psys->GetGravObj (trim_string (cbuf+4), true);
 			if (!ref) ref = g_psys->GetGravObj (0);
-		} else if (!_strnicmp (cbuf, "FRM", 3)) {
-			if (!_stricmp (trim_string (cbuf+4), "EQUATORIAL")) frm = 1;
+		} else if (caseInsensitiveStartsWith(cbuf, "FRM")) {
+			if (caseInsensitiveEquals(trim_string (cbuf+4), "EQUATORIAL")) frm = 1;
 			else frm = 0;
-		} else if (!_strnicmp (cbuf, "CRD", 3)) {
-			if (!_stricmp (trim_string (cbuf+4), "POLAR")) crd = 1;
+		} else if (caseInsensitiveStartsWith(cbuf, "CRD")) {
+			if (caseInsensitiveEquals(trim_string (cbuf+4), "POLAR")) crd = 1;
 			else crd = 0;
-		} else if (!_strnicmp (cbuf, "STARTMJD", 8)) {
+		} else if (caseInsensitiveStartsWith(cbuf, "STARTMJD")) {
 			sscanf (cbuf+9, "%lf", &MJDofs);
 		} else {
 			if (sscanf (cbuf, "%lf%lf%lf%lf%lf%lf%lf", &simt, &x, &y, &z, &vx, &vy, &vz) != 7)
@@ -430,13 +435,13 @@ bool Vessel::FRecorder_Read (const char *scname)
 	strcpy (fname+strlen(fname)-3, "att");
 	ifs.open (fname);
 	while (ifs.getline (cbuf, 256)) {
-		if (!_strnicmp (cbuf, "REF", 3)) {
+		if (caseInsensitiveStartsWith(cbuf, "REF")) {
 			ref = g_psys->GetGravObj (trim_string (cbuf+4), true);
 			if (!ref) ref = g_psys->GetGravObj (0);
-		} else if (!_strnicmp (cbuf, "FRM", 3)) {
-			if (!_stricmp (trim_string (cbuf+4), "HORIZON")) attfrm = 1;
+		} else if (caseInsensitiveStartsWith(cbuf, "FRM")) {
+			if (caseInsensitiveEquals(trim_string (cbuf+4), "HORIZON")) attfrm = 1;
 			else attfrm = 0;
-		} else if (!_strnicmp (cbuf, "STARTMJD", 8)) {
+		} else if (caseInsensitiveStartsWith(cbuf, "STARTMJD")) {
 			sscanf (cbuf+9, "%lf", &MJDofs);
 			// assumes that MJDofs from all streams are the same!
 		} else {
@@ -602,13 +607,13 @@ void Vessel::FRecorder_PlayEvent ()
 		FRatc_stream->getline (cbuf, 1024);
 		s = strtok (cbuf, " \t");
 		if (s) {
-			if (!_stricmp (s, "ENG")) {
+			if (caseInsensitiveEquals(s, "ENG")) {
 				while (s = strtok (NULL, " \t\n")) {
 					if (sscanf (s, "%d%c%lf", &id, &c, &lvl) == 3 && c == ':') {
 						if (id < m_thruster.size()) SetThrusterLevel_playback (m_thruster[id], lvl);
 					} else {
 						for (i = 0; i < NTHGROUP; i++)
-							if (!_strnicmp (s, THGROUPSTR[i], strlen (THGROUPSTR[i]))) break;
+							if (caseInsensitiveStartsWith(s, THGROUPSTR[i])) break;
 						if (i < NTHGROUP && sscanf (s+strlen(THGROUPSTR[i])+1, "%lf", &lvl)) {
 							ThrustGroupSpec* tgs = GetThrusterGroup((THGROUP_TYPE)i);
 							if (tgs) {
@@ -618,7 +623,7 @@ void Vessel::FRecorder_PlayEvent ()
 						}
 					}
 				}
-			} else if (!_strnicmp (s, "LANDED", 6)) {
+			} else if (caseInsensitiveStartsWith(s, "LANDED")) {
 #ifdef UNDEF
 				if (fstatus != FLIGHTSTATUS_LANDED) {
 					Planet *p = g_psys->GetPlanet (s+7, true);
@@ -631,10 +636,10 @@ void Vessel::FRecorder_PlayEvent ()
 						InitLanded (g_psys->GetPlanet (s+7, true), sp.lng, sp.lat, sp.dir);
 				}
 #endif
-			} else if (!_strnicmp (s, "TAKEOFF", 7)) {
+			} else if (caseInsensitiveStartsWith(s, "TAKEOFF")) {
 				if (fstatus == FLIGHTSTATUS_LANDED)
 					bForceActive = true;
-			} else if (!_strnicmp (s, "NAVMODE", 7)) {
+			} else if (caseInsensitiveStartsWith(s, "NAVMODE")) {
 				if (!strcmp (s+7, "CLR")) {
 					sscanf (s+11, "%d", &i);
 					ClrNavMode (i, false, true);
@@ -642,59 +647,59 @@ void Vessel::FRecorder_PlayEvent ()
 					sscanf (s+8, "%d", &i);
 					SetNavMode (i, true);
 				}
-			} else if (!_stricmp (s, "RCSMODE")) {
+			} else if (caseInsensitiveEquals(s, "RCSMODE")) {
 				sscanf (s+8, "%d", &i);
 				SetAttMode (i, true);
-			} else if (!_stricmp (s, "ADCMODE")) {
+			} else if (caseInsensitiveEquals(s, "ADCMODE")) {
 				sscanf (s+8, "%d", &i);
 				SetADCtrlMode (i, true);
-			} else if (!_stricmp (s, "UNDOCK")) {
+			} else if (caseInsensitiveEquals(s, "UNDOCK")) {
 				while (s = strtok (NULL, " \t\n")) {
 					int dock;
 					sscanf (s, "%d", &dock);
 					Undock (dock);
 				}
-			} else if (!_stricmp (s, "DETACH")) {
+			} else if (caseInsensitiveEquals(s, "DETACH")) {
 				double v;
 				int res = sscanf (s+7, "%d%lf", &id, &v);
 				if (res < 2) v = 0.0;
 				AttachmentSpec *as = GetAttachmentFromIndex (false, id);
 				if (as) DetachChild (as, v);
-			} else if (!_stricmp (s, "ATTACH")) {
+			} else if (caseInsensitiveEquals(s, "ATTACH")) {
 				DWORD pidx, cidx;
 				char cname[128], modestr[32];
 				int res = sscanf (s+7, "%s%d%d%s", cname, &pidx, &cidx, modestr);
 				Vessel *child = g_psys->GetVessel (cname, true);
-				bool loose = (res > 3 && !_stricmp (modestr,"LOOSE") ? true : false);
+				bool loose = (res > 3 && caseInsensitiveEquals(modestr,"LOOSE") ? true : false);
 				if (child) {
 					AttachmentSpec *asp = GetAttachmentFromIndex (false, pidx);
 					AttachmentSpec *asc = child->GetAttachmentFromIndex (true, cidx);
 					if (asp && asc)
 						AttachChild (child, asp, asc, loose);
 				}
-			} else if (!_strnicmp (s, "LIGHTSOURCE", 11)) { // light emitter event
+			} else if (caseInsensitiveStartsWith(s, "LIGHTSOURCE")) { // light emitter event
 				s = strtok (NULL, " \t\n");
 				DWORD idx;
 				if (sscanf (s, "%d", &idx) == 1 && idx < nemitter) {
 					s = strtok (NULL, " \t\n");
-					if (!_stricmp (s, "ACTIVATE")) {
+					if (caseInsensitiveEquals(s, "ACTIVATE")) {
 						DWORD flag;
 						if (sscanf (s+9, "%d", &flag) == 1)
 							emitter[idx]->Activate (flag != 0);
 					}
 				}
-			} else if (!_strnicmp (s, "TACC", 4)) { // DEPRECATED - now stored in system stream
+			} else if (caseInsensitiveStartsWith(s, "TACC")) { // DEPRECATED - now stored in system stream
 				if (sscanf (s+5, "%lf%lf", &RecordingSpeed, &WarpDelay) < 2)
 					WarpDelay = 0.0;
 				if (g_pOrbiter->Cfg()->CfgRecPlayPrm.bReplayWarp)
 						g_pOrbiter->SetWarpFactor (RecordingSpeed, true, WarpDelay);
-			} else if (!_strnicmp (s, "CAMERA", 6)) { // DEPRECATED - now stored in system stream
+			} else if (caseInsensitiveStartsWith(s, "CAMERA")) { // DEPRECATED - now stored in system stream
 				s = strtok (NULL, " \t\n");
-				if (!_strnicmp (s, "PRESET", 6)) {
+				if (caseInsensitiveStartsWith(s, "PRESET")) {
 					sscanf (s+7, "%d", &i);
 					g_camera->RecallPreset (i);
 				}
-			} else if (!_strnicmp (s, "NOTE", 4)) { // DEPRECATED - now stored in system stream
+			} else if (caseInsensitiveStartsWith(s, "NOTE")) { // DEPRECATED - now stored in system stream
 				oapi::ScreenAnnotation *sa = g_pOrbiter->SNotePB();
 				if (sa) {
 					if (!strcmp (s+4, "COL")) {
@@ -767,7 +772,7 @@ void Vessel::FRecorder_EndPlayback ()
 
 void Orbiter::FRecorder_Reset ()
 {
-	FRsysname = 0;
+	FRsysname = std::filesystem::path{};
 	FRsys_stream = 0;
 	FReditor = 0;
 	frec_sys_simt = -1e10;
@@ -776,23 +781,19 @@ void Orbiter::FRecorder_Reset ()
 
 bool Orbiter::FRecorder_PrepareDir (const char *fname, bool force)
 {
-	char cbuf[256];
-	strcpy (cbuf, "Flights\\"); strcat (cbuf, fname);
-	if (_mkdir (cbuf) == -1) {
-		if (errno == EEXIST && !force) return false;
+    auto dirToMake = std::filesystem::path{"Flights"} / fname;
+	if (!std::filesystem::create_directory(dirToMake)) {
+        // If we didn't throw, the error was that the directory already exists
+		if (!force) return false;
 		// don't overwrite existing recording
-		struct _finddata_t fd;
-		char cb2[256], cb3[256];
-		strcpy (cb2, cbuf); strcat (cb2, "\\*");
-		intptr_t handle = _findfirst (cb2, &fd), res = handle;
-		while (res != -1) {
-			if (!(fd.attrib & _A_SUBDIR)) {
-				sprintf (cb3, "%s\\%s", cbuf, fd.name);
-				_unlink (cb3);
-			}
-			res = _findnext (handle, &fd);
-		}
-		_findclose (handle);
+        // NOTE(jec):  Above comment says not to overwrite existing recording,
+        // but the code appears to do the opposite--at least it deletes all
+        // non-directory files.
+        for (auto& dir_entry : std::filesystem::directory_iterator{dirToMake}) {
+            if (!dir_entry.is_directory()) {
+                std::filesystem::remove(dir_entry.path());
+            }
+        }
 	}
 	return true;
 }
@@ -805,9 +806,7 @@ void Orbiter::FRecorder_Activate (bool active, const char *fname, bool append)
 		bRecord = true;
 		char cbuf[256];
 		sprintf (cbuf, "Flights\\%s\\system.dat", fname);
-		if (FRsysname) delete []FRsysname;
-		FRsysname = new char[strlen(cbuf)+1]; TRACENEW
-		strcpy (FRsysname, cbuf);
+        FRsysname = std::filesystem::path{"Flights"} / fname / "system.dat";
 	} else {
 		bRecord = false;
 	}
@@ -818,7 +817,7 @@ void Orbiter::FRecorder_Activate (bool active, const char *fname, bool append)
 void Orbiter::FRecorder_SaveEvent (const char *event_type, const char *event)
 {
 	if (!bRecord) return;
-	ofstream ofs(FRsysname, ios::app);
+	ofstream ofs(FRsysname.c_str(), ios::app);
 	ofs << setprecision(10) << (td.SimT1-Tofs) << ' ' << event_type << ' ' << event << endl;
 }
 
@@ -831,10 +830,7 @@ void Orbiter::FRecorder_OpenPlayback (const char *scname)
 
 	for (i = strlen(scname)-1; i > 0; i--)
 		if (scname[i-1] == '\\') break;
-	sprintf (cbuf, "Flights\\%s\\system.dat", scname+i);
-	if (FRsysname) delete []FRsysname;
-	FRsysname = new char[strlen(cbuf)+1]; TRACENEW
-	strcpy (FRsysname, cbuf);
+    FRsysname = std::filesystem::path{"Flights"} / (scname + i) / "system.dat";
 
 	FRsys_stream = new ifstream (cbuf); TRACENEW
 	*FRsys_stream >> frec_sys_simt;
@@ -856,7 +852,7 @@ void Orbiter::FRecorder_RescanPlayback ()
 {
 	oapi::ScreenAnnotation *sa = SNotePB();
 	if (sa) sa->Reset();
-	FRsys_stream = new ifstream (FRsysname); TRACENEW
+	FRsys_stream = new ifstream (FRsysname.c_str()); TRACENEW
 	*FRsys_stream >> frec_sys_simt;
 	FRecorder_Play(); // read up to current playback time
 }
@@ -882,27 +878,27 @@ void Orbiter::FRecorder_Play ()
 		FRsys_stream->getline (cbuf, 1024);
 		s = strtok (cbuf, " \t");
 		if (s) {
-			if (!_strnicmp (s, "TACC", 4)) {
+			if (caseInsensitiveStartsWith(s, "TACC")) {
 				if (sscanf (s+5, "%lf%lf", &RecordingSpeed, &WarpDelay) < 2)
 					WarpDelay = 0.0;
 				if (Cfg()->CfgRecPlayPrm.bReplayWarp)
 						SetWarpFactor (RecordingSpeed, true, WarpDelay);
-			} else if (!_strnicmp (s, "CAMERA", 6)) {
+			} else if (caseInsensitiveStartsWith(s, "CAMERA")) {
 				s = strtok (NULL, " \t\n");
-				if (!_strnicmp (s, "PRESET", 6)) {
+				if (caseInsensitiveStartsWith(s, "PRESET")) {
 					sscanf (s+7, "%d", &i);
 					g_camera->RecallPreset (i);
-				} else if (!_strnicmp (s, "SET", 3)) {
+				} else if (caseInsensitiveStartsWith(s, "SET")) {
 					CameraMode *cm = CameraMode::Create (s+4);
 					if (cm) g_camera->SetCMode (cm);
 					delete cm;
 				}
-			} else if (!_strnicmp (s, "FOCUS", 5)) {
+			} else if (caseInsensitiveStartsWith(s, "FOCUS")) {
 				s = strtok (NULL, " \t\n");
 				vfocus = g_psys->GetVessel (s, true);
 				if (vfocus && Cfg()->CfgRecPlayPrm.bReplayFocus)
 					g_pOrbiter->SetFocusObject (vfocus);
-			} else if (!_strnicmp (s, "NOTE", 4)) {
+			} else if (caseInsensitiveStartsWith(s, "NOTE")) {
 				oapi::ScreenAnnotation *sa = SNotePB();
 				if (sa) {
 					if (!strcmp (s+4, "COL")) {
@@ -924,14 +920,16 @@ void Orbiter::FRecorder_Play ()
 						sa->SetText (s+5);
 					}
 				}
-			} else if (!_strnicmp (s, "JUMPTOTIME", 10)) {
+			} else if (caseInsensitiveStartsWith(s, "JUMPTOTIME")) {
 				double jumptime;
 				if (sscanf (s+11, "%lf", &jumptime) && jumptime > td.SimT0) {
 					double tgtmjd = td.MJD0 + (jumptime-td.SimT0)/86400.0;
 					g_pOrbiter->Timejump(tgtmjd, PROP_ORBITAL_FIXEDSURF);
 				}
-			} else if (!_strnicmp (s, "ENDSESSION", 10)) {
+			} else if (caseInsensitiveStartsWith(s, "ENDSESSION")) {
+                /* TODO(jec):  Quits application
 				if (hRenderWnd) PostMessage (hRenderWnd, WM_CLOSE, 0, 0);
+                */
 			}
 		}
 		*FRsys_stream >> frec_sys_simt; // read time for next event

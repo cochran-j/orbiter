@@ -1,10 +1,14 @@
 // Copyright (c) Martin Schweiger
 // Licensed under the MIT License
 
+#include <thread>
+
 #include <stdio.h>
 #include "GraphicsAPI.h"
 #include "DlgMgr.h"
+/* TODO(jec)
 #include "Resource.h"
+*/
 #include "Orbiter.h"
 #include "Log.h"
 
@@ -13,10 +17,12 @@ using namespace oapi;
 extern char DBG_MSG[256];
 extern Orbiter *g_pOrbiter;
 
+/* TODO(jec)
 static int x_sizeframe = GetSystemMetrics (SM_CXSIZEFRAME);
 static int y_sizeframe = GetSystemMetrics (SM_CYSIZEFRAME);
 static int x_fixedframe = GetSystemMetrics (SM_CXFIXEDFRAME);
 static int y_fixedframe = GetSystemMetrics (SM_CYFIXEDFRAME);
+*/
 
 static bool doflip = true;
 
@@ -34,7 +40,6 @@ struct THREADDATA {
 } g_tdata;
 
 HWND g_hDlg;       // dialog handle passed from dlg to main thread
-HANDLE hCreateDlg; // used for synchronising dialog creation
 static DIALOGENTRY *de_create = 0;
 
 // ==================================================================
@@ -93,6 +98,15 @@ HWND DialogManager::OpenDialogEx (HINSTANCE hInst, int id, HWND hParent, DLGPROC
 	return AddEntry (hInst, id, hParent, pDlg, flag, context);
 }
 
+HWND DialogManager::OpenChildWindow (HINSTANCE hInst, HWND hParent, void *context)
+{
+    // TODO
+    //
+    HWND hwnd {};
+
+    AddList(hwnd);
+}
+
 void DialogManager::OpenDialogAsync (HINSTANCE hInst, int id, HWND hParent, DLGPROC pDlg, DWORD flag, void *context)
 {
 	if ((flag & DLG_ALLOWMULTI) == 0)
@@ -111,8 +125,11 @@ bool DialogManager::CloseDialog (HWND hDlg)
 
 void *DialogManager::GetDialogContext (HWND hDlg)
 {
+    /* TODO(jec)
 	DialogWin *dlg = (DialogWin*)GetWindowLongPtr (hDlg, DWLP_USER);
 	return (dlg ? dlg->GetContext() : 0);
+    */
+    return nullptr;
 }
 
 DIALOGENTRY *DialogManager::AddWindow (HINSTANCE hInst, HWND hWnd, HWND hParent, DWORD flag)
@@ -165,6 +182,7 @@ HWND DialogManager::AddEntry (DialogWin *dlg)
 void DialogManager::AddEntryAsync (HINSTANCE hInst, int id, HWND hParent, DLGPROC pDlg, DWORD flag, void *context)
 {
 #ifdef USEDLGTHREAD
+    /* TODO(jec)
 	g_tdata.hInst = hInst;
 	g_tdata.hParent = hParent;
 	g_tdata.id = id;
@@ -172,6 +190,7 @@ void DialogManager::AddEntryAsync (HINSTANCE hInst, int id, HWND hParent, DLGPRO
 	g_tdata.procDlg = pDlg;
 	g_tdata.context = context;
 	PostThreadMessage (thid, TM_OPENDIALOG, (WPARAM)&g_tdata, 0);
+    */
 #else
 	AddEntry (hInst, id, hParent, pDlg, flag, context);
 #endif
@@ -302,6 +321,7 @@ void DialogManager::BroadcastMessage (DWORD msg, void *data)
 //-----------------------------------------------------------------------------
 INT_PTR OrbiterDefDialogProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_SETCURSOR:
 		// implements "focus follows mouse" behaviour
@@ -349,6 +369,7 @@ INT_PTR OrbiterDefDialogProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 	//	SetBkColor (hDC, 0x808080);
 	//	} return (INT_PTR)GetStockObject (GRAY_BRUSH);
 	}
+    */
 	return FALSE;
 }
 
@@ -358,21 +379,23 @@ INT_PTR OrbiterDefDialogProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 void DialogManager::StartDialogThread ()
 {
-	DWORD WINAPI DlgThreadProc (void *data);
-	hThread = CreateThread (NULL, 2048, DlgThreadProc, this, 0, &thid);
-	hCreateDlg = CreateEvent (NULL, FALSE, FALSE, NULL);
+	void DlgThreadProc (void *data);
+	hThread = std::thread{DlgThreadProc, this};
+    /* NOTE(jec):  hCreateDlg was dead. */
 }
 
 void DialogManager::DestroyDialogThread ()
 {
+    /* TODO(jec)
 	PostThreadMessage (thid, WM_QUIT, 0, 0);
-	CloseHandle (hThread);
-	CloseHandle (hCreateDlg);
+    */
+    hThread.join();
 }
 
-DWORD WINAPI DlgThreadProc (void *data)
+void DlgThreadProc (void *data)
 {
 	DialogManager *dlgmgr = (DialogManager*)data;
+    /* TODO(jec)
 	MSG msg;
 	void DoDialog (THREADDATA *tdata);
 
@@ -388,8 +411,7 @@ DWORD WINAPI DlgThreadProc (void *data)
 			break;
 		}
 	}
-
-	return 0;
+    */
 }
 
 // ====================================================================

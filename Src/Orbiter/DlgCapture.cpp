@@ -10,8 +10,10 @@
 #include <windows.h>
 #include "DlgCapture.h"
 #include "Orbiter.h"
+/* TODO(jec)
 #include "Resource.h"
 #include "Resource2.h"
+*/
 #include <string>
 
 extern Orbiter *g_pOrbiter;
@@ -20,7 +22,7 @@ extern HELPCONTEXT DefHelpContext;
 // ======================================================================
 
 DlgCapture::DlgCapture (HINSTANCE hInstance, HWND hParent, void *context)
-: DialogWin (hInstance, hParent, IDD_CAPTURE, 0, 0, context)
+: DialogWin (hInstance, hParent, /* TODO(jec) IDD_CAPTURE*/ 0, 0, 0, context)
 {
 }
 
@@ -38,6 +40,7 @@ BOOL DlgCapture::OnInitDialog (HWND hDlg, WPARAM wParam, LPARAM lParam)
 	char cbuf[256];
 	int i;
 	CFG_CAPTUREPRM &prm = g_pOrbiter->Cfg()->CfgCapturePrm;
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_CAP_TOCLIP, BM_SETCHECK, prm.ImageTgt == 0 ? BST_CHECKED : BST_UNCHECKED, 0);
 	SendDlgItemMessage (hDlg, IDC_CAP_TOFILE, BM_SETCHECK, prm.ImageTgt == 0 ? BST_UNCHECKED : BST_CHECKED, 0);
 	EnableWindow (GetDlgItem (hDlg, IDC_CAP_FNAME), prm.ImageTgt == 0 ? FALSE:TRUE);
@@ -59,6 +62,7 @@ BOOL DlgCapture::OnInitDialog (HWND hDlg, WPARAM wParam, LPARAM lParam)
 		SendDlgItemMessage(hDlg, IDC_COMBO2, CB_INSERTSTRING, -1, (LPARAM)std::to_string(i).data());
 	}
 	SendDlgItemMessage (hDlg, IDC_COMBO2, CB_SETCURSEL, prm.ImageQuality-1, 0);
+    */
 
 	return TRUE;
 }
@@ -67,6 +71,7 @@ BOOL DlgCapture::OnInitDialog (HWND hDlg, WPARAM wParam, LPARAM lParam)
 
 BOOL DlgCapture::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 {
+    /* TODO(jec)
 	switch (id) {
 	case IDCANCEL:
 		Take (hDlg);
@@ -127,6 +132,7 @@ BOOL DlgCapture::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 		}
 		break;
 	}
+    */
 	return DialogWin::OnCommand (hDlg, id, code, hControl);
 }
 
@@ -138,10 +144,14 @@ void DlgCapture::Update ()
 		char cbuf[256];
 		int curframe = g_pOrbiter->Cfg()->CfgCapturePrm.SequenceStart;
 		int showframe;
+        /* TODO(jec)
 		GetWindowText (GetDlgItem (hWnd, IDC_CAP_STARTCOUNT), cbuf, 256);
+        */
 		if (!sscanf (cbuf, "%d", &showframe) || showframe != curframe) {
 			sprintf (cbuf, "%05d", curframe);
+            /* TODO(jec)
 			SetWindowText (GetDlgItem (hWnd, IDC_CAP_STARTCOUNT), cbuf);
+            */
 		}
 	}
 }
@@ -153,17 +163,23 @@ bool DlgCapture::Take (HWND hDlg)
 	bool ok = true;
 	char cbuf[256];
 	CFG_CAPTUREPRM &prm = g_pOrbiter->Cfg()->CfgCapturePrm;
+    /* TODO(jec)
 	bool isClipbd = (SendDlgItemMessage (hDlg, IDC_CAP_TOCLIP, BM_GETCHECK, 0, 0) == TRUE);
 	prm.ImageTgt = (isClipbd ? 0 : 1);
+    */
+    /* TODO(jec)
 	EnableWindow (GetDlgItem (hDlg, IDC_CAP_FNAME), isClipbd ? FALSE:TRUE);
 	GetWindowText (GetDlgItem (hDlg, IDC_CAP_FNAME), prm.ImageFile, 128);
 	GetWindowText (GetDlgItem (hDlg, IDC_CAP_DNAME), prm.SequenceDir, 128);
 	GetWindowText (GetDlgItem (hDlg, IDC_CAP_STARTCOUNT), cbuf, 256);
+    */
 	if (!sscanf (cbuf, "%d", &prm.SequenceStart)) {
 		prm.SequenceStart = 0;
 		ok = false;
 	}
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hDlg, IDC_CAP_SKIPFRAME), cbuf, 256);
+    */
 	if (!sscanf (cbuf, "%d", &prm.SequenceSkip)) {
 		prm.SequenceSkip = 0;
 		ok = false;
@@ -176,14 +192,18 @@ bool DlgCapture::Take (HWND hDlg)
 bool DlgCapture::AutoIncrement (HWND hDlg)
 {
 	char cbuf[256];
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hDlg, IDC_CAP_FNAME), cbuf, 256);
+    */
 	int i, count, len = strlen(cbuf);
 	for (i = len; i > 0; i--)
 		if (cbuf[i-1] == '\\') break;
 	if (sscanf (cbuf+i, "%d", &count) == 1) {
 		int w = len-i;
 		sprintf (cbuf+i, "%0*d", w, count+1);
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (hDlg, IDC_CAP_FNAME), cbuf);
+        */
 		return true;
 	}
 	return false;

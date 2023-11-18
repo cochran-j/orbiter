@@ -3,6 +3,7 @@
 
 #include "Keymap.h"
 #include "Config.h"
+#include "Util.h"
 #include <fstream>
 
 #define NKEY 95
@@ -323,21 +324,21 @@ bool Keymap::ScanStr (char *cbuf, WORD &key) const
 	char *tok = strtok (cbuf, " ");
 	if (!tok) return false;
 	for (i = 0; i < NKEY; i++)
-		if (!_stricmp (tok, keyname[i].name)) break;
+		if (caseInsensitiveEquals(tok, keyname[i].name)) break;
 	if (i == NKEY) return false; // key not found
 	key = keyname[i].id;
 	for (;;) {
 		tok = strtok (NULL, " ");
 		if (!tok) break;
-		if      (!_stricmp (tok, "LSHIFT")) key |= KMOD_LSHIFT;
-		else if (!_stricmp (tok, "RSHIFT")) key |= KMOD_RSHIFT;
-		else if (!_stricmp (tok, "SHIFT"))  key |= KMOD_SHIFT;
-		else if (!_stricmp (tok, "LCTRL"))  key |= KMOD_LCTRL;
-		else if (!_stricmp (tok, "RCTRL"))  key |= KMOD_RCTRL;
-		else if (!_stricmp (tok, "CTRL"))   key |= KMOD_CTRL;
-		else if (!_stricmp (tok, "LALT"))   key |= KMOD_LALT;
-		else if (!_stricmp (tok, "RALT"))   key |= KMOD_RALT;
-		else if (!_stricmp (tok, "ALT"))    key |= KMOD_ALT;
+		if      (caseInsensitiveEquals(tok, "LSHIFT")) key |= KMOD_LSHIFT;
+		else if (caseInsensitiveEquals(tok, "RSHIFT")) key |= KMOD_RSHIFT;
+		else if (caseInsensitiveEquals(tok, "SHIFT"))  key |= KMOD_SHIFT;
+		else if (caseInsensitiveEquals(tok, "LCTRL"))  key |= KMOD_LCTRL;
+		else if (caseInsensitiveEquals(tok, "RCTRL"))  key |= KMOD_RCTRL;
+		else if (caseInsensitiveEquals(tok, "CTRL"))   key |= KMOD_CTRL;
+		else if (caseInsensitiveEquals(tok, "LALT"))   key |= KMOD_LALT;
+		else if (caseInsensitiveEquals(tok, "RALT"))   key |= KMOD_RALT;
+		else if (caseInsensitiveEquals(tok, "ALT"))    key |= KMOD_ALT;
 	}
 	return true;
 }

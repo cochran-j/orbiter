@@ -7,6 +7,7 @@
 #include "Psys.h"
 #include "Select.h"
 #include "Log.h"
+#include "Util.h"
 
 using namespace std;
 
@@ -506,31 +507,31 @@ bool Instrument_Orbit::ReadParams (ifstream &ifs)
 	for (;;) {
 		if (!ifs.getline (cbuf, 256)) return false;
 		pc = trim_string (cbuf);
-		if (!_strnicmp (pc, "END_MFD", 7)) break;
-		if (!_strnicmp (pc, "PROJ", 4)) {
+		if (caseInsensitiveStartsWith(pc, "END_MFD")) break;
+		if (caseInsensitiveStartsWith(pc, "PROJ")) {
 			strcpy (cprj, trim_string (pc+4));
-		} else if (!_strnicmp (pc, "ALT", 3)) {
+		} else if (caseInsensitiveStartsWith(pc, "ALT")) {
 			dstmode = DIST_ALT;
-		} else if (!_strnicmp (pc, "REF", 3)) {
+		} else if (caseInsensitiveStartsWith(pc, "REF")) {
 			strcpy (cref, trim_string (pc+3));
-		} else if (!_strnicmp (pc, "TARGET", 6)) {
+		} else if (caseInsensitiveStartsWith(pc, "TARGET")) {
 			strcpy (ctgt, trim_string (pc+6));
-		} else if (!_strnicmp (pc, "FRAME", 5)) {
+		} else if (caseInsensitiveStartsWith(pc, "FRAME")) {
 			pc = trim_string (pc+5);
-			if (!_stricmp (pc, "Ecliptic"))
+			if (caseInsensitiveEquals(pc, "Ecliptic"))
 				frmmode = FRM_ECL;
-			else if (!_stricmp (pc, "Equator"))
+			else if (caseInsensitiveEquals(pc, "Equator"))
 				frmmode = FRM_EQU;
 		}
 	}
 	if (cref[0]) SelectRef (cref);
 	if (ctgt[0]) SelectTarget (ctgt);
 	if (cprj[0]) {
-		if (!_strnicmp (cprj, "Ship", 4))
+		if (caseInsensitiveStartsWith(cprj, "Ship"))
 			projmode = PRJ_SHIP;
-		else if (!_strnicmp (cprj, "Target", 6) && tgt)
+		else if (caseInsensitiveStartsWith(cprj, "Target") && tgt)
 			projmode = PRJ_TGT;
-		else if (!_strnicmp (cprj, "Ecliptic", 8) || !_strnicmp (cprj, "Frame", 5))
+		else if (caseInsensitiveStartsWith(cprj, "Ecliptic") || caseInsensitiveStartsWith(cprj, "Frame"))
 			projmode = PRJ_FRM;
 	}
 	return true;

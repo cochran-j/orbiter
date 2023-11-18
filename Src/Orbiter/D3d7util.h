@@ -13,6 +13,11 @@
 #ifndef __D3DUTIL_H
 #define __D3DUTIL_H
 
+/* NOTE(jec):  Compatibility definitions */
+#ifndef CALLBACK
+#define CALLBACK
+#endif
+
 #include <d3d.h>
 #include "OrbiterAPI.h"
 

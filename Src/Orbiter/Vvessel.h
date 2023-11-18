@@ -27,7 +27,7 @@ public:
 	static void CreateDeviceObjects (LPDIRECT3DDEVICE7 dev);
 	static void DestroyDeviceObjects ();
 
-	DWORD GetCaps () const { return VOCAPS_HASENGINES; }
+	unsigned long GetCaps () const override { return VOCAPS_HASENGINES; }
 	const Vessel *GetVessel() const { return vessel; }
 
 	void clbkEvent (DWORD msg, DWORD_PTR content);

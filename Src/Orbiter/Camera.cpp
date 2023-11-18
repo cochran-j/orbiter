@@ -23,7 +23,10 @@
 #include "Util.h"
 #include "Log.h"
 #include "OrbiterAPI.h"
+
+/* (jec) What kind of header is this?
 #include <zmouse.h>
+*/
 
 #ifdef INLINEGRAPHICS
 #include "OGraphics.h"
@@ -73,7 +76,8 @@ Camera::Camera (double _nearplane, double _farplane)
 	has_tref = false;
 	movehead = false;
 	ExtCtrlMode = 0;
-	GetCursorPos (&pm);
+    // TODO(jec)
+	/* GetCursorPos (&pm); */
 	mmoveT = -1000.0;
 	ap_int = ap_ext = RAD*25.0;
 	ap = &ap_ext;
@@ -96,6 +100,14 @@ Camera::~Camera ()
 
 bool Camera::ProcessMouse (UINT event, DWORD state, DWORD x, DWORD y, const char *kstate)
 {
+    // TODO(jec):  Provide definitions to compile.  Taken from actual Windows
+    // headers. This function to migrate to SDL.
+    constexpr UINT WM_MOUSEWHEEL = 0x020A;
+    constexpr UINT WM_LBUTTONDOWN = 0x0201;
+    constexpr UINT WM_RBUTTONDOWN = 0x0204;
+    constexpr UINT WM_LBUTTONUP = 0x0202;
+    constexpr UINT WM_RBUTTONUP = 0x0205;
+
 	if (event != WM_MOUSEWHEEL)
 		mx = (int)x, my = (int)y;
 
@@ -124,7 +136,7 @@ bool Camera::ProcessMouse (UINT event, DWORD state, DWORD x, DWORD y, const char
 		if (KEYMOD_CONTROL(kstate)) {
 		}
 		else {
-			short zDelta = (short)HIWORD(state);
+			short zDelta = static_cast<short>((state & 0xFFFF0000U) >> 16);
 			if (external_view)
 				ShiftDist(-zDelta*0.001);
 			else
@@ -138,7 +150,9 @@ bool Camera::ProcessMouse (UINT event, DWORD state, DWORD x, DWORD y, const char
 void Camera::UpdateMouse ()
 {
 	POINT pt;
-	GetCursorPos (&pt);
+    // TODO(jec):  It looks like this function rotates the camera when the mouse
+    //             is down.
+	/* GetCursorPos (&pt); */
 	if (pt.x != pm.x || pt.y != pm.y) {
 		pm.x = pt.x, pm.y = pt.y;
 		mmoveT = td.SysT0;
@@ -147,11 +161,14 @@ void Camera::UpdateMouse ()
 	if (mbdown[1]) {
 		int dx, dy, x0, y0;
 		x0 = pt.x, y0 = pt.y;
-		if (!g_pOrbiter->IsFullscreen())
-			ScreenToClient (g_pOrbiter->GetRenderWnd(), &pt);
+		if (!g_pOrbiter->IsFullscreen()) {
+            // TODO(jec)
+			/* ScreenToClient (g_pOrbiter->GetRenderWnd(), &pt); */
+        }
 		dx = pt.x - mx;
 		dy = pt.y - my;
-		SetCursorPos (x0-dx, y0-dy);
+        // TODO(jec)
+		/* SetCursorPos (x0-dx, y0-dy); */
 		if (!(dx || dy)) return;
 
 		if (external_view) {
@@ -855,8 +872,10 @@ void Camera::SendDlgMessage (int msgid, void *msg) const
 	DialogManager *dlgmgr = g_pOrbiter->DlgMgr();
 	if (dlgmgr) {
 		HWND dlg = dlgmgr->IsEntry (g_pOrbiter->GetInstance(), IDD_CAMERA);
-		if (dlg)
-			PostMessage (dlg, WM_APP, msgid, (LPARAM)msg);
+		if (dlg) {
+            // TODO(jec):  Fix with wxWidgets
+			/* PostMessage (dlg, WM_APP, msgid, (LPARAM)msg); */
+        }
 	}
 }
 
@@ -1425,39 +1444,39 @@ bool Camera::Read (ifstream &ifs)
 	for (;;) {
 		if (!ifs.getline (cbuf, 256)) break;
 		pc = trim_string (cbuf);
-		if (!_strnicmp (pc, "END_CAMERA", 10)) break;
-		if (!_strnicmp (pc, "TARGET", 6)) {
-			pc = trim_string (pc+6);
+		if (caseInsensitiveStartsWith(pc, "END_CAMERA")) break;
+		if (caseInsensitiveStartsWith(pc, "TARGET")) {
+			pc = trim_string(pc+6);
 			if (!(tg = g_psys->GetObj (pc, true)))
 				tg = g_psys->GetBase (pc, true);
-		} else if (!_strnicmp (pc, "MODE", 4)) {
+		} else if (caseInsensitiveStartsWith(pc, "MODE")) {
 			pc = trim_string (pc+4);
-			if (!_strnicmp (pc, "Extern", 6)) external_view = true;
-			else                             external_view = false;
-		} else if (!_strnicmp (pc, "POS", 3)) {
+			if (caseInsensitiveEquals(pc, "Extern")) external_view = true;
+			else                                     external_view = false;
+		} else if (caseInsensitiveStartsWith(pc, "POS")) {
 			n = sscanf (pc+3, "%lf%lf%lf", &rd, &ph, &th);
 			ph *= RAD, th *= RAD;
-		} else if (!_strnicmp (pc, "FOV", 3)) {
+		} else if (caseInsensitiveStartsWith(pc, "FOV")) {
 			double a;
 			n = sscanf (pc+3, "%lf", &a);
 			if (a < 10.0) a = 10.0;
 			else if (a > 160.0) a = 160.0;
 			a *= RAD*0.5;
 			ap_int = ap_ext = a;
-		} else if (!_strnicmp (pc, "TRACKMODE", 9)) {
+		} else if (caseInsensitiveStartsWith(pc, "TRACKMODE")) {
 			n = sscanf (pc+9, "%s%s", ctrackmode, cdirref);
-		} else if (!_strnicmp (pc, "GROUNDLOCATION", 14)) {
+		} else if (caseInsensitiveStartsWith(pc, "GROUNDLOCATION")) {
 			n = sscanf (pc+14, "%lf%lf%lf", &go.lng, &go.lat, &go.alt);
 			go.lng *= RAD, go.lat *= RAD;
-		} else if (!_strnicmp (pc, "GROUNDDIRECTION", 15)) {
+		} else if (caseInsensitiveStartsWith(pc, "GROUNDDIRECTION")) {
 			n = sscanf (pc+15, "%lf%lf", &go.phi, &go.tht);
 			go.phi *= RAD, go.tht *= RAD;
 			go.tgtlock = false;
-		} else if (!_strnicmp (pc, "BEGIN_PRESET", 12)) {
+		} else if (caseInsensitiveStartsWith(pc, "BEGIN_PRESET")) {
 			for (;;) {
 				if (!ifs.getline (cbuf, 256)) break;
 				pc = trim_string (cbuf);
-				if (!_strnicmp (pc, "END_PRESET", 10)) break;
+				if (caseInsensitiveStartsWith(pc, "END_PRESET")) break;
 				AddPreset (CameraMode::Create (pc));
 			}
 		}
@@ -1465,15 +1484,15 @@ bool Camera::Read (ifstream &ifs)
 	if (tg && external_view) target = tg;
 	if (external_view) {
 		rdist = rd, ephi = ph, etheta = th;
-		if (!_stricmp (ctrackmode, "AbsoluteDirection"))
+		if (caseInsensitiveEquals(ctrackmode, "AbsoluteDirection"))
 			extmode = CAMERA_ABSDIRECTION;
-		else if (!_stricmp (ctrackmode, "GlobalFrame"))
+		else if (caseInsensitiveEquals(ctrackmode, "GlobalFrame"))
 			extmode = CAMERA_GLOBALFRAME;
-		else if (!_stricmp (ctrackmode, "TargetTo") && (dirref = g_psys->GetObj (cdirref, true)))
+		else if (caseInsensitiveEquals(ctrackmode, "TargetTo") && (dirref = g_psys->GetObj (cdirref, true)))
 			extmode = CAMERA_TARGETTOOBJECT;
-		else if (!_stricmp (ctrackmode, "TargetFrom") && (dirref = g_psys->GetObj (cdirref, true)))
+		else if (caseInsensitiveEquals(ctrackmode, "TargetFrom") && (dirref = g_psys->GetObj (cdirref, true)))
 			extmode = CAMERA_TARGETFROMOBJECT;
-		else if (!_stricmp (ctrackmode, "Ground") && (dirref = g_psys->GetObj (cdirref, true)))
+		else if (caseInsensitiveEquals(ctrackmode, "Ground") && (dirref = g_psys->GetObj (cdirref, true)))
 			extmode = CAMERA_GROUNDOBSERVER;
 		else 
 			extmode = CAMERA_TARGETRELATIVE;
@@ -1585,11 +1604,11 @@ CameraMode *CameraMode::Create (char *str)
 
 	if (!(pc = strtok (str, ":"))) return 0;
 	tc = trim_string (pc);
-	if (!_stricmp (tc, "Cockpit")) {
+	if (caseInsensitiveEquals(tc, "Cockpit")) {
 		cm = new CameraMode_Cockpit; TRACENEW
-	} else if (!_stricmp (tc, "Track")) {
+	} else if (caseInsensitiveEquals(tc, "Track")) {
 		cm = new CameraMode_Track; TRACENEW
-	} else if (!_stricmp (tc, "Ground")) {
+	} else if (caseInsensitiveEquals(tc, "Ground")) {
 		cm = new CameraMode_Ground; TRACENEW
 	} else {
 		cm = new CameraMode_Cockpit; TRACENEW
@@ -1623,15 +1642,15 @@ void CameraMode_Cockpit::Init (char *str)
 {
 	if (!str || str[0] == '\0') return;
 
-	if (!strnicmp(str, "generic", 7)) {
+	if (caseInsensitiveStartsWith(str, "generic")) {
 		cmode = CM_GENERIC;
 		str += 7;
-	} else if (!strnicmp(str, "panel2d", 7)) {
+	} else if (caseInsensitiveStartsWith(str, "panel2d")) {
 		cmode = CM_PANEL2D;
 		str += 7;
 		if (str[0] == ':' && sscanf(++str, "%d", &pos))
 			while (*str != ' ' && *str != '\0') str++;
-	} else if (!strnicmp(str, "vc", 2)) {
+	} else if (caseInsensitiveStartsWith(str, "vc")) {
 		cmode = CM_VC;
 		str += 2;
 		if (str[0] == ':' && sscanf(++str, "%d", &pos)) {
@@ -1645,7 +1664,7 @@ void CameraMode_Cockpit::Init (char *str)
 				}
 			}
 		}
-	} else if (!strnicmp(str, "current", 7)) {
+	} else if (caseInsensitiveStartsWith(str, "current")) {
 		cmode = CM_CURRENT;
 		str += 7;
 	}
@@ -1677,18 +1696,18 @@ void CameraMode_Track::Init (char *str)
 {
 	char tm[64], rf[256];
 	sscanf (str, "%s%lf%lf%lf%s", tm, &reldist, &phi, &theta, rf);
-	if (!_stricmp (tm, "RELATIVE"))
+	if (caseInsensitiveEquals(tm, "RELATIVE"))
 		tmode = TM_RELATIVE;
-	else if (!_stricmp (tm, "ABSDIR"))
+	else if (caseInsensitiveEquals(tm, "ABSDIR"))
 		tmode = TM_ABSDIR;
-	else if (!_stricmp (tm, "GLOBAL"))
+	else if (caseInsensitiveEquals(tm, "GLOBAL"))
 		tmode = TM_GLOBAL;
-	else if (!_stricmp (tm, "TARGETTOREF")) {
+	else if (caseInsensitiveEquals(tm, "TARGETTOREF")) {
 		tmode = TM_TARGETTOREF;
 		Body *r = g_psys->GetObj (rf, true);
 		if (r) ref = (OBJHANDLE)r;
 		else tmode = TM_CURRENT;
-	} else if (!_stricmp (tm, "TARGETFROMREF")) {
+	} else if (caseInsensitiveEquals(tm, "TARGETFROMREF")) {
 		tmode = TM_TARGETFROMREF;
 		Body *r = g_psys->GetObj (rf, true);
 		if (r) ref = (OBJHANDLE)r;

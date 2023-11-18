@@ -14,4 +14,4 @@ void OpenDefaultHelp (HWND hWnd, const char *topic);
 // e.g. from the Launchpad dialog. For in-game help, use the mechanism in
 // Dialogs.cpp instead.
 
-#endif __HELP_H
+#endif /* __HELP_H */

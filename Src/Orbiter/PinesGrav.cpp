@@ -19,7 +19,8 @@
 
 */
 
-
+#include <errno.h>
+#include <stdio.h> // fopen
 #include <fstream>
 #include <cmath>
 #include "Vecmat.h"
@@ -132,7 +133,8 @@ int PinesGravProp::readGravModel(char* filename, int cutoff, int &actualLoadedTe
 	C[0] = 0;	//This needs to be 0 unless you want the point-mass gravity as well.
 	S[0] = 0; 
 
-	int file_error = fopen_s(&gravModelFile, filename, "rt");
+    gravModelFile = fopen(filename, "rt");
+    int file_error = gravModelFile ? 0 : errno;
 
 	if (file_error == 0 && gravModelFile) {
 		while (fgets(gravFileLine, 511, gravModelFile))

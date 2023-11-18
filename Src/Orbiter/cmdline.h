@@ -36,9 +36,9 @@ protected:
 	};
 	std::vector<Option> optionList;
 
-	CommandLine(const PSTR cmdLine);
-	void ParseCmdLine(const PSTR cmdLine);
-	bool ParseNextOption(PSTR& cmdLine, bool& groupKey, Option& option);
+	CommandLine(const char* cmdLine);
+	void ParseCmdLine(const char* cmdLine);
+	bool ParseNextOption(const char*& cmdLine, bool& groupKey, Option& option);
 	void MapKeys();
 	void ApplyOptions();
 	virtual void ApplyOption(const Key* key, const std::string& value) {}
@@ -58,7 +58,7 @@ namespace orbiter {
 	{
 	public:
 		static CommandLine& Instance() { return InstanceImpl(); }
-		static void Parse(Orbiter* pOrbiter, const PSTR cmdLine) { InstanceImpl(pOrbiter, cmdLine); }
+		static void Parse(Orbiter* pOrbiter, const char* cmdLine) { InstanceImpl(pOrbiter, cmdLine); }
 
 		CommandLine(CommandLine const&) = delete;
 		void operator=(CommandLine const&) = delete;
@@ -83,8 +83,8 @@ namespace orbiter {
 		void PrintHelpAndExit() const;
 
 	private:
-		CommandLine(Orbiter* pOrbiter, const PSTR cmdLine);
-		static CommandLine& InstanceImpl(Orbiter* pOrbiter = 0, const PSTR cmdLine = 0);
+		CommandLine(Orbiter* pOrbiter, const char* cmdLine);
+		static CommandLine& InstanceImpl(Orbiter* pOrbiter = 0, const char* cmdLine = nullptr);
 		Orbiter* m_pOrbiter;
 	};
 

@@ -11,6 +11,8 @@
 #include "DialogWin.h"
 #include "VectorMap.h"
 
+class DlgMap;
+
 // ======================================================================
 // Class for map window inside the dialog box
 
@@ -46,7 +48,7 @@ protected:
 	bool FindTarget (int mx, int my);
 	static MapWin *GetMapInstance (HWND hw);
 	static MapWin *map_in_creation;
-	static LRESULT FAR PASCAL Map_WndProc (HWND, UINT, WPARAM, LPARAM);
+	static LRESULT Map_WndProc (HWND, UINT, WPARAM, LPARAM);
 
 private:
 	DlgMap *dlg;

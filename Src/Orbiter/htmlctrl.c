@@ -17,7 +17,9 @@ the same level of OLE in-place activation.
 */
 
 
-
+/* TODO(jec):  Exclude from build off of win32, and substitute.
+ */
+#ifdef _WIN32
 
 
 #include <windows.h>
@@ -1928,3 +1930,5 @@ void RegisterHtmlCtrl (HINSTANCE hInstance, BOOL active)
 		RegisterClassEx(&wc);
 	}
 }
+
+#endif /* _WIN32 */

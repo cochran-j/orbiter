@@ -4,6 +4,8 @@
 #define STRICT 1
 #define OAPI_IMPLEMENTATION
 
+#include <string>
+
 #include "Orbiter.h"
 #include "Launchpad.h"
 #include "Psys.h"
@@ -25,6 +27,7 @@
 #include "MenuInfoBar.h"
 #include "zlib.h"
 #include "DrawAPI.h"
+#include "DllCompat.h"
 
 #ifdef INLINEGRAPHICS  // should be temporary
 #include "OGraphics.h"
@@ -1988,7 +1991,9 @@ DLLEXPORT SURFHANDLE oapiCreateSurface (HBITMAP hBmp, bool release_bmp)
 	oapi::GraphicsClient *gc = g_pOrbiter->GetGraphicsClient();
 	SURFHANDLE surf = NULL;
 	if (gc) surf = gc->clbkCreateSurface (hBmp);
+    /* TODO(jec)
 	if (release_bmp) DeleteObject ((HGDIOBJ)hBmp);
+    */
 	return surf;
 }
 
@@ -2155,6 +2160,11 @@ DLLEXPORT HWND oapiOpenDialog (HINSTANCE hDLLInst, int resourceId, DLGPROC msgPr
 DLLEXPORT HWND oapiOpenDialogEx (HINSTANCE hDLLInst, int resourceId, DLGPROC msgProc, DWORD flag, void *context)
 {
 	return g_pOrbiter->OpenDialogEx (hDLLInst, resourceId, msgProc, flag, context);
+}
+
+DLLEXPORT HWND oapiCreateChildWindow (HINSTANCE hDLLInst, void *context)
+{
+    return g_pOrbiter->CreateChildWindow (hDLLInst, context);
 }
 
 DLLEXPORT HWND oapiFindDialog (HINSTANCE hDLLInst, int resourceId)
@@ -2363,11 +2373,11 @@ DLLEXPORT bool oapiReadScenario_nextline (FILEHANDLE file, char *&line)
 	char *cbuf = readline(ifs);
 	if (!cbuf) return false;
 	line = trim_string (cbuf);
-	if (!_stricmp (line, "END")) return false;
+	if (caseInsensitiveEquals(line, "END")) return false;
 	return true;
 }
 
-DLLEXPORT void oapiWriteItem_string (FILEHANDLE file, char *item, char *string)
+DLLEXPORT void oapiWriteItem_string (FILEHANDLE file, const char *item, const char *string)
 {
 	ofstream &ofs = *(ofstream*)file;
 	ofs << item << " = " << string << endl;
@@ -2530,8 +2540,10 @@ DLLEXPORT DWORD oapiDeflate (const BYTE *inp, DWORD ninp, BYTE *outp, DWORD nout
 DLLEXPORT DWORD oapiInflate (const BYTE *inp, DWORD ninp, BYTE *outp, DWORD noutp)
 {
 	DWORD ndata = noutp;
+    /* TODO(jec):  Unclear which library this is.  Appears to be a PKZIP or something.
 	if (uncompress (outp, &ndata, inp, ninp) != Z_OK)
 		return 0;
+    */
 	return ndata;
 }
 
@@ -2543,22 +2555,29 @@ DLLEXPORT void InitLib (HINSTANCE hModule)
 {
 	typedef void (*OPC_DLLInit)(HINSTANCE hDLL);
 	OPC_DLLInit DLLInit;
-	char cbuf[256], mname[256], *mp;
+	char cbuf[256];
+    const char* mp;
+    std::string mname {};
 	int i, len;
 
 	if (td.SimT0 < 1) {
 		// don't write during simulation, since unnecessary file access
 		// can cause time waste
-		GetModuleFileName (hModule, mname, 256);
-		for (i = 0, mp = mname; mname[i]; i++)
-			if (mname[i] == '\\') mp = mname+i+1;
+        mname = DLL::GetDLLFileName (hModule);
+        /* TODO(jec) this is doing path stuff--but it's hard to decipher exactly what. */
+        const char* mname_cstr = mname.c_str();
+		for (i = 0, mp = mname_cstr; mname_cstr[i]; i++) {
+			if ((mname_cstr[i] == '\\') || (mname_cstr[i] == '/')) {
+                mp = mname_cstr+i+1;
+            }
+        }
 		sprintf (cbuf, "Module %s ", mp);
 		if ((len = strlen(cbuf)) < 30) {
 			for (i = len; i < 30; i++) cbuf[i] = '.';
 			cbuf[i] = '\0';
 		}
 
-		char *(*mdate)() = (char*(*)())GetProcAddress (hModule, "ModuleDate");
+		char *(*mdate)() = (char*(*)())DLL::GetProcAddress (hModule, "ModuleDate");
 		if (mdate) {
 			int Date2Int (char *date);
 			sprintf (cbuf+strlen(cbuf), " [Build %06d", Date2Int(mdate()));
@@ -2566,7 +2585,7 @@ DLLEXPORT void InitLib (HINSTANCE hModule)
 			strcat (cbuf, " [Build ******");
 		}
 
-		int (*fversion)() = (int(*)())GetProcAddress (hModule, "GetModuleVersion");
+		int (*fversion)() = (int(*)())DLL::GetProcAddress (hModule, "GetModuleVersion");
 		if (fversion) {
 			sprintf (cbuf+strlen(cbuf), ", API %06d]", fversion());
 		} else {
@@ -2576,8 +2595,8 @@ DLLEXPORT void InitLib (HINSTANCE hModule)
 		LOGOUT (cbuf);
 	}
 
-	DLLInit = (OPC_DLLInit)GetProcAddress (hModule, "InitModule");
-	if (!DLLInit) DLLInit = (OPC_DLLInit)GetProcAddress (hModule, "opcDLLInit");
+	DLLInit = (OPC_DLLInit)DLL::GetProcAddress (hModule, "InitModule");
+	if (!DLLInit) DLLInit = (OPC_DLLInit)DLL::GetProcAddress (hModule, "opcDLLInit");
 	if (DLLInit) (*DLLInit)(hModule);
 }
 
@@ -2585,8 +2604,8 @@ DLLEXPORT void ExitLib (HINSTANCE hModule)
 {
 	typedef void (*OPC_DLLExit)(HINSTANCE hDLL);
 	OPC_DLLExit DLLExit;
-	DLLExit = (OPC_DLLExit)GetProcAddress (hModule, "ExitModule");
-	if (!DLLExit) DLLExit = (OPC_DLLExit)GetProcAddress (hModule, "opcDLLExit");
+	DLLExit = (OPC_DLLExit)DLL::GetProcAddress (hModule, "ExitModule");
+	if (!DLLExit) DLLExit = (OPC_DLLExit)DLL::GetProcAddress (hModule, "opcDLLExit");
 	if (DLLExit) (*DLLExit)(hModule);
 }
 
@@ -2597,7 +2616,7 @@ DLLEXPORT int Date2Int (char *date)
 	int day, month, year, v;
 	sscanf (date, "%s%d%d", ms, &day, &year);
 	for (month = 0; month < 12; month++)
-		if (!_strnicmp (ms, mstr[month], 3)) break;
+		if (caseInsensitiveStartsWith(ms, mstr[month])) break;
 	v = (year%100)*10000 + (month+1)*100 + day;
 	return v;
 }

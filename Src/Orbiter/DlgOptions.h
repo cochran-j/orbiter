@@ -17,8 +17,10 @@
 #include "OptionsPages.h"
 #include "CustomControls.h"
 #include <windows.h>
+/* (jec) compatibility
 #include <commctrl.h>
 #include <winuser.h>
+*/
 
 class OptionsPage;
 

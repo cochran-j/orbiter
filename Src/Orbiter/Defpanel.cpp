@@ -546,6 +546,7 @@ void DefaultPanel::Render ()
 
 bool DefaultPanel::ProcessMouse (UINT event, DWORD state, int x, int y)
 {
+    /* TODO(jec)
 	switch (event) {
 	case WM_LBUTTONDOWN:
 		mstate = PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED;
@@ -563,6 +564,7 @@ bool DefaultPanel::ProcessMouse (UINT event, DWORD state, int x, int y)
 		mstate = 0;
 		break;
 	}
+    */
 	if (mstate & PANEL_MOUSE_DOWN) { // locate mouse event
 		int mfd, btn;
 		if (GetMFDButton (x, y, mfd, btn)) {
@@ -699,7 +701,9 @@ void DefaultPanel::GetButtonState (int &state, int &mfd, int &btn)
 {
 	if (activemfd >= 0 && mstate & PANEL_MOUSE_PRESSED) {
 		POINT pt;
+        /* TODO(jec)
 		GetCursorPos (&pt);
+        */
 		g_pOrbiter->ScreenToClient (&pt);
 		if (GetMFDButton (pt.x, pt.y, mfd, btn) && mfd == activemfd && btn == activebtn) {
 			if (btn < 12) {

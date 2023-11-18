@@ -747,19 +747,20 @@ void Pane::InitResources ()
 	if (skp) {
 		skp->SetFont (hudfont[0]);
 		charsize = skp->GetCharSize ();
-		f1W = HIWORD(charsize);
-		f1H = LOWORD(charsize);
+		f1W = ((charsize & 0xFFFF0000U) >> 16);
+		f1H = (charsize & 0x0000FFFFU);
 		scaleW = f1W * 10;
 		skp->SetFont (hudfont[1]);
 		charsize = skp->GetCharSize ();
-		f2W = HIWORD(charsize);
-		f2H = LOWORD(charsize);
+		f2W = ((charsize & 0xFFFF0000U) >> 16);
+		f2H = (charsize & 0x0000FFFFFU);
 		gc->clbkReleaseSketchpad (skp);
 	} else {
 		f1W = f1H = 0;
 	}
 
 	// OBSOLETE
+    /* TODO(jec)
 	hPen[0] = CreatePen (PS_SOLID, 0, RGB(0,255,0));
 	hPen[1] = CreatePen (PS_SOLID, 0, RGB(0,255,0));
 	hPen[2] = CreatePen (PS_SOLID, 0, RGB(0,128,0));
@@ -770,6 +771,7 @@ void Pane::InitResources ()
 	static LOGBRUSH lbrush2 = {BS_SOLID, RGB(96,96,0), 0};
 	hBrush1 = CreateBrushIndirect (&lbrush1);
 	hBrush2 = CreateBrushIndirect (&lbrush2);
+    */
 	// END OBSOLETE
 
 	blinkmesh.tex = (gc ? gc->clbkLoadTexture ("transp.dds", 0x4) : NULL);
@@ -804,9 +806,11 @@ void Pane::FreeResources ()
 
 	for (i = 0; i < 2; i++) gc->clbkReleaseFont (hudfont[i]);
 	gc->clbkReleasePen (hudpen);
+    /* TODO(jec)
 	for (i = 0; i < 6; i++) DeleteObject (hPen[i]);
 	DeleteObject (hBrush1);
 	DeleteObject (hBrush2);
+    */
 	if (blinkmesh.tex) gc->clbkReleaseSurface (blinkmesh.tex);
 }
 
@@ -1204,7 +1208,9 @@ void Pane::RepaintMFDButtons (INT_PTR id, Instrument *instr)
 void Pane::RegisterPanelBackground (HBITMAP hBmp, DWORD flag, DWORD ck)
 {
 	if (panel) panel->DefineBackground (hBmp, flag, ck);
+    /* TODO(jec)
 	DeleteObject ((HGDIOBJ)hBmp);
+    */
 }
 
 void Pane::RegisterPanelBackground (SURFHANDLE hSurf, DWORD flag)

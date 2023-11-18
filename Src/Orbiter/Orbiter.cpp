@@ -7,18 +7,40 @@
 // Enable visual styles. Source: https://msdn.microsoft.com/en-us/library/windows/desktop/bb773175(v=vs.85).aspx
 #pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
+#ifndef _WIN32
+#include <unistd.h> // execl
+#endif
+
 #include <windows.h>
+/* NOTE(jec) Headers missing
 #include <zmouse.h>
 #include <commctrl.h>
 #include <mmsystem.h>
 #include <process.h>
 #include <direct.h>
+#include <io.h>
+*/
 #include <stdio.h>
 #include <time.h>
 #include <fstream>
 #include <strstream>
 #include <iomanip>
-#include <io.h>
+#include <vector>
+
+/* FPE signal handling */
+#include <cmath>
+#include <csignal>
+
+/* Filesystem */
+#include <filesystem>
+#include <string>
+
+/* Concurrency moving to std */
+#include <mutex>
+
+/* std::chrono timing */
+#include <chrono>
+
 #include "cmdline.h"
 #include "D3d7util.h"
 #include "D3dmath.h"
@@ -49,6 +71,8 @@
 #include "DlgCtrl.h"
 #include "GraphicsAPI.h"
 #include "ConsoleManager.h"
+#include "Input.h"
+#include "DllCompat.h"
 
 #ifdef INLINEGRAPHICS
 #include "OGraphics.h"
@@ -76,19 +100,19 @@ const int MAX_TEXTURE_BUFSIZE = 8000000;
 // Texture manager buffer size. Should be determined from
 // memory size (System or Video?)
 
-const TCHAR* g_strAppTitle = "OpenOrbiter";
+const char* g_strAppTitle = "OpenOrbiter";
 
 #ifdef INLINEGRAPHICS
-const TCHAR* MasterConfigFile = "Orbiter.cfg";
+const char* MasterConfigFile = "Orbiter.cfg";
 #else
-const TCHAR* MasterConfigFile = "Orbiter_NG.cfg";
+const char* MasterConfigFile = "Orbiter_NG.cfg";
 #endif // INLINEGRAPHICS
 
-const TCHAR* CurrentScenario = "(Current state)";
+const char* CurrentScenario = "(Current state)";
 char ScenarioName[256] = "\0";
 // some global string resources
 
-char cwd[512];
+std::string cwd;
 
 // =======================================================================
 // Global variables
@@ -116,10 +140,12 @@ bool g_bStateUpdate = false;
 DWORD  launch_tick;      // counts the first 3 frames
 DWORD  g_vtxcount = 0;   // vertices/frame rendered (for diagnosis)
 DWORD  g_tilecount = 0;  // surface tiles/frame rendered (for diagnosis)
-BOOL   use_fine_counter;         // high-precision timer available?
+bool   use_fine_counter;         // high-precision timer available?
 double fine_counter_step;        // step interval of high-precision counter (or 0 if not available)
 LARGE_INTEGER fine_counter_freq; // high-precision tick frequency
-LARGE_INTEGER fine_counter;      // current high-precision time value
+// current high-precision time value
+std::chrono::high_resolution_clock::time_point fine_counter;
+
 TimeData td;             // timing information
 
 // Configuration parameters set from Driver.cfg
@@ -167,7 +193,9 @@ HANDLE hConsoleMutex = 0;
 // =======================================================================
 // _matherr()
 // trap global math exceptions
+/* NOTE(jec):  Nonstandard facility in math.h */
 
+#ifdef _WIN32
 int _matherr(struct _exception *except )
 {
 	if (!strcmp (except->name, "acos")) {
@@ -176,14 +204,13 @@ int _matherr(struct _exception *except )
 	}
 	return 0;
 }
-
+#endif
 
 // =======================================================================
-// WinMain()
+// xplat_main()
 // Application entry containing message loop
 
-
-INT WINAPI WinMain (HINSTANCE hInstance, HINSTANCE, LPSTR strCmdLine, INT nCmdShow)
+int xplat_main(HINSTANCE hInstance, const char* strCmdLine)
 {
 #ifdef _CRTDBG_MAP_ALLOC
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -191,15 +218,23 @@ INT WINAPI WinMain (HINSTANCE hInstance, HINSTANCE, LPSTR strCmdLine, INT nCmdSh
 
 #ifndef INLINEGRAPHICS
 	// Verify working directory
-	char dir[1024];
-	GetCurrentDirectory(1024, dir);
+    auto dir = std::filesystem::current_path();
 	// If the server version was launched from its own subdirectory, step back
 	// up to the Orbiter main directory
-	if (strlen(dir) >= 15 && !stricmp (dir+strlen(dir)-15, "\\Modules\\Server"))
-		SetCurrentDirectory("..\\..");
+    auto it1 = --dir.end();
+    auto it2 = it1;
+    --it2;
+    if ((it1 != dir.begin()) && (it2 != dir.begin()) &&
+        (*(it2) == "Modules") &&
+        (*(it1) == "Server")) {
+
+        std::filesystem::current_path(std::filesystem::path{".."} / "..");
+    }
 #endif
 
 #ifdef INLINEGRAPHICS
+    /* TODO(jec):  Cross-platform IPC synchronization.  Maybe boost. */
+# ifdef _WIN32
 	// determine whether another instance already exists
 	hMutex = CreateMutex (NULL, TRUE, "Test");
 	if (GetLastError() == ERROR_ALREADY_EXISTS) {
@@ -207,12 +242,13 @@ INT WINAPI WinMain (HINSTANCE hInstance, HINSTANCE, LPSTR strCmdLine, INT nCmdSh
 			"ORBITER Error", MB_OK | MB_ICONEXCLAMATION);
 		return 0;
 	}
+# endif
 #endif
 
     // If we're not running from actual console, hide the window
     if (ConsoleManager::IsConsoleExclusive())
         ConsoleManager::ShowConsole(false);
-    
+
     SetEnvironmentVars();
 	g_pOrbiter = new Orbiter; // application instance
 
@@ -222,9 +258,9 @@ INT WINAPI WinMain (HINSTANCE hInstance, HINSTANCE, LPSTR strCmdLine, INT nCmdSh
 	// Initialise the log
 	INITLOG("Orbiter.log", g_pOrbiter->Cfg()->CfgCmdlinePrm.bAppendLog); // init log file
 #ifdef ISBETA
-	LOGOUT("Build %s BETA [v.%06d]", __DATE__, GetVersion());
+	LOGOUT("Build %s BETA [v.%06d]", __DATE__, g_pOrbiter->GetVersion());
 #else
-	LOGOUT("Build %s [v.%06d]", __DATE__, GetVersion());
+	LOGOUT("Build %s [v.%06d]", __DATE__, g_pOrbiter->GetVersion());
 #endif
 
 	// Initialise random number generator
@@ -238,8 +274,12 @@ INT WINAPI WinMain (HINSTANCE hInstance, HINSTANCE, LPSTR strCmdLine, INT nCmdSh
 	// Create application
 	if (FAILED (hr = g_pOrbiter->Create (hInstance))) {
 		LOGOUT("Application creation failed");
+
+        /* TODO(jec):  Cross-platform message boxes with widget toolkit */
+        /*
 		MessageBox (NULL, "Application creation failed!\nTerminating.",
 			"Orbiter Error", MB_OK | MB_ICONERROR);
+        */
 		return 0;
 	}
 
@@ -250,6 +290,33 @@ INT WINAPI WinMain (HINSTANCE hInstance, HINSTANCE, LPSTR strCmdLine, INT nCmdSh
 	return 0;
 }
 
+// =======================================================================
+// WinMain() / main()
+// Application entry for specific platforms.
+
+
+#ifdef _WIN32
+INT WINAPI WinMain (HINSTANCE hInstance, HINSTANCE, LPSTR strCmdLine, INT nCmdShow)
+{
+    return xplat_main(hInstance, strCmdLine);
+}
+#else
+int main(int argv, char* argc[]) {
+
+
+    /* TODO(jec):  hInstance--what do we need it for? What does it need to be? */
+    std::string cmdLine {};
+    for (int i = 0; i < argv; ++i) {
+        cmdLine += argc[i];
+        cmdLine += " ";
+    }
+
+    return xplat_main(nullptr, cmdLine.c_str());
+}
+#endif
+
+
+
 void SetEnvironmentVars ()
 {
 	// Set search path to "Modules" subdirectory so that DLLs are found
@@ -257,13 +324,15 @@ void SetEnvironmentVars ()
 	if (ppath) {
 		char *cbuf = new char[strlen(ppath)+15]; TRACENEW
 		sprintf (cbuf, "PATH=%s;Modules", ppath);
-		_putenv (cbuf);
+		putenv (cbuf);
 		delete []cbuf;
 		cbuf = NULL;
 	} else {
-		_putenv ("PATH=Modules");
+		putenv ("PATH=Modules");
 	}
-	_getcwd (cwd, 512);
+
+    // TODO(jec): Merge with other CWD work in main().
+    cwd = std::filesystem::current_path();
 }
 
 // =======================================================================
@@ -319,14 +388,25 @@ Orbiter::Orbiter ()
     //m_fnConfirmDevice = ConfirmDevice;
 
 	// Initialise timer
-	timeBeginPeriod(1);
-	if (use_fine_counter = QueryPerformanceFrequency(&fine_counter_freq)) {
-		double freq = fine_counter_freq.LowPart;
-		if (fine_counter_freq.HighPart) freq += fine_counter_freq.HighPart * 4294967296.0;
-		fine_counter_step = 1.0 / freq;
+    use_fine_counter = std::ratio_less<
+        std::chrono::high_resolution_clock::period,
+        std::chrono::steady_clock::period
+    >::value;
+
+	if (use_fine_counter) {
+        using period = std::chrono::high_resolution_clock::period;
+
+        fine_counter_step = static_cast<double>(period::num) /
+                            static_cast<double>(period::den);
 	}
 
-	pDI             = new DInput(this); TRACENEW
+#if CONFIG_SDL_INPUT
+    pDI             = input_CreateSDLInput();
+#else
+# if CONFIG_DIRECT_INPUT
+	pDI             = input_CreateDirectInput();
+# endif
+#endif
 	pConfig         = new Config; TRACENEW
 	pState          = NULL;
 	m_pLaunchpad    = NULL;
@@ -391,12 +471,15 @@ HRESULT Orbiter::Create (HINSTANCE hInstance)
 {
 	if (m_pLaunchpad) return S_OK; // already created
 
+    /* TODO(jec):  Cross-platform launchpad */
 	HRESULT hr;
+    /*
 	WNDCLASS wndClass;
 
 	// Enable tab controls
 	InitCommonControls();
 	LoadLibrary ("riched20.dll");
+    */
 
 	// parameter manager - parses from master config file
 	hInst = hInstance;
@@ -406,26 +489,35 @@ HRESULT Orbiter::Create (HINSTANCE hInstance)
 	if (FAILED (hr = pDI->Create (hInstance))) return hr;
 
 	// validate configuration
-	if (pConfig->CfgJoystickPrm.Joy_idx > GetDInput()->NumJoysticks()) pConfig->CfgJoystickPrm.Joy_idx = 0;
+	if (pConfig->CfgJoystickPrm.Joy_idx > pDI->NumJoyDevices()) {
+        pConfig->CfgJoystickPrm.Joy_idx = 0;
+    }
 
 	// Read key mapping from file (or write default keymap)
 	if (!keymap.Read ("keymap.cfg")) keymap.Write ("keymap.cfg");
 
     pState = new State(); TRACENEW
 
+    /*
 	// Register main dialog window class
 	GetClassInfo (hInstance, "#32770", &wndClass); // override default dialog class
 	wndClass.hIcon = LoadIcon (hInstance, MAKEINTRESOURCE (IDI_MAIN_ICON));
 	RegisterClass (&wndClass);
+    */
 
 	// Find out if we are running under Linux/WINE
+    // Disables HTML text.
+    /*
 	HKEY key;
 	long ret = RegOpenKeyEx (HKEY_CURRENT_USER, TEXT("Software\\Wine"), 0, KEY_QUERY_VALUE, &key);
 	RegCloseKey (key);
 	bWINEenv = (ret == ERROR_SUCCESS);
+    */
 
 	// Register HTML viewer class
+    /* TODO(jec)
 	RegisterHtmlCtrl (hInstance, UseHtmlInline());
+    */
 	CustomCtrl::RegisterClass (hInstance);
 
 	if (pConfig->CfgCmdlinePrm.bFastExit)
@@ -433,10 +525,12 @@ HRESULT Orbiter::Create (HINSTANCE hInstance)
 	if (pConfig->CfgCmdlinePrm.bOpenVideoTab)
 		OpenVideoTab();
 
+    /* TODO(jec):
 	if (pConfig->CfgDemoPrm.bBkImage) {
 		hBk = CreateDialog (hInstance, MAKEINTRESOURCE(IDD_DEMOBK), NULL, BkMsgProc);
 		ShowWindow (hBk, SW_MAXIMIZE);
 	}
+    */
 	
 	// Create the "launchpad" main dialog window
 	m_pLaunchpad = new orbiter::LaunchpadDialog (this); TRACENEW
@@ -461,6 +555,9 @@ HRESULT Orbiter::Create (HINSTANCE hInstance)
 	// preload startup plugin modules
 	LoadStartupModules();
 
+    /* TODO(jec):  This determines ClearType status on the system fonts,
+     * and orbiter disables ClearType if found.  This is probably so that
+     * the Courier New text on the MFDs doesn't get messed up.
 	{
 		BOOL cleartype, ok;
 		ok = SystemParametersInfo(SPI_GETFONTSMOOTHING, 0, &cleartype, 0);
@@ -469,6 +566,7 @@ HRESULT Orbiter::Create (HINSTANCE hInstance)
 	}
 	if (pConfig->CfgDebugPrm.bDisableSmoothFont)
 		ActivateRoughType();
+    */
 
 	memstat = new MemStat;
 	
@@ -506,11 +604,12 @@ VOID Orbiter::CloseApp (bool fast_shutdown)
 			gclient = 0;
 		}
 #endif
-		delete pDI;
 		if (memstat) delete memstat;
 		if (pConfig)  delete pConfig;
 		if (m_pLaunchpad) delete m_pLaunchpad;
+        /* TODO(jec)
 		if (hBk) DestroyWindow (hBk);
+        */
 		if (pState)   delete pState;
 		if (script) delete script;
 		if (ncustomcmd) {
@@ -523,7 +622,6 @@ VOID Orbiter::CloseApp (bool fast_shutdown)
 		}
 		oapiUnregisterCustomControls (hInst);
 	}
-	timeEndPeriod (1);
 }
 
 //-----------------------------------------------------------------------------
@@ -539,33 +637,10 @@ int Orbiter::GetVersion () const
 		int day, month, year;
 		sscanf (__DATE__, "%s%d%d", ms, &day, &year);
 		for (month = 0; month < 12; month++)
-			if (!_strnicmp (ms, mstr[month], 3)) break;
+			if (caseInsensitiveStartsWith(ms, mstr[month])) break;
 		v = (year%100)*10000 + (month+1)*100 + day;
 	}
 	return v;
-}
-
-static bool FileExists(const char* path)
-{
-	return access(path, 0) != -1;
-}
-
-//! Finds legacy module consisting of a single DLL
-//! @return true on success
-//! @param cbufOut returns path to the plugin DLL
-static bool FindStandaloneDll(const char *path, const char *name, char* cbufOut)
-{
-	sprintf (cbufOut, "%s\\%s.dll", path, name);
-	return FileExists(cbufOut);
-}
-
-//! Finds module consisting of a plugin DLL inside a plugin-specific folder
-//! @return true on success
-//! @param cbufOut returns path to the plugin DLL
-static bool FindDllInPluginFolder(const char *path, const char *name, char* cbufOut)
-{
-	sprintf(cbufOut, "%s\\%s\\%s.dll", path, name, name);
-	return FileExists(cbufOut);
 }
 
 void Orbiter::LoadModules(const std::string& path, const std::list<std::string>& names)
@@ -577,16 +652,13 @@ void Orbiter::LoadModules(const std::string& path, const std::list<std::string>&
 
 void Orbiter::LoadModules(const std::string& path)
 {
-	struct _finddata_t fdata;
-	intptr_t fh = _findfirst((path + std::string("\\*.dll")).c_str(), &fdata);
-	if (fh == -1) return; // no files found
-	do {
-		if (strlen(fdata.name) > 4) {
-			fdata.name[strlen(fdata.name) - 4] = '\0'; // cut off extension
-			LoadModule(path.c_str(), fdata.name);
-		}
-	} while (!_findnext(fh, &fdata));
-	_findclose(fh);
+    for (auto& p : std::filesystem::directory_iterator{path}) {
+        auto file_ext = p.path().extension();
+        auto file_name = p.path().filename();
+        if (file_ext == DLL::DLLExt) {
+            LoadModule(path.c_str(), file_name.c_str());
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -608,36 +680,36 @@ HINSTANCE Orbiter::LoadModule (const char *path, const char *name)
 
 	// Load the module DLL
 	HINSTANCE hDLL = NULL;
-	char cbuf[256];
-	if (FindStandaloneDll(path, name, cbuf)) // try to find standalone plugin file
+    std::filesystem::path dllPath;
+	if (DLL::FindStandaloneDll(path, name, dllPath)) // try to find standalone plugin file
 	{
-		hDLL = LoadLibrary (cbuf);
+		hDLL = DLL::LoadDLL(dllPath.c_str());
 	}
 	else // try to find plugin in a plugin folder
 	{
-		char cbuf2[256];
-		if (FindDllInPluginFolder(path, name, cbuf2))
+        std::filesystem::path dllPath2;
+		if (DLL::FindDllInPluginFolder(path, name, dllPath2))
 		{
 			// Convert to absolute path, otherwise LoadLibraryEx fails with error code 87.
 			// See https://stackoverflow.com/questions/36275535/loadlibraryex-error-87-the-parameter-is-incorrect
-			sprintf(cbuf, "%s\\%s", cwd, cbuf2);
-			hDLL = LoadLibraryEx(cbuf, NULL, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+            dllPath = cwd / dllPath2;
+			hDLL = DLL::LoadDLLEx(dllPath.c_str());
 		}
 		else
 		{
-			LOGOUT_ERR("Could not find a module named %s. Tried %s and %s.", name, cbuf, cbuf2);
+			LOGOUT_ERR("Could not find a module named %s. Tried %s and %s.", name, dllPath.c_str(), dllPath2.c_str());
 			return NULL;
 		}
 	}
 
 	if (hDLL) {
-		DLLModule module = { hDLL, register_module ? register_module : new oapi::Module(hDLL), std::string(name), !register_module };
+		DLLModule module_ = { hDLL, register_module ? register_module : new oapi::Module(hDLL), std::string(name), !register_module };
 		// If the DLL doesn't provide a Module interface, create a default one which provides the legacy callbacks
 		LOGOUT(register_module ? "Loading module %s" : "Loading module %s (legacy interface)", name);
-		m_Plugin.push_back(module);
+		m_Plugin.push_back(module_);
 	} else {
-		DWORD err = GetLastError();
-		LOGOUT_ERR ("Failed loading module %s (code %d)", cbuf, err);
+		int err = DLL::GetLastError();
+		LOGOUT_ERR ("Failed loading module %s (code %d)", dllPath.c_str(), err);
 	}
 	return hDLL;
 }
@@ -653,7 +725,7 @@ bool Orbiter::UnloadModule (const std::string &name)
 			LOGOUT("Unloading module %s", it->sName.c_str());
 			if (it->bLocalAlloc)
 				delete it->pModule;
-			FreeLibrary(it->hDLL);
+            DLL::UnloadDLL(it->hDLL);
 			m_Plugin.erase(it);
 			return true;
 		}
@@ -672,7 +744,7 @@ bool Orbiter::UnloadModule (HINSTANCE hDLL)
 			LOGOUT("Unloading module %s", it->sName.c_str());
 			if (it->bLocalAlloc)
 				delete it->pModule;
-			FreeLibrary(it->hDLL);
+            DLL::UnloadDLL(it->hDLL);
 			m_Plugin.erase(it);
 			return true;
 		}
@@ -686,7 +758,7 @@ bool Orbiter::UnloadModule (HINSTANCE hDLL)
 //-----------------------------------------------------------------------------
 OPC_Proc Orbiter::FindModuleProc (HINSTANCE hDLL, const char *procname)
 {
-	return (OPC_Proc)GetProcAddress (hDLL, procname);
+	return (OPC_Proc)DLL::GetProcAddress(hDLL, procname);
 }
 
 //-----------------------------------------------------------------------------
@@ -695,7 +767,10 @@ OPC_Proc Orbiter::FindModuleProc (HINSTANCE hDLL, const char *procname)
 //-----------------------------------------------------------------------------
 VOID Orbiter::Launch (const char *scenario)
 {
+    /* TODO(jec):  Set the hourglass cursor */
+    /*
 	HCURSOR hCursor = SetCursor (LoadCursor (NULL, IDC_WAIT));
+    */
 	bool have_state = false;
 	pConfig->Write (); // save current settings
 	m_pLaunchpad->WriteExtraParams ();
@@ -709,7 +784,9 @@ VOID Orbiter::Launch (const char *scenario)
 	long m0 = memstat->HeapUsage();
 	CreateRenderWindow (pConfig, scenario);
 	simheapsize = memstat->HeapUsage()-m0;
+    /*
 	SetCursor (hCursor);
+    */
 }
 
 //-----------------------------------------------------------------------------
@@ -746,8 +823,9 @@ HWND Orbiter::CreateRenderWindow (Config *pCfg, const char *scenario)
 		}
 
 		// Create joystick device
-		if (pDI->CreateJoyDevice ())
+		if (pDI->CreateJoyDevice (pCfg->CfgJoystickPrm)) {
 			plZ4 = 1; // invalidate
+        }
 	}
 
 	// read simulation environment state
@@ -785,7 +863,8 @@ HWND Orbiter::CreateRenderWindow (Config *pCfg, const char *scenario)
 		return 0;
 	}
 	LOGOUT("Finished initialising world");
-	ms_prev = timeGetTime () - 1; // make sure SimDT > 0 for first frame
+	ms_prev = std::chrono::steady_clock::now() -
+              std::chrono::milliseconds{1}; // make sure SimDT > 0 for first frame
 
 	g_psys->InitState (ScnPath (scenario));
 
@@ -805,7 +884,8 @@ HWND Orbiter::CreateRenderWindow (Config *pCfg, const char *scenario)
 
 	if (gclient) {
 		// GDI resources - NOT VALID FOR ALL CLIENTS!
-		InitializeGDIResources (hRenderWnd);
+        /* DELETE(jec) */
+		/* InitializeGDIResources (hRenderWnd); */
 		pDlgMgr = new DialogManager (this, hRenderWnd);
 
 		// global dialog resources
@@ -873,7 +953,7 @@ HWND Orbiter::CreateRenderWindow (Config *pCfg, const char *scenario)
 
 	for (auto it = m_Plugin.begin(); it != m_Plugin.end(); it++) {
 		it->pModule->clbkSimulationStart(rendermode);
-		CHECKCWD(cwd, it->sName.c_str());
+		CHECKCWD(cwd.c_str(), it->sName.c_str());
 	}
 
 	if (g_pane) {
@@ -892,10 +972,11 @@ HWND Orbiter::CreateRenderWindow (Config *pCfg, const char *scenario)
 		m_pConsole->EchoIntro();
 
 	// suppress throttle update on launch
-	if (pDI->joyprop.bThrottle && pCfg->CfgJoystickPrm.bThrottleIgnore) {
-		DIJOYSTATE2 js;
-		if (pDI->PollJoystick(&js))
-			plZ4 = *(long*)(((BYTE*)&js) + pDI->joyprop.ThrottleOfs) >> 3;
+    auto& joyDevice = pDI->GetJoyDevice();
+    const auto& joyProps = joyDevice.GetProps();
+	if (joyProps.bThrottle && pCfg->CfgJoystickPrm.bThrottleIgnore) {
+
+        plZ4 = joyDevice.GetAxis(joyProps.ThrottleAxisIdx);
 	}
 
 	return hRenderWnd;
@@ -958,7 +1039,8 @@ void Orbiter::CloseSession ()
 		if (g_pane) { delete g_pane;   g_pane = 0; }
 		if (pDlgMgr)  { delete pDlgMgr; pDlgMgr = 0; }
 		Instrument::GlobalExit (gclient);
-		ReleaseGDIResources();
+        /* DELETE(jec) */
+		/* ReleaseGDIResources(); */
 		meshmanager.Flush(); // destroy buffered meshes
 		DestroyWorld ();     // destroy logical objects
 		if (gclient)
@@ -993,12 +1075,16 @@ void Orbiter::CloseSession ()
 #ifdef INLINEGRAPHICS
 			const char *name = "orbiter.exe";
 #else
-			const char *name = "modules\\server\\orbiter.exe";
+			const char *name = "modules//server//orbiter.exe";
 #endif
 #ifdef INLINEGRAPHICS
 			CloseHandle (hMutex);        // delete mutex so that we don't block the child
 #endif
+#ifdef _WIN32
 			_execl (name, name, "-l", NULL);   // respawn the process
+#else
+            execl(name, name, "-l", NULL);
+#endif
 		}
 	}
 	LOGOUT("**** Closing simulation session");
@@ -1048,8 +1134,10 @@ HRESULT Orbiter::Render3DEnvironment ()
 //-----------------------------------------------------------------------------
 void Orbiter::ScreenToClient (POINT *pt) const
 {
+    /* TODO:  Integrate with widget toolkit--used in dialog procedure
 	if (!IsFullscreen() && hRenderWnd)
 		::ScreenToClient (hRenderWnd, pt);
+    */
 }
 
 //-----------------------------------------------------------------------------
@@ -1060,14 +1148,17 @@ INT Orbiter::Run ()
 {
     // Recieve and process Windows messages
     BOOL  bGotMsg, bCanRender, bpCanRender = TRUE;
+    /* TODO
     MSG   msg;
     PeekMessage (&msg, NULL, 0U, 0U, PM_NOREMOVE);
+    */
 
 	if (!pConfig->CfgCmdlinePrm.LaunchScenario.empty())
 		Launch (pConfig->CfgCmdlinePrm.LaunchScenario.c_str());
 	// otherwise wait for the user to make a selection from the scenario
 	// list in the launchpad dialog
 
+    /*
 	while (WM_QUIT != msg.message) {
 
         // Use PeekMessage() if the app is active, so we can use idle time to
@@ -1120,6 +1211,7 @@ INT Orbiter::Run ()
     }
 	hRenderWnd = NULL;
     return msg.wParam;
+    */
 }
 
 void Orbiter::SingleFrame ()
@@ -1140,15 +1232,18 @@ void Orbiter::SingleFrame ()
 void Orbiter::TerminateOnError ()
 {
 	LogOut (">>> TERMINATING <<<");
+    /* TODO(jec): cross-platform message boxes
 	if (hRenderWnd) ShowWindow (hRenderWnd, FALSE);
 	MessageBox (NULL,
 		"Terminating after critical error. See Orbiter.log for details.",
 		"Orbiter: Critical Error", MB_OK | MB_ICONERROR);
+    */
 	exit (1);
 }
 
 void Orbiter::UpdateServerWnd (HWND hWnd)
 {
+    /* TODO
 	char cbuf[256];
 	sprintf (cbuf, "%0.0fs", td.SysT0);
 	SetWindowText (GetDlgItem (hWnd, IDC_STATIC1), cbuf);
@@ -1164,15 +1259,19 @@ void Orbiter::UpdateServerWnd (HWND hWnd)
 	SetWindowText (GetDlgItem (hWnd, IDC_STATIC6), cbuf);
 	sprintf (cbuf, "%zd", g_psys->nVessel());
 	SetWindowText (GetDlgItem (hWnd, IDC_STATIC7), cbuf);
+    */
 }
 
 void Orbiter::InitRotationMode ()
 {
 	bKeepFocus = true;
+    /* TODO
 	ShowCursor (FALSE);
 	SetCapture (hRenderWnd);
+    */
 
 	// Limit cursor to render window confines, so we don't miss the button up event
+    /* TODO
 	if (!bFullscreen && hRenderWnd) {
 		RECT rClient;
 		GetClientRect (hRenderWnd, &rClient);
@@ -1183,11 +1282,13 @@ void Orbiter::InitRotationMode ()
 		RECT rScreen = {pLeftTop.x, pLeftTop.y, pRightBottom.x, pRightBottom.y};
 		ClipCursor (&rScreen);
 	}
+    */
 }
 
 void Orbiter::ExitRotationMode ()
 {
 	bKeepFocus = false;
+    /* TODO
 	ReleaseCapture ();
 	ShowCursor (TRUE);
 
@@ -1195,6 +1296,7 @@ void Orbiter::ExitRotationMode ()
 	if (!bFullscreen && hRenderWnd) {
 		ClipCursor (NULL);
 	}
+    */
 }
 
 void Orbiter::OnOptionChanged(DWORD cat, DWORD item)
@@ -1476,9 +1578,11 @@ VOID Orbiter::SetFOV (double fov, bool limit_range)
 	g_bForceUpdate = true;
 
 	// update Camera dialog
+    /* TODO (jec) integrate with widgets
 	HWND hCamDlg;
 	if (pDlgMgr && (hCamDlg = pDlgMgr->IsEntry (hInst, IDD_CAMERA)))
 		SendMessage (hCamDlg, WM_APP, 0, (LPARAM)&fov);
+    */
 }
 
 //-----------------------------------------------------------------------------
@@ -1493,9 +1597,11 @@ VOID Orbiter::IncFOV (double dfov)
 	g_bForceUpdate = true;
 
 	// update Camera dialog
+    /* TODO(jec) integrate with dialog widgets
 	HWND hCamDlg;
 	if (pDlgMgr && (hCamDlg = pDlgMgr->IsEntry (hInst, IDD_CAMERA)))
 		SendMessage (hCamDlg, WM_APP, 0, (LPARAM)&fov);
+    */
 }
 
 //-----------------------------------------------------------------------------
@@ -1634,7 +1740,9 @@ void Orbiter::ToggleRecorder (bool force, bool append)
 		g_psys->GetVessel(i)->FRecorder_Activate (bStartRecorder, sname, append);
 	if (bStartRecorder)
 		SavePlaybackScn (sname);
+    /* TODO(jec) Dialog integration
 	if (pDlg) PostMessage (pDlg->GetHwnd(), WM_USER+1, 0, 0);
+    */
 }
 
 void Orbiter::EndPlayback ()
@@ -1645,8 +1753,10 @@ void Orbiter::EndPlayback ()
 	if (snote_playback) snote_playback->ClearText();
 	bPlayback = false;
 	if (pDlgMgr) {
+        /* TODO(jec) Dialog integration
 		HWND hDlg = pDlgMgr->IsEntry (hInst, IDD_RECPLAY);
 		if (hDlg) PostMessage (hDlg, WM_USER+1, 0, 0);
+        */
 	}
 	if (g_pane && g_pane->MIBar()) g_pane->MIBar()->SetPlayback(false);
 }
@@ -1786,6 +1896,7 @@ HRESULT Orbiter::RestoreDeviceObjects ()
 HRESULT Orbiter::DeleteDeviceObjects ()
 {
 #ifdef INLINEGRAPHICS
+    /* DELETE(jec) */
 	//ReleaseGDIResources ();
 	SAFE_DELETE (g_texmanager);
 	//SAFE_DELETE (g_texmanager2);
@@ -1817,6 +1928,7 @@ void Orbiter::OutputLoadTick (int line, bool ok)
 // Name: InitializeGDIResources()
 // Desc: Allocate resources required for GDI display (HUD, MFD)
 //-----------------------------------------------------------------------------
+/* DELETE(jec)
 void Orbiter::InitializeGDIResources (HWND hWnd)
 {
 	// Allocate global GDI resources
@@ -1832,6 +1944,8 @@ void Orbiter::ReleaseGDIResources ()
 {
 	if (g_gdires) delete g_gdires, g_gdires = 0;
 }
+
+*/
 
 //-----------------------------------------------------------------------------
 // Name: OpenTextureFile()
@@ -1914,6 +2028,8 @@ VOID Orbiter::Output2DData ()
 //-----------------------------------------------------------------------------
 bool Orbiter::BeginTimeStep (bool running)
 {
+    using namespace std::chrono_literals;
+
 	// Check for a pause/resume request
 	if (bRequestRunning != running) {
 		running = bRunning = bRequestRunning;
@@ -1929,24 +2045,26 @@ bool Orbiter::BeginTimeStep (bool running)
 	// Note that for times > 1e6 the simulation time is represented by
 	// an offset and increment, to avoid floating point underflow roundoff
 	// when adding the current time step
-	double deltat;
-	DWORD ms_curr = timeGetTime ();
-	LARGE_INTEGER hi_curr;
-	if (use_fine_counter) QueryPerformanceCounter (&hi_curr);
+    std::chrono::duration<double, std::chrono::milliseconds::period> deltat;
+	auto ms_curr = std::chrono::steady_clock::now();
+    std::chrono::high_resolution_clock::time_point hi_curr;
+	if (use_fine_counter) {
+       hi_curr = std::chrono::high_resolution_clock::now();
+    }
 
 	if (launch_tick) {
 		// control time interval in first few frames, when loading events occur
 		// enforce interval 10ms for first 3 time steps
-		deltat = 1e-2;
-		ms_prev = ms_curr-10;
-		if (use_fine_counter) fine_counter.QuadPart = hi_curr.QuadPart - fine_counter_freq.QuadPart/100;
+		deltat = 1e-2s;
+		ms_prev = ms_curr - 10ms;
+		if (use_fine_counter) fine_counter = hi_curr - 10ms;
 		launch_tick--;
 	} else {
 		// standard time update
-		DWORD ms_delta = ms_curr - ms_prev;
-		if (ms_delta < 10000 && use_fine_counter) {
-			if (hi_curr.QuadPart <= fine_counter.QuadPart) {
-				if (hi_curr.QuadPart < fine_counter.QuadPart) {
+		auto ms_delta = ms_curr - ms_prev;
+		if (ms_delta < 10ms && use_fine_counter) {
+			if (hi_curr <= fine_counter) {
+				if (hi_curr < fine_counter) {
 					static bool warn = true;
 					if (warn) {
 						LOGOUT(">>> WARNING: Inconsistent timer value");
@@ -1960,23 +2078,23 @@ bool Orbiter::BeginTimeStep (bool running)
 				return false;
 			}
 			// skip this step if the interval is smaller than the timer resolution
-			LONGLONG dt = hi_curr.QuadPart - fine_counter.QuadPart;
-			deltat = (double)dt * fine_counter_step;
+			auto  dt = hi_curr - fine_counter;
+			deltat = std::chrono::duration_cast<decltype(deltat)>(dt);
 		} else {
-			if (!ms_delta) return false;
+			if (ms_delta.count() == 0) return false;
 			// skip this step if the interval is smaller than the timer resolution
-			deltat = ms_delta * 0.001;
+			deltat = std::chrono::duration_cast<decltype(deltat)>(ms_delta);
 		}
 	}
 
-	if (deltat < fine_counter_step) {
+	if (deltat.count() < fine_counter_step) {
 		// this should never be triggered, given the previous timer checks
 		return false; // don't allow zero time step (will cause division by zero everywhere!)
 	}
 
 	ms_prev = ms_curr;
 	if (use_fine_counter) fine_counter = hi_curr;
-	td.BeginStep (deltat, running);
+	td.BeginStep (deltat.count(), running);
 
 	if (!running) return true;
 	if (td.WarpChanged()) ApplyWarpFactor();
@@ -2003,9 +2121,15 @@ void Orbiter::EndTimeStep (bool running)
 	g_bForceUpdate = false;                        // clear flag
 
 	// check for termination of demo mode
-	if (SessionLimitReached())
-		if (hRenderWnd) PostMessage(hRenderWnd, WM_CLOSE, 0, 0);
-		else CloseSession();
+	if (SessionLimitReached()) {
+		if (hRenderWnd)  {
+            /* TODO
+            PostMessage(hRenderWnd, WM_CLOSE, 0, 0);
+            */
+        } else {
+            CloseSession();
+        }
+    }
 }
 
 bool Orbiter::SessionLimitReached() const
@@ -2046,15 +2170,15 @@ bool Orbiter::Timejump (double _mjd, int pmode)
 
 void Orbiter::Suspend (void)
 {
-	ms_suspend = timeGetTime ();
+	ms_suspend = std::chrono::steady_clock::now();
 }
 
 void Orbiter::Resume (void)
 {
-	DWORD dt = timeGetTime() - ms_suspend;
+    auto dt = std::chrono::steady_clock::now() - ms_suspend;
 	ms_prev += dt;
 	if (use_fine_counter)
-		fine_counter.QuadPart += (LONGLONG)dt * (LONGLONG)(1e-3/fine_counter_step);
+        fine_counter += dt;
 }
 
 //-----------------------------------------------------------------------------
@@ -2153,8 +2277,11 @@ VOID Orbiter::UpdateWorld ()
 
 	g_bStateUpdate = false;
 
-	if (!KillVessels())  // kill any vessels marked for deletion
+	if (!KillVessels()) {  // kill any vessels marked for deletion
+        /* TODO(jec)
 		if (hRenderWnd) DestroyWindow (hRenderWnd);
+        */
+    }
 
 	//g_texmanager->OutputInfo();
 }
@@ -2172,9 +2299,8 @@ const char *Orbiter::KeyState() const
 HRESULT Orbiter::UserInput ()
 {
 	static char buffer[256];
-	DIDEVICEOBJECTDATA dod[10];
-	LPDIRECTINPUTDEVICE8 didev;
-	DWORD i, dwItems = 10;
+	I_KbdDevice& kbdDev = pDI->GetKbdDevice();
+	int i;
 	HRESULT hr;
 	bool skipkbd = false;
 
@@ -2185,43 +2311,48 @@ HRESULT Orbiter::UserInput ()
 	if ((g_input && g_input->IsActive()) ||
 	    (g_select && g_select->IsActive())) skipkbd = true;
 
-	if (didev = GetDInput()->GetKbdDevice()) {
-		// keyboard input: immediate key interpretation
-		hr = didev->GetDeviceState (sizeof(buffer), &buffer);
-		if ((hr == DIERR_NOTACQUIRED || hr == DIERR_INPUTLOST) && SUCCEEDED (didev->Acquire()))
-			hr = didev->GetDeviceState (sizeof(buffer), &buffer);
-		if (SUCCEEDED (hr))
-			for (i = 0; i < 256; i++)
-				simkstate[i] |= buffer[i];
-		bool consume = BroadcastImmediateKeyboardEvent (simkstate);
-		if (!skipkbd && !consume) {
-			KbdInputImmediate_System (simkstate);
-			if (bRunning) KbdInputImmediate_OnRunning (simkstate);
-		}
+    // keyboard input: immediate key interpretation
+    hr = kbdDev.Acquire();
+    if (SUCCEEDED(hr)) {
+        const auto& keysImmediate = kbdDev.GetKeysImmediate();
+        for (i = 0; i < 256; ++i) {
+            buffer[i] = keysImmediate[i] & 0xFF;
+            simkstate[i] |= buffer[i];
+        }
+    }
+    kbdDev.Unacquire();
 
-		// keyboard input: buffered key events
-		hr = didev->GetDeviceData (sizeof(DIDEVICEOBJECTDATA), dod, &dwItems, 0);
-		if ((hr == DIERR_NOTACQUIRED || hr == DIERR_INPUTLOST) && SUCCEEDED (didev->Acquire()))
-			hr = didev->GetDeviceData (sizeof(DIDEVICEOBJECTDATA), dod, &dwItems, 0);
-		if (SUCCEEDED (hr)) {
-			BroadcastBufferedKeyboardEvent (buffer, dod, dwItems);
-			if (!skipkbd) {
-				KbdInputBuffered_System (buffer, dod, dwItems);
-				if (bRunning) KbdInputBuffered_OnRunning (buffer, dod, dwItems);
-			}
-		}
-		//if (hr == DI_BUFFEROVERFLOW) MessageBeep (-1);
-	}
+    bool consume = BroadcastImmediateKeyboardEvent(simkstate);
+    if (!skipkbd && !consume) {
+        KbdInputImmediate_System (simkstate);
+        if (bRunning) KbdInputImmediate_OnRunning (simkstate);
+    }
+
+    // keyboard input: buffered key events
+    hr = kbdDev.Acquire();
+    if (SUCCEEDED(hr)) {
+        const auto& keysBuffered = kbdDev.GetKeysBuffered();
+
+        BroadcastBufferedKeyboardEvent (buffer, keysBuffered);
+        if (!skipkbd) {
+            KbdInputBuffered_System (buffer, keysBuffered);
+            if (bRunning) KbdInputBuffered_OnRunning (buffer, keysBuffered);
+        }
+    }
+    kbdDev.Unacquire();
+    //if (hr == DI_BUFFEROVERFLOW) MessageBeep (-1);
 
 	for (i = 0; i < 15; i++) ctrlTotal[i] = ctrlKeyboard[i]; // update attitude requests
 
 	// joystick input
-	DIJOYSTATE2 js;
-	if (pDI->PollJoystick (&js)) {
-		UserJoyInput_System (&js);                  // general joystick functions
-		if (bRunning) UserJoyInput_OnRunning (&js); // joystick vessel control functions
+    auto& joyDev = pDI->GetJoyDevice();
+    hr = joyDev.Acquire();
+    if (SUCCEEDED(hr)) {
+		UserJoyInput_System (joyDev);                  // general joystick functions
+		if (bRunning) UserJoyInput_OnRunning (joyDev); // joystick vessel control functions
 		for (i = 0; i < 15; i++) ctrlTotal[i] += ctrlJoystick[i]; // update thrust requests
 	}
+    joyDev.Unacquire();
 
 	g_camera->UpdateMouse();
 
@@ -2240,16 +2371,18 @@ bool Orbiter::SendKbdBuffered(DWORD key, DWORD *mod, DWORD nmod, bool onRunningO
 {
 	if (onRunningOnly && !bRunning) return false;
 
-	DIDEVICEOBJECTDATA dod;
-	dod.dwData = 0x80;
-	dod.dwOfs = key;
+    using KeyEvent = I_KbdDevice::KeyEvent;
+    using Key_EventType = I_KbdDevice::Key_EventType;
+
+    std::vector<KeyEvent> keyBuf {{Key_EventType::KeyDown, static_cast<int>(key)}};
 	char buffer[256];
 	memset (buffer, 0, 256);
+
 	for (int i = 0; i < nmod; i++)
 		buffer[mod[i]] = 0x80;
-	BroadcastBufferedKeyboardEvent (buffer, &dod, 1);
-	KbdInputBuffered_System (buffer, &dod, 1);
-	KbdInputBuffered_OnRunning (buffer, &dod, 1);
+	BroadcastBufferedKeyboardEvent (buffer, keyBuf);
+	KbdInputBuffered_System (buffer, keyBuf);
+	KbdInputBuffered_OnRunning (buffer, keyBuf);
 	return true;
 }
 
@@ -2446,12 +2579,17 @@ void Orbiter::KbdInputImmediate_OnRunning (char *kstate)
 // Desc: General user keyboard buffered key interpretation. Processes keys
 //       which are also interpreted when simulation is paused
 //-----------------------------------------------------------------------------
-void Orbiter::KbdInputBuffered_System (char *kstate, DIDEVICEOBJECTDATA *dod, DWORD n)
+void Orbiter::KbdInputBuffered_System (char *kstate, const std::vector<I_KbdDevice::KeyEvent>& keysBuffered)
 {
-	for (DWORD i = 0; i < n; i++) {
+    using Key_EventType = I_KbdDevice::Key_EventType;
+    int n = keysBuffered.size();
 
-		if (!(dod[i].dwData & 0x80)) continue; // only process key down events
-		DWORD key = dod[i].dwOfs;
+	for (int i = 0; i < n; i++) {
+
+        if (keysBuffered[i].type == Key_EventType::KeyUp) {
+            continue;
+        }
+		DWORD key = keysBuffered[i].key;
 
 		if (keymap.IsLogicalKey(key, kstate, OAPI_LKEY_Pause))                TogglePause();
 		else if (keymap.IsLogicalKey(key, kstate, OAPI_LKEY_Quicksave))            Quicksave();
@@ -2476,7 +2614,9 @@ void Orbiter::KbdInputBuffered_System (char *kstate, DIDEVICEOBJECTDATA *dod, DW
 			if (bPlayback) EndPlayback();
 			else ToggleRecorder ();
 		} else if (keymap.IsLogicalKey (key, kstate, OAPI_LKEY_Quit)) {
+            /* TODO(jec)
 			if (hRenderWnd) PostMessage (hRenderWnd, WM_CLOSE, 0, 0);
+            */
 		} else if (keymap.IsLogicalKey (key, kstate, OAPI_LKEY_SelectPrevVessel)) {
 			if (g_pfocusobj) SetFocusObject (g_pfocusobj);
 		}
@@ -2505,12 +2645,15 @@ void Orbiter::KbdInputBuffered_System (char *kstate, DIDEVICEOBJECTDATA *dod, DW
 // Name: KbdInputBuffered_OnRunning ()
 // Desc: User keyboard buffered key interpretation in running simulation
 //-----------------------------------------------------------------------------
-void Orbiter::KbdInputBuffered_OnRunning (char *kstate, DIDEVICEOBJECTDATA *dod, DWORD n)
+void Orbiter::KbdInputBuffered_OnRunning (char *kstate, const std::vector<I_KbdDevice::KeyEvent>& keysBuffered)
 {
-	for (DWORD i = 0; i < n; i++) {
+    using Key_EventType = I_KbdDevice::Key_EventType;
+    int n = keysBuffered.size();
 
-		DWORD key = dod[i].dwOfs;
-		bool bdown = (dod[i].dwData & 0x80) != 0;
+	for (int i = 0; i < n; i++) {
+
+		DWORD key = keysBuffered[i].key;
+		bool bdown = keysBuffered[i].type == Key_EventType::KeyDown;
 
 		if (g_focusobj->ConsumeBufferedKey (key, bdown, kstate)) // offer key to vessel for processing
 			continue;
@@ -2532,7 +2675,7 @@ void Orbiter::KbdInputBuffered_OnRunning (char *kstate, DIDEVICEOBJECTDATA *dod,
 
 		} else if (KEYMOD_SHIFT (kstate)) {  // Shift-key combinations (reserved for MFD control)
 
-			int id = (KEYDOWN (kstate, DIK_LSHIFT) ? 0 : 1);
+			int id = (KEYDOWN (kstate, OAPI_KEY_LSHIFT) ? 0 : 1);
 			g_pane->MFDConsumeKeyBuffered (id, key);
 
 		} else if (KEYMOD_ALT (kstate)) {    // ALT-Key combinations
@@ -2552,12 +2695,15 @@ void Orbiter::KbdInputBuffered_OnRunning (char *kstate, DIDEVICEOBJECTDATA *dod,
 // Name: UserJoyInput_System ()
 // Desc: General user joystick input (also functional when paused)
 //-----------------------------------------------------------------------------
-void Orbiter::UserJoyInput_System (DIJOYSTATE2 *js)
+void Orbiter::UserJoyInput_System (I_JoyDevice& joyDev)
 {
-	if (LOWORD (js->rgdwPOV[0]) != 0xFFFF) {
-		DWORD dir = js->rgdwPOV[0];
+    // TODO(jec):  Configurability on axes, hats, and buttons?
+    // TODO(jec):  Evaluate performance impact of repolling more often.
+
+	if ((joyDev.GetHat(0) & 0xFFFF) != 0xFFFF) {
+		DWORD dir = joyDev.GetHat(0);
 		if (g_camera->IsExternal()) {  // use the joystick's coolie hat to rotate external camera
-			if (js->rgbButtons[2]) { // shift instrument panel
+			if (joyDev.GetButton(2)) { // shift instrument panel
 				if      (dir <  5000 || dir > 31000) g_camera->Rotate (0,  td.SysDT);
 				else if (dir > 13000 && dir < 23000) g_camera->Rotate (0, -td.SysDT);
 				if      (dir >  4000 && dir < 14000) g_camera->Rotate (-td.SysDT, 0);
@@ -2569,7 +2715,7 @@ void Orbiter::UserJoyInput_System (DIJOYSTATE2 *js)
 				else if (dir > 22000 && dir < 32000) g_camera->AddPhi   (-td.SysDT);
 			}
 		} else { // internal view
-			if (js->rgbButtons[2]) { // shift instrument panel
+			if (joyDev.GetButton(2)) { // shift instrument panel
 				if      (dir <  5000 || dir > 31000) g_pane->ShiftPanel (0.0,  td.SysDT*pConfig->CfgLogicPrm.PanelScrollSpeed);
 				else if (dir > 13000 && dir < 23000) g_pane->ShiftPanel (0.0, -td.SysDT*pConfig->CfgLogicPrm.PanelScrollSpeed);
 				if      (dir >  4000 && dir < 14000) g_pane->ShiftPanel (-td.SysDT*pConfig->CfgLogicPrm.PanelScrollSpeed, 0.0);
@@ -2588,30 +2734,40 @@ void Orbiter::UserJoyInput_System (DIJOYSTATE2 *js)
 // Name: UserJoyInput_OnRunning ()
 // Desc: User joystick input query for running simulation (ship controls etc.)
 //-----------------------------------------------------------------------------
-void Orbiter::UserJoyInput_OnRunning (DIJOYSTATE2 *js)
+void Orbiter::UserJoyInput_OnRunning (I_JoyDevice& joyDevice)
 {
+    // TODO(jec):  Axis configuration??
+    int X = joyDevice.GetAxis(0);
+    int Y = joyDevice.GetAxis(1);
+    int Z = joyDevice.GetAxis(2);
+    int RZ = joyDevice.GetAxis(5);
+
+    bool btn2 = joyDevice.GetButton(2);
+
 	if (bEnableAtt) {
-		if (js->lX) {
-			if (js->rgbButtons[2]) { // emulate rudder control
-				if (js->lX > 0) ctrlJoystick[THGROUP_ATT_YAWRIGHT] =   js->lX;
-				else            ctrlJoystick[THGROUP_ATT_YAWLEFT]  =  -js->lX;
+		if (X) {
+			if (btn2) { // emulate rudder control
+				if (X > 0) ctrlJoystick[THGROUP_ATT_YAWRIGHT] =   X;
+				else            ctrlJoystick[THGROUP_ATT_YAWLEFT]  =  -X;
 			} else {                 // rotation (bank)
-				if (js->lX > 0) ctrlJoystick[THGROUP_ATT_BANKRIGHT] =  js->lX;
-				else            ctrlJoystick[THGROUP_ATT_BANKLEFT]  = -js->lX;
+				if (X > 0) ctrlJoystick[THGROUP_ATT_BANKRIGHT] =  X;
+				else            ctrlJoystick[THGROUP_ATT_BANKLEFT]  = -X;
 			}
 		}
-		if (js->lY) {                // rotation (pitch) or translation (vertical)
-			if (js->lY > 0) ctrlJoystick[THGROUP_ATT_PITCHUP]   = ctrlJoystick[THGROUP_ATT_UP]    =  js->lY;
-			else            ctrlJoystick[THGROUP_ATT_PITCHDOWN] = ctrlJoystick[THGROUP_ATT_DOWN]  = -js->lY;
+		if (Y) {                // rotation (pitch) or translation (vertical)
+			if (Y > 0) ctrlJoystick[THGROUP_ATT_PITCHUP]   = ctrlJoystick[THGROUP_ATT_UP]    =  Y;
+			else            ctrlJoystick[THGROUP_ATT_PITCHDOWN] = ctrlJoystick[THGROUP_ATT_DOWN]  = -Y;
 		}
-		if (js->lRz) {               // rotation (yaw) or translation (transversal)
-			if (js->lRz > 0) ctrlJoystick[THGROUP_ATT_YAWRIGHT] = ctrlJoystick[THGROUP_ATT_RIGHT] =  js->lRz;
-			else             ctrlJoystick[THGROUP_ATT_YAWLEFT]  = ctrlJoystick[THGROUP_ATT_LEFT]  = -js->lRz;
+		if (RZ) {               // rotation (yaw) or translation (transversal)
+			if (RZ > 0) ctrlJoystick[THGROUP_ATT_YAWRIGHT] = ctrlJoystick[THGROUP_ATT_RIGHT] =  RZ;
+			else             ctrlJoystick[THGROUP_ATT_YAWLEFT]  = ctrlJoystick[THGROUP_ATT_LEFT]  = -RZ;
 		}
 	}
 
-	if (pDI->joyprop.bThrottle) { // main thrusters via throttle control
-		long lZ4 = *(long*)(((BYTE*)js)+pDI->joyprop.ThrottleOfs) >> 3;
+    const auto& joyProps = joyDevice.GetProps();
+
+	if (joyProps.bThrottle) { // main thrusters via throttle control
+        long lZ4 = joyDevice.GetAxis(joyProps.ThrottleAxisIdx);
 		if (lZ4 != plZ4) {
 			if (ignorefirst) {
 				if (abs(lZ4-plZ4) > 10) ignorefirst = false;
@@ -2629,13 +2785,17 @@ bool Orbiter::MouseEvent (UINT event, DWORD state, DWORD x, DWORD y)
 {
 	if (g_pane->MIBar() && g_pane->MIBar()->ProcessMouse (event, state, x, y)) return true;
 	if (BroadcastMouseEvent (event, state, x, y)) return true;
+    /* TODO(jec)
 	if (event == WM_MOUSEMOVE) return false; // may be lifted later
+    */
 
 	if (bRunning) {
+        /* TODO(jec)
 		if (event == WM_LBUTTONDOWN || event == WM_RBUTTONDOWN) {
 			if (g_input && g_input->IsActive()) g_input->Close();
 			if (g_select && g_select->IsActive()) g_select->Clear (true);
 		}
+        */
 		if (g_pane->ProcessMouse_OnRunning (event, state, x, y, simkstate)) return true;
 	}
 	if (g_pane->ProcessMouse_System(event, state, x, y, simkstate)) return true;
@@ -2665,18 +2825,22 @@ bool Orbiter::BroadcastImmediateKeyboardEvent (char *kstate)
 	return consume;
 }
 
-void Orbiter::BroadcastBufferedKeyboardEvent (char *kstate, DIDEVICEOBJECTDATA *dod, DWORD n)
+void Orbiter::BroadcastBufferedKeyboardEvent (char *kstate, const std::vector<I_KbdDevice::KeyEvent>& keysBuffered)
 {
-	for (DWORD i = 0; i < n; i++) {
+    int n = keysBuffered.size();
+	for (int i = 0; i < n; i++) {
 		bool consume = false;
-		if (!(dod[i].dwData & 0x80)) continue; // only process key down events
-		DWORD key = dod[i].dwOfs;
+        if (keysBuffered[i].type == I_KbdDevice::Key_EventType::KeyUp) {
+            continue;
+        }
+        int key = keysBuffered[i].key;
 
 		for (auto it = m_Plugin.begin(); it != m_Plugin.end(); it++)
 			if (it->pModule && it->pModule->clbkProcessKeyboardBuffered(key, kstate, bRunning))
 				consume = true;
 
-		if (consume) dod[i].dwData = 0; // remove key from process queue
+        // TODO(jec):  Where does this get back to DirectInput??
+		//if (consume) key = 0; // remove key from process queue
 	}
 }
 
@@ -2689,6 +2853,7 @@ LRESULT Orbiter::MsgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	WORD kmod;
 
+    /* TODO(jec)
 	switch (uMsg) {
 
 	case WM_ACTIVATE:
@@ -2829,6 +2994,7 @@ LRESULT Orbiter::MsgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         break;
 	}
     return DefWindowProc (hWnd, uMsg, wParam, lParam);
+    */
 }
 
 //-----------------------------------------------------------------------------
@@ -2840,6 +3006,7 @@ bool Orbiter::ActivateRoughType ()
 	//if (!bSysClearType) return false; // ClearType isn't user-enabled anyway
 	if (bRoughType) return false; // active already
 
+    /* TODO(jec)
 	BOOL cleartype;
 	BOOL ok = SystemParametersInfo (SPI_GETFONTSMOOTHING, 0, &cleartype, 0);
 	if (!ok) return false; // ClearType status can't be determined
@@ -2847,6 +3014,8 @@ bool Orbiter::ActivateRoughType ()
 		bRoughType = true;
 		return true;
 	} else return false;
+    */
+    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -2858,10 +3027,12 @@ bool Orbiter::DeactivateRoughType ()
 	bool bEnforceClearType = pConfig->CfgDebugPrm.bForceReenableSmoothFont;
 	if (!bSysClearType && !bEnforceClearType) return false; // ClearType isn't user-enabled anyway
 	if (!bRoughType) return false; // not active
+    /* TODO(jec)
 	if (SystemParametersInfo (SPI_SETFONTSMOOTHING, TRUE, NULL, SPIF_SENDCHANGE)) {
 		bRoughType = false;
 		return true;
 	} else return false;
+    */
 }
 
 #ifndef INLINEGRAPHICS
@@ -2920,12 +3091,19 @@ HWND Orbiter::OpenDialogEx (HINSTANCE hInstance, int id, DLGPROC pDlg, DWORD fla
 	return (pDlgMgr ? pDlgMgr->OpenDialogEx (hInstance, id, hRenderWnd, pDlg, flag, context) : NULL);
 }
 
+HWND Orbiter::CreateChildWindow (HINSTANCE hInstance, void *context)
+{
+    return (pDlgMgr ? pDlgMgr->OpenChildWindow (hInstance, hRenderWnd, context) : nullptr);
+}
+
 HWND Orbiter::OpenHelp (const HELPCONTEXT *hcontext)
 {
 	if (pDlgMgr) {
 		DlgHelp *pHelp = pDlgMgr->EnsureEntry<DlgHelp> ();
 		HWND hHelp = pHelp->GetHwnd();
+        /* TODO(jec)
 		PostMessage (hHelp, WM_USER+1, 0, (LPARAM)hcontext);
+        */
 		return hHelp;
 	} else return NULL;
 }
@@ -2958,6 +3136,7 @@ HWND Orbiter::IsDialog (HINSTANCE hInstance, DWORD resId)
 
 INT_PTR CALLBACK BkMsgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_SIZE: {
 		RECT r;
@@ -2965,5 +3144,6 @@ INT_PTR CALLBACK BkMsgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		MoveWindow (GetDlgItem (hDlg, IDC_IMG), 0, 0, r.right, r.bottom, TRUE);
 		} return 1;
 	}
+    */
 	return 0;
 }

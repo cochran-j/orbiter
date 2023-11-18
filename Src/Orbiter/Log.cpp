@@ -3,10 +3,25 @@
 
 #define __LOG_CPP
 
+#include <chrono>
+
 #include <string.h>
 #include <fstream>
-#include <dx7\ddraw.h>
-#include <dx7\dplay.h>
+/* NOTE(jec):  This points into the git submodule with directx 7 headers. */
+/* TODO(jec):  Compatibility definitions. */
+#define STRICT
+#include <windows.h>
+#ifndef CALLBACK
+#define CALLBACK
+#endif
+/* NOTE(jec):  MSFT with implicit narrowing conversions.. HRESULT is signed. */
+/* static_cast here is implementation defined. */
+#define CO_E_NOTINITIALIZED (static_cast<HRESULT>(0x800401F0L))
+#include <ddraw.h>
+/* TODO(jec)
+#include <dx7/ddraw.h>
+#include <dx7/dplay.h>
+*/
 #include "Log.h"
 #include "Orbiter.h"
 
@@ -18,7 +33,7 @@ extern TimeData td;
 static char logname[256] = "Orbiter.log";
 static char logs[256] = "";
 static bool finelog = false;
-static DWORD t0 = 0;
+static std::chrono::steady_clock::time_point t0 {};
 
 static LogOutFunc logOut = 0;
 
@@ -27,7 +42,7 @@ void InitLog (const char *logfile, bool append)
 	strcpy (logname, logfile);
 	ofstream ofs (logname, append ? ios::app : ios::out);
 	ofs << "**** " << logname << endl;
-	t0 = timeGetTime();
+	t0 = std::chrono::steady_clock::now();
 }
 
 void SetLogOutFunc(LogOutFunc func)
@@ -51,7 +66,8 @@ void LogOut (const char *msg, ...)
 void LogOutVA(const char *format, va_list ap)
 {
 	FILE *f = fopen(logname, "a+t");
-	fprintf(f, "%010.3f: ", (timeGetTime() - t0) * 1e-3);
+	fprintf(f, "%010.3f: ",
+            std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - t0));
 	vfprintf(f, format, ap);
 	fputc('\n', f);
 	fclose(f);
@@ -67,7 +83,8 @@ void LogOutFine (const char *msg, ...)
 		va_list ap;
 		va_start (ap, msg);
 		FILE *f = fopen (logname, "a+t");
-		fprintf (f, "%010.3f: ", (timeGetTime() - t0) * 1e-3);
+		fprintf (f, "%010.3f: ", 
+                std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - t0));
 		vfprintf (f, msg, ap);
 		fputc ('\n', f);
 		fclose (f);
@@ -141,14 +158,22 @@ void LogOut_WarningVA(const char* func, const char* file, int line, const char* 
 
 void LogOut_LastError (const char *func, const char *file, int line)
 {
+    /* NOTE(jec):  This function is nearly dead. Only use in DialogWin() to
+     * diagnose a DestroyWindow() call. */
+#ifdef _WIN32
 	DWORD err = GetLastError();
 	LPTSTR errString = NULL;
 	FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_IGNORE_INSERTS,NULL,err,MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT),(LPTSTR)&errString,0,NULL);
 	LogOut_Error (func, file, line, errString);
 	if (errString) LocalFree(errString);
+#endif
 }
 
 void LogOut_DDErr (HRESULT hr, const char *func, const char *file, int line) {
+    /* NOTE(jec):  This function should be only in use on builds using the
+     * internal client.
+     */
+
 	if (hr == DD_OK) return;
 	static char errmsg[256] = ">>> ERROR: DDraw error ";
 	static char *err = errmsg+23;
@@ -281,7 +306,12 @@ void LogOut_DDErr (HRESULT hr, const char *func, const char *file, int line) {
 	LogOut ("---------------------------------------------------------------");
 }
 
+#if CONFIG_DIRECT_INPUT
 void LogOut_DIErr (HRESULT hr, const char *func, const char *file, int line) {
+    /* NOTE(jec) This function is only in use on builds building the
+     * DirectInput support.
+     */
+
 	static char errmsg[256] = ">>> ERROR: DInput error ";
 	static char *err = errmsg+24;
 	switch (hr) {
@@ -303,8 +333,11 @@ void LogOut_DIErr (HRESULT hr, const char *func, const char *file, int line) {
 	LogOut();
 	LogOut ("---------------------------------------------------------------");
 }
+#endif
 
 void LogOut_DPErr (HRESULT hr, const char *func, const char *file, int line) {
+    /* NOTE(jec): This function is dead. */
+/* TODO(jec)
 	static char errmsg[256] = ">>> ERROR: DPlay error ";
 	static char *err = errmsg+23;
 	switch (hr) {
@@ -345,6 +378,7 @@ void LogOut_DPErr (HRESULT hr, const char *func, const char *file, int line) {
 	sprintf (logs, ">>> [%s | %s | %d]", func, file, line);
 	LogOut();
 	LogOut ("---------------------------------------------------------------");
+*/
 }
 
 void LogOut_Warning(const char* func, const char* file, int line, const char* msg, ...)
@@ -389,34 +423,35 @@ void tracenew (char *fname, int line)
 // Profiler methods
 // =======================================================================
 
-static double prof_sum = 0.0;
-static double prof_scale = 0.0;
-static DWORD prof_count = 0;
-static LARGE_INTEGER prof_t0;
+/* NOTE(jec):  These are dead, but it appears you manually put them into stuff
+ * you want to profile.  Refactoring to use std::chrono::high_resolution_clock.
+ * This clock uses QueryPerformanceCounter() on MSVC.
+ */
+
+using prof_clock = std::chrono::high_resolution_clock;
+using double_prof_duration = std::chrono::duration<double, prof_clock::period>;
+using double_seconds = std::chrono::duration<double>;
+
+static double_prof_duration prof_sum {};
+static int prof_count = 0;
+static prof_clock::time_point prof_t0 {};
 
 void StartProf ()
 {
-	if (!prof_scale) {
-		LARGE_INTEGER freq;
-		QueryPerformanceFrequency (&freq);
-		double f = (double)freq.LowPart + (double)freq.HighPart * 4294967296.0;
-		prof_scale = 1e6/(double)f;
-	}
-	QueryPerformanceCounter (&prof_t0);
+    prof_t0 = prof_clock::now();
+
 }
 
 double EndProf (DWORD *count)
 {
-	LARGE_INTEGER t1;
-	QueryPerformanceCounter (&t1);
-	double f0 = (double)prof_t0.LowPart + (double)prof_t0.HighPart * 4294967296.0;
-	double f1 = (double)t1.LowPart      + (double)t1.HighPart * 4294967296.0;
-	double dt = f1-f0;
-	if (dt > 0.0) {
-		prof_sum += dt;
+    auto t1 = prof_clock::now();
+    auto dt = t1 - prof_t0;
+	if (dt.count() > 0.0) {
+		prof_sum += std::chrono::duration_cast<double_prof_duration>(dt);
 		prof_count++;
 	}
 	if (count) *count = prof_count;
-	return prof_sum*prof_scale/(double)prof_count;
+	return std::chrono::duration_cast<double_seconds>(prof_sum).count() /
+           static_cast<double>(prof_count);
 }
 

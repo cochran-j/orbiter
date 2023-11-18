@@ -6,8 +6,10 @@
 //=============================================================================
 
 #include <windows.h>
+/* TODO(jec)
 #include <commctrl.h>
 #include <io.h>
+*/
 #include "Orbiter.h"
 #include "TabAbout.h"
 #include "Util.h"
@@ -34,6 +36,7 @@ bool orbiter::AboutTab::OpenHelp ()
 
 void orbiter::AboutTab::Create ()
 {
+    /* TODO(jec)
 	hTab = CreateTab (IDD_PAGE_ABT);
 
 	SetWindowText (GetDlgItem (hTab, IDC_ABT_TXT_NAME), NAME1);
@@ -48,12 +51,14 @@ void orbiter::AboutTab::Create ()
 	SendDlgItemMessage(hTab, IDC_ABT_LBOX_COMPONENT, LB_ADDSTRING, 0,
 		(LPARAM)"XRSound module Copyright (c) Doug Beachy"
 	);
+    */
 }
 
 //-----------------------------------------------------------------------------
 
 BOOL orbiter::AboutTab::OnMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
@@ -70,6 +75,7 @@ BOOL orbiter::AboutTab::OnMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		}
 		break;
 	}
+    */
 	return FALSE;
 }
 
@@ -77,8 +83,9 @@ BOOL orbiter::AboutTab::OnMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 // Name: AboutProc()
 // Desc: Minimal message proc function for the about box
 //-----------------------------------------------------------------------------
-INT_PTR CALLBACK orbiter::AboutTab::AboutProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR orbiter::AboutTab::AboutProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		SetWindowText(GetDlgItem(hWnd, IDC_MSG),
@@ -90,6 +97,7 @@ INT_PTR CALLBACK orbiter::AboutTab::AboutProc (HWND hWnd, UINT uMsg, WPARAM wPar
 			EndDialog (hWnd, TRUE);
 		return TRUE;
 	}
+    */
     return FALSE;
 }
 

@@ -112,6 +112,9 @@ protected:
 
 // =======================================================================
 
+template <class T>
+class TileManager2;
+
 class TileLoader {
 	template<class T> friend class TileManager2;
 

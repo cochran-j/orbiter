@@ -11,6 +11,23 @@
 #include "Util.h"
 #include "Log.h"
 
+/* TODO(jec):  Compatibility definitions */
+#include <windows.h>
+constexpr UINT WM_KEYDOWN = 0x0100;
+constexpr UINT WM_CHAR = 0x0102;
+constexpr UINT VK_RETURN = 0x0D;
+constexpr UINT VK_ESCAPE = 0x1B;
+constexpr UINT VK_DOWN = 0x28;
+constexpr UINT VK_UP = 0x26;
+constexpr UINT VK_RIGHT = 0x27;
+constexpr UINT VK_LEFT = 0x25;
+constexpr UINT VK_SPACE = 0x20;
+constexpr UINT VK_BACK = 0x08;
+constexpr UINT VK_DELETE = 0x2E;
+constexpr UINT VK_HOME = 0x24;
+constexpr UINT VK_END = 0x23;
+
+
 using std::max;
 
 extern Orbiter *g_pOrbiter;
@@ -175,7 +192,9 @@ void Select::Activate ()
 	// allocate and init surface
 	surf = gc->clbkCreateSurface (surfw, surfh);
 	RefreshSurface ();
+    /* TODO(jec)
 	SetFocus (g_pOrbiter->GetRenderWnd());
+    */
 }
 
 void Select::Open (const char *_title, Callbk submenu_cbk, Callbk enter_cbk,
@@ -593,7 +612,8 @@ InputBox::InputBox (oapi::GraphicsClient *gclient, HWND hwnd, int _buflen): Inli
 	cbk_cancel = 0;
 	userdata = 0;
 	lineh  = draw.fontH;
-	cw     = g_gdires->dlgF2W;  // replace this!
+    /* TODO(jec):  Average character width of Courier New */
+	cw     = 10; //g_gdires->dlgF2W;  // replace this!
 }
 
 InputBox::~InputBox ()
@@ -752,7 +772,9 @@ int InputBox::ConsumeKey (UINT uMsg, WPARAM wParam, WORD mod)
 					Close (true);
 					return key_ok;
 				} else {
+                    /* TODO(jec)
 					MessageBeep (-1);
+                    */
 					return key_consume;
 				}
 			case VK_ESCAPE:

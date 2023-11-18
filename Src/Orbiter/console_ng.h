@@ -5,6 +5,7 @@
 #define __console_ng_h
 
 #include <windows.h>
+#include <thread>
 
 class Orbiter;
 
@@ -27,7 +28,7 @@ namespace orbiter {
 		Orbiter* m_pOrbiter;
 		HWND m_hWnd;       // console window handle
 		HWND m_hStatWnd;   // stats dialog
-		HANDLE m_hThread;  // console thread handle
+        std::thread m_hThread;  // console thread handle
 	};
 
 }

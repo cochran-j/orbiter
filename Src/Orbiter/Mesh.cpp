@@ -8,6 +8,8 @@
 #include "Log.h"
 #include "Util.h"
 
+#include <cstring>
+
 #ifdef INLINEGRAPHICS
 #include "OGraphics.h"
 #include "Texture.h"
@@ -835,9 +837,9 @@ const char* Mesh::GetName() const
 void Mesh::SetName(const char* n)
 {
 	if (n) {
-		int len = lstrlen(n) + 1;
+		int len = std::strlen(n) + 1;
 		name = new char[len];
-		strcpy_s(name, len, n);
+        std::strncpy(name, n, len);
 	}
 }
 
@@ -1032,10 +1034,10 @@ istream &operator>> (istream &is, Mesh &mesh)
 
 	for (;;) {
 		if (!is.getline (cbuf, 256)) return is;
-		if (!_strnicmp (cbuf, "GROUPS", 6)) {
+		if (caseInsensitiveStartsWith(cbuf, "GROUPS")) {
 			if (sscanf (cbuf+6, "%d", &ngrp) != 1) return is;
 			break;
-		} else if (!_strnicmp (cbuf, "STATICMESH", 10)) {
+		} else if (caseInsensitiveStartsWith(cbuf, "STATICMESH")) {
 			staticmesh = true;
 		}
 	}
@@ -1056,32 +1058,32 @@ istream &operator>> (istream &is, Mesh &mesh)
 
 		for (;;) {
 			if (!is.getline (cbuf, 256)) { term = true; break; }
-			if (!_strnicmp (cbuf, "MATERIAL", 8)) {       // read material index
+			if (caseInsensitiveStartsWith(cbuf, "MATERIAL")) {       // read material index
 				sscanf (cbuf+8, "%d", &mtrl_idx);
 				mtrl_idx--;
-			} else if (!_strnicmp (cbuf, "TEXTURE", 7)) { // read texture index
+			} else if (caseInsensitiveStartsWith(cbuf, "TEXTURE")) { // read texture index
 				sscanf (cbuf+7, "%d", &tex_idx);
 				tex_idx--;
-			} else if (!_strnicmp (cbuf, "ZBIAS", 5)) {   // read z-bias
+			} else if (caseInsensitiveStartsWith(cbuf, "ZBIAS")) {   // read z-bias
 				sscanf (cbuf+5, "%hu", &zbias);
-			} else if (!_strnicmp (cbuf, "TEXWRAP", 7)) { // read wrap flags
+			} else if (caseInsensitiveStartsWith(cbuf, "TEXWRAP")) { // read wrap flags
 				char uvstr[10] = "";
 				sscanf (cbuf+7, "%9s", uvstr);
 				if (uvstr[0] == 'U' || uvstr[1] == 'U') flag |= 0x01;
 				if (uvstr[0] == 'V' || uvstr[1] == 'V') flag |= 0x02;
-			} else if (!_strnicmp (cbuf, "NONORMAL", 8)) {
+			} else if (caseInsensitiveStartsWith(cbuf, "NONORMAL")) {
 				bnormal = false; calcnml = true;
-			} else if (!_strnicmp (cbuf, "FLAG", 4)) {
+			} else if (caseInsensitiveStartsWith(cbuf, "FLAG")) {
 				sscanf (cbuf+4, "%lx", &uflag);
-			} else if (!_strnicmp (cbuf, "FLIP", 4)) {
+			} else if (caseInsensitiveStartsWith(cbuf, "FLIP")) {
 				flipidx = true;
-			} else if (!_strnicmp (cbuf, "LABEL", 5)) {
+			} else if (caseInsensitiveStartsWith(cbuf, "LABEL")) {
 				// ignore group labels here
-			} else if (!_strnicmp (cbuf, "STATIC", 6)) {
+			} else if (caseInsensitiveStartsWith(cbuf, "STATIC")) {
 				flag |= 0x04;
-			} else if (!_strnicmp (cbuf, "DYNAMIC", 7)) {
+			} else if (caseInsensitiveStartsWith(cbuf, "DYNAMIC")) {
 				flag ^= 0x04;
-			} else if (!_strnicmp (cbuf, "GEOM", 4)) {    // read geometry
+			} else if (caseInsensitiveStartsWith(cbuf, "GEOM")) {    // read geometry
 				if (sscanf (cbuf+4, "%d%d", &nvtx, &ntri) != 2) break; // parse error - skip group
 				nidx = ntri*3;
 				vtx = new NTVERTEX[nvtx]; TRACENEW
@@ -1293,7 +1295,7 @@ const Mesh *MeshManager::LoadMesh (const char *fname, bool *firstload)
 	int i;
 	DWORDLONG crc = Str2Crc (fname);
 	for (i = 0; i < nmlist; i++) {
-		if (crc == mlist[i].crc && !_strnicmp (fname, mlist[i].fname, 32)) {
+		if (crc == mlist[i].crc && caseInsensitiveStartsWith(fname, mlist[i].fname)) {
 			if (firstload) *firstload = false;
 			return mlist[i].mesh; // found it
 		}

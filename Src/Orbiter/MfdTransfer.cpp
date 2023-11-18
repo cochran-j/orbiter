@@ -8,6 +8,7 @@
 #include "Log.h"
 #include "Select.h"
 #include "Orbiter.h"
+#include "Util.h"
 
 using namespace std;
 
@@ -595,7 +596,7 @@ bool Instrument_Transfer::SelectRef (char *str)
 bool Instrument_Transfer::SelectSrc (const char *str)
 {
 	RigidBody *obj;
-	if (!_stricmp (str, "x")) {
+	if (caseInsensitiveEquals(str, "x")) {
 		obj = vessel;
 	} else {
 		obj = (RigidBody*)g_psys->GetObj (str, true);
@@ -659,17 +660,17 @@ bool Instrument_Transfer::ReadParams (ifstream &ifs)
 	for (;;) {
 		if (!ifs.getline (cbuf, 256)) return false;
 		pc = trim_string (cbuf);
-		if (!_strnicmp (pc, "END_MFD", 7)) break;
-		if (!_strnicmp (pc, "REF", 3)) {
+		if (caseInsensitiveStartsWith(pc, "END_MFD")) break;
+		if (caseInsensitiveStartsWith(pc, "REF")) {
 			strcpy (cref, trim_string (pc+3));
-		} else if (!_strnicmp (pc, "SOURCE", 6)) {
+		} else if (caseInsensitiveStartsWith(pc, "SOURCE")) {
 			strcpy (csrc, trim_string (pc+6));
-		} else if (!_strnicmp (pc, "TARGET", 6)) {
+		} else if (caseInsensitiveStartsWith(pc, "TARGET")) {
 			strcpy (ctgt, trim_string (pc+6));
-		} else if (!_strnicmp (pc, "SIMORBIT", 8)) {
+		} else if (caseInsensitiveStartsWith(pc, "SIMORBIT")) {
 			char flag[32];
 			int res = sscanf (pc+8, "%lf%lf%s", &le, &dv, flag);
-			enable_hyp = (res == 3 && !_stricmp (flag, "SHOW"));
+			enable_hyp = (res == 3 && caseInsensitiveEquals(flag, "SHOW"));
 			xferprm = true;
 		}
 	}

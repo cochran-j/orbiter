@@ -1000,8 +1000,8 @@ bool Instrument_Surface::ReadParams (ifstream &ifs)
 	for (;;) {
 		if (!ifs.getline (cbuf, 256)) return false;
 		pc = trim_string (cbuf);
-		if (!_strnicmp (pc, "END_MFD", 7)) break;
-		if (!_strnicmp (pc, "SPDMODE", 7)) {
+		if (caseInsensitiveStartsWith(pc, "END_MFD")) break;
+		if (caseInsensitiveStartsWith(pc, "SPDMODE")) {
 			n = sscanf (pc+7, "%d", &spdmode);
 			if (spdmode <= 0 || spdmode > 4) spdmode = 1;
 		}

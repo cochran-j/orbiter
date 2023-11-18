@@ -2,7 +2,15 @@
 // Licensed under the MIT License
 
 #include "Util.h"
+/* TODO(jec)
 #include <shlobj.h>
+*/
+
+#include <filesystem>
+#include <chrono>
+#include <cctype>
+#include <algorithm>
+#include <string_view>
 
 LONGLONG NameToId (const char *name)
 {
@@ -30,6 +38,7 @@ double rand1()
 
 bool MakePath (const char *fname)
 {
+    /* TODO(jec):  Is this the correct reimplementation?
 	char cbuf[256];
 	int i, len = strlen(fname);
 	for (i = len; i > 0; i--)
@@ -43,6 +52,9 @@ bool MakePath (const char *fname)
 	strncpy_s (cbuf+len, 256-len, fname, i);
 	int res = SHCreateDirectoryEx (NULL, cbuf, NULL);
 	return res == ERROR_SUCCESS;
+    */
+
+    return std::filesystem::create_directory({fname});
 }
 
 bool iequal(const std::string& s1, const std::string& s2)
@@ -57,43 +69,64 @@ bool iequal(const std::string& s1, const std::string& s2)
 	return true;
 }
 
-static bool need_timer_setup = true;
-static LARGE_INTEGER fine_counter_freq; // high-precision tick frequency
-static LARGE_INTEGER hi_start;
+using tic_clock = std::chrono::high_resolution_clock;
+static tic_clock::time_point hi_start {};
 
 void tic()
 {
-	if (need_timer_setup) {
-		QueryPerformanceFrequency (&fine_counter_freq);
-		need_timer_setup = false;
-	}
-	QueryPerformanceCounter (&hi_start);
+    hi_start = tic_clock::now();
 }
 
 double toc()
 {
-	LARGE_INTEGER hi_end;
-	QueryPerformanceCounter (&hi_end);
-	_int64 diff = hi_end.QuadPart-hi_start.QuadPart;
-	_int64 freq = fine_counter_freq.QuadPart;
-	return (double)diff/(double)freq;
-	return 0;
+    auto hi_end = tic_clock::now();
+    return std::chrono::duration_cast<std::chrono::duration<double>>
+        (hi_end - hi_start).count(); // sec
 }
+
+/* TODO(jec):  These functions go with widget toolkit */
 
 RECT GetClientPos (HWND hWnd, HWND hChild)
 {
 	RECT r;
 	POINT p;
+    /* TODO(jec)
 	GetWindowRect (hChild, &r);
 	p.x = r.left, p.y = r.top; ScreenToClient (hWnd, &p);
 	r.left = p.x, r.top = p.y;
 	p.x = r.right, p.y = r.bottom; ScreenToClient (hWnd, &p);
 	r.right = p.x, r.bottom = p.y;
+    */
 	return r;
 }
 
 void SetClientPos (HWND hWnd, HWND hChild, RECT &r)
 {
+    /* TODO(jec)
 	MoveWindow (hChild, r.left, r.top, r.right-r.left, r.bottom-r.top, true);
+    */
+}
+
+bool caseInsensitiveEquals(const std::string_view& str1,
+                           const std::string_view& str2) {
+
+    return std::equal(str1.begin(), str1.end(),
+                      str2.begin(), str2.end(),
+                      [](char c1, char c2) {
+                          return std::tolower(static_cast<unsigned char>(c1)) ==
+                                 std::tolower(static_cast<unsigned char>(c2));
+                      });
+}
+
+bool caseInsensitiveStartsWith(const std::string_view& str,
+                               const std::string_view& start) {
+
+    return (str.size() >= start.size()) &&
+        std::equal(str.begin(), str.begin() + start.size(),
+                   start.begin(), start.end(),
+                   [](char c1, char c2) {
+                       return std::tolower(static_cast<unsigned char>(c1)) ==
+                              std::tolower(static_cast<unsigned char>(c2));
+                   });
 }
 

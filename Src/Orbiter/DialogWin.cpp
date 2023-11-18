@@ -5,17 +5,21 @@
 #include "DlgMgr.h"
 #include "OrbiterAPI.h"
 #include "Orbiter.h"
+/* TODO(jec)
 #include "Resource.h"
+*/
 #include "Log.h"
 
 #define DLG_CAPTIONBUTTON (DLG_CAPTIONCLOSE|DLG_CAPTIONHELP)
 
 extern Orbiter *g_pOrbiter;
 
+/* TODO(jec)
 static int x_sizeframe = GetSystemMetrics (SM_CXSIZEFRAME);
 static int y_sizeframe = GetSystemMetrics (SM_CYSIZEFRAME);
 static int x_fixedframe = GetSystemMetrics (SM_CXFIXEDFRAME);
 static int y_fixedframe = GetSystemMetrics (SM_CYFIXEDFRAME);
+*/
 
 DialogWin *DialogWin::dlg_create = 0;
 
@@ -64,8 +68,10 @@ DialogWin::DialogWin (HINSTANCE hInstance, HWND hWindow, HWND hParent, DWORD fla
 DialogWin::~DialogWin ()
 {
 	if (hWnd) {
+        /* TODO(jec)
 		if (!DestroyWindow(hWnd))
 			LOGOUT_LASTERR();
+        */
 	}
 }
 
@@ -79,21 +85,29 @@ HWND DialogWin::OpenWindow ()
 	if (gc) gc->clbkPreOpenPopup();
 
 	if (!hWnd) { // otherwise window exists already
+        /* TODO(jec)
 		hWnd = CreateDialogParam (hInst, MAKEINTRESOURCE(resId), hPrnt, dlgproc,
 			(LPARAM)context);
+        */
 		newwin = true;
 	}
+    /* TODO(jec)
 	SetWindowLongPtr (hWnd, DWLP_USER, (LONG_PTR)this);
+    */
 	if (newwin && pos && pos->right-pos->left) {
+        /* TODO(jec)
 		if (GetWindowLongPtr (hWnd, GWL_STYLE) & WS_SIZEBOX)
 			SetWindowPos (hWnd, NULL, pos->left, pos->top, pos->right-pos->left, pos->bottom-pos->top, SWP_NOZORDER);
 		else
 			SetWindowPos (hWnd, NULL, pos->left, pos->top, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+        */
 	}
 
 	RECT r;
+    /* TODO(jec)
 	ShowWindow (hWnd, SW_SHOWNOACTIVATE);
 	GetWindowRect (hWnd, &r);
+    */
 	psize = r.bottom - r.top;
 
 	dlg_create = 0;
@@ -109,8 +123,9 @@ void DialogWin::Update ()
 
 // ======================================================================
 
-INT_PTR CALLBACK DialogWin::DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR DialogWin::DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	BOOL res = MSG_DEFAULT;
 	switch (uMsg) {
 	case WM_INITDIALOG:
@@ -151,25 +166,32 @@ INT_PTR CALLBACK DialogWin::DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
 		break;
 	}
 	return (res != MSG_DEFAULT ? res : OrbiterDefDialogProc (hDlg, uMsg, wParam, lParam));
+    */
+    return FALSE;
 }
 
 // ======================================================================
 
 BOOL DialogWin::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 {
+    /* TODO(jec)
 	switch (id) {
 	case IDCANCEL:
 		g_pOrbiter->CloseDialog (hDlg);
 		return TRUE;
 	}
 	return MSG_DEFAULT;
+    */
+    return FALSE;
 }
 
 // ======================================================================
 
 int DialogWin::OnSize (HWND hWnd, WPARAM wParam, int w, int h)
 {
+    /* TODO(jec)
 	if (pos) GetWindowRect (hWnd, pos);
+    */
 	return 0;
 }
 
@@ -177,7 +199,9 @@ int DialogWin::OnSize (HWND hWnd, WPARAM wParam, int w, int h)
 
 int DialogWin::OnMove (HWND hWnd, int x, int y)
 {
+    /* TODO(jec)
 	if (pos) GetWindowRect (hWnd, pos);
+    */
 	return 0;
 }
 
@@ -185,7 +209,9 @@ int DialogWin::OnMove (HWND hWnd, int x, int y)
 
 void DialogWin::Message (DWORD msg, void *data)
 {
+    /* TODO(jec)
 	PostMessage (hWnd, WM_USERMESSAGE, msg, (LPARAM)data);
+    */
 }
 
 // ======================================================================
@@ -193,8 +219,11 @@ void DialogWin::Message (DWORD msg, void *data)
 void DialogWin::ToggleShrink ()
 {
 	RECT r;
+    /* TODO(jec)
 	GetWindowRect (hWnd, &r);
+    */
 	int hw = r.bottom - r.top;
+    /* TODO(jec)j
 	int h0 = GetSystemMetrics (SM_CYMIN);
 	if (hw == h0) { // restore window
 		hw = psize;
@@ -203,16 +232,20 @@ void DialogWin::ToggleShrink ()
 		psize = hw;
 		SetWindowPos (hWnd, 0, r.left, r.top, r.right-r.left, h0, SWP_SHOWWINDOW);
 	}
+    */
 }
 
 // ======================================================================
 
 DialogWin *DialogWin::GetDialogWin (HWND hDlg)
 {
+    /* TODO(jec)
 	DialogWin *dlg = (DialogWin*)GetWindowLongPtr (hDlg, DWLP_USER);
 	if (!dlg)
 		dlg = dlg_create;
 	return dlg;
+    */
+    return nullptr;
 }
 
 // ======================================================================
@@ -246,6 +279,7 @@ bool DialogWin::SetTitleButtonState (DWORD msg, DWORD state)
 {
 	for (int i = 0; i < 5; i++)
 		if (tbtn[i].DlgMsg == msg) {
+            /* TODO(jec)
 			if (tbtn[i].flag & DLG_CB_TWOSTATE) {
 				DWORD oldstate = (tbtn[i].flag & 0x80000000 ? 1:0);
 				if (oldstate != state) {
@@ -255,6 +289,7 @@ bool DialogWin::SetTitleButtonState (DWORD msg, DWORD state)
 					return true;
 				}
 			}
+            */
 			return false;
 		}
 	return false;
@@ -264,21 +299,29 @@ bool DialogWin::SetTitleButtonState (DWORD msg, DWORD state)
 
 void DialogWin::PaintTitleButtons ()
 {
+    /* TODO(jec)
 	if (!(flag & DLG_CAPTIONBUTTON)) return;
+    */
 	RECT r;
 	int x0, y0;
+    /* TODO(jec)
 	GetWindowRect (hWnd, &r);
 	if (GetWindowLongPtr (hWnd, GWL_STYLE) & WS_THICKFRAME) {
 		x0 = -y_sizeframe,  y0 = x_sizeframe;
 	} else {
 		x0 = -y_fixedframe, y0 = x_fixedframe;
 	}
+    */
 	x0 += r.right-r.left-15;
+
+    /* TODO(jec)
 	HDC hDC = GetWindowDC (hWnd);
 	HDC hDCsrc = CreateCompatibleDC (hDC);
 	HBITMAP hBmp = (HBITMAP)LoadImage (g_pOrbiter->GetInstance(), MAKEINTRESOURCE(IDB_DEFBUTTON), IMAGE_BITMAP, 15, 30, 0);
 	SelectObject (hDCsrc, hBmp);
+    */
 	int i = 0;
+    /* TODO(jec)
 	if (flag & DLG_CAPTIONCLOSE) {
 		BOOL res = BitBlt (hDC, x0, y0, 15, 15, hDCsrc, 0, 0, SRCCOPY);
 		x0 -= 16;
@@ -289,44 +332,57 @@ void DialogWin::PaintTitleButtons ()
 		x0 -= 16;
 		i++;
 	}
+    */
 	for (; i < 5; i++) {
 		if (tbtn[i].DlgMsg && tbtn[i].hBmp) {
+            /* TODO(jec)
 			SelectObject (hDCsrc, tbtn[i].hBmp);
 			BitBlt (hDC, x0, y0, 15, 15, hDCsrc, 0, tbtn[i].flag & 0x80000000 ? 15:0, SRCCOPY);
+            */
 			x0 -= 16;
 		}
 	}
+    /* TODO(jec)
 	DeleteDC (hDCsrc);
 	DeleteObject (hBmp);
 	ReleaseDC (hWnd, hDC);
+    */
 }
 
 // ======================================================================
 
 bool DialogWin::CheckTitleButtons (const POINTS &pt)
 {
+    /* TODO(jec)
 	if (!(flag & DLG_CAPTIONBUTTON)) return false;
+    */
 
 	RECT r;
+    /* TODO(jec)
 	GetWindowRect (hWnd, &r);
+    */
 	int xm = pt.x-r.left;
 	int ym = pt.y-r.top;
 	int x0, y0;
+    /* TODO(jec)
 	if (GetWindowLongPtr (hWnd, GWL_STYLE) & WS_THICKFRAME) {
 		x0 = y_sizeframe,  y0 = x_sizeframe;
 	} else {
 		x0 = y_fixedframe, y0 = x_fixedframe;
 	}
+    */
 	if (ym < y0 || ym >= y0+15) return false;
 	int nbt = (r.right-pt.x-x0)/16;
 	if (nbt >= 0 && nbt < 5 && tbtn[nbt].DlgMsg) {
 		WORD state = 0;
+        /* TODO(jec)
 		if (tbtn[nbt].flag & DLG_CB_TWOSTATE) {
 			tbtn[nbt].flag ^= 0x80000000;
 			state = (tbtn[nbt].flag & 0x80000000 ? 1:0);
 			PaintTitleButtons ();
 		}
 		PostMessage (hWnd, WM_COMMAND, MAKELONG (tbtn[nbt].DlgMsg, state), 0);
+        */
 		return true;
 	} else return false;
 }

@@ -47,7 +47,7 @@ Body::Body (double _mass, double _size)
 	size = _size;
 }
 
-Body::Body(char* fname)
+Body::Body(const char* fname)
 	: Body()
 {
 	char *cpath = g_pOrbiter->ConfigPath (fname);

@@ -9,20 +9,24 @@
 
 #include "DlgRecorder.h"
 #include "Orbiter.h"
+/* TODO(jec)
 #include "Resource.h"
 #include "Resource2.h"
+*/
 
 extern Orbiter *g_pOrbiter;
 extern Vessel *g_focusobj;
 extern HELPCONTEXT DefHelpContext;
 
+/* TODO(jec)
 static int RecItemEx[4] = {IDC_REC_GRPADVANCED, IDC_REC_WARP, IDC_REC_SYSSAMPLE, IDC_REC_RECFOCUS};
 static int RecItemStd[3] = {IDC_REC_ROLLDOWN, IDC_REC_HELP1, IDC_REC_CANCEL1};
+*/
 
 // ======================================================================
 
 DlgRecorder::DlgRecorder (HINSTANCE hInstance, HWND hParent, void *context)
-: DialogWin (hInstance, hParent, IDD_RECPLAY, 0, 0, context)
+: DialogWin (hInstance, hParent, /* TODO(jec) IDD_RECPLAY*/0, 0, 0, context)
 {
 }
 
@@ -30,13 +34,16 @@ DlgRecorder::DlgRecorder (HINSTANCE hInstance, HWND hParent, void *context)
 
 void DlgRecorder::SetupDialog (HWND hDlg)
 {
+    /* TODO(jec)
 	static int RecItem[4] = {IDC_REC_GRPRECORD, IDC_REC_SCNLABEL, IDC_REC_SCENARIO, IDC_REC_ROLLDOWN};
 	static int RecItem2[3] = {IDC_REC_SCNLABEL, IDC_REC_SCENARIO, IDC_REC_SYSSAMPLE};
 	static int PlayItem[6] = {IDC_REC_GRPREPLAY, IDC_REC_SHOWNOTES, IDC_REC_PLAYRECSPEED, IDC_REC_USECAM, IDC_REC_USEFOCUS, IDC_REC_EDITOR};
+    */
 	static const char *statestr[3] = {"Status:\nNormal", "Status:\nRecording", "Status:\nPlaying"};
 
 	int i, status = g_pOrbiter->RecorderStatus();
 
+    /* TODO(jec)
 	for (i = 0; i < 3; i++)
 		EnableWindow (GetDlgItem (hDlg, RecItem2[i]), status != 1);
 	if (status == 2) {
@@ -47,7 +54,9 @@ void DlgRecorder::SetupDialog (HWND hDlg)
 		for (i = 0; i < 4; i++) ShowWindow (GetDlgItem (hDlg, RecItem[i]), TRUE);
 		ShowWindow (GetDlgItem (hDlg, IDC_REC_ROLLDOWN), IsWindowVisible (GetDlgItem (hDlg, IDC_REC_GRPADVANCED)) ? FALSE:TRUE);
 	}
+    */
 
+    /* TODO(jec)
 	int img = (status == 0 ? IDI_REC_ICON : IDI_STOP_ICON);
 	SendDlgItemMessage (hDlg, IDC_REC_CTRL, BM_SETIMAGE, IMAGE_ICON,
 		(LPARAM)LoadImage (g_pOrbiter->GetInstance(), MAKEINTRESOURCE(img), IMAGE_ICON, 32, 32, LR_SHARED));
@@ -63,13 +72,16 @@ void DlgRecorder::SetupDialog (HWND hDlg)
 	SendDlgItemMessage (hDlg, IDC_REC_ATTHOR, BM_SETCHECK, g_pOrbiter->Cfg()->CfgRecPlayPrm.RecordAttFrame == 1 ? BST_CHECKED:BST_UNCHECKED, 0);
 	SendDlgItemMessage (hDlg, IDC_REC_POSECL, BM_SETCHECK, g_pOrbiter->Cfg()->CfgRecPlayPrm.RecordPosFrame == 0 ? BST_CHECKED:BST_UNCHECKED, 0);
 	SendDlgItemMessage (hDlg, IDC_REC_POSEQU, BM_SETCHECK, g_pOrbiter->Cfg()->CfgRecPlayPrm.RecordPosFrame == 1 ? BST_CHECKED:BST_UNCHECKED, 0);
+    */
 }
 
 // ======================================================================
 
 void DlgRecorder::GetRecordName (char *str, int maxlen) const
 {
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hWnd, IDC_REC_SCENARIO), str, maxlen);
+    */
 }
 
 // ======================================================================
@@ -77,11 +89,13 @@ void DlgRecorder::GetRecordName (char *str, int maxlen) const
 void DlgRecorder::ShowAdvancedRec (HWND hDlg)
 {
 	int i;
+    /* TODO(jec)
 	SetWindowPos (hDlg, HWND_TOP, 0, 0, RecorderDlg_w, RecorderDlg_h2, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
 	for (i = 0; i < 3; i++)
 		ShowWindow (GetDlgItem (hDlg, RecItemStd[i]), SW_HIDE);
 	for (i = 0; i < 4; i++)
 		ShowWindow (GetDlgItem (hDlg, RecItemEx[i]), SW_SHOW);
+    */
 }
 
 // ======================================================================
@@ -89,11 +103,13 @@ void DlgRecorder::ShowAdvancedRec (HWND hDlg)
 void DlgRecorder::HideAdvancedRec (HWND hDlg)
 {
 	int i;
+    /* TODO(jec)
 	SetWindowPos (hDlg, HWND_TOP, 0, 0, RecorderDlg_w, RecorderDlg_h1, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
 	for (i = 0; i < 4; i++)
 		ShowWindow (GetDlgItem (hDlg, RecItemEx[i]), SW_HIDE);
 	for (i = 0; i < 3; i++)
 		ShowWindow (GetDlgItem (hDlg, RecItemStd[i]), SW_SHOW);
+    */
 }
 
 // ======================================================================
@@ -101,18 +117,22 @@ void DlgRecorder::HideAdvancedRec (HWND hDlg)
 BOOL DlgRecorder::OnInitDialog (HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
 	RECT r1, r2;
+    /* TODO(jec)
 	GetWindowRect (hDlg, &r1);
 	GetWindowRect (GetDlgItem (hDlg, IDC_REC_ROLLDOWN), &r2);
+    */
 	RecorderDlg_w = r1.right-r1.left;
 	RecorderDlg_h2 = r1.bottom-r1.top;
 	RecorderDlg_h1 = r2.bottom-r1.top + ((r2.bottom-r2.top)*2)/3;
 	HideAdvancedRec (hDlg);
 	SetupDialog (hDlg);
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hDlg, IDC_REC_SCENARIO), g_pOrbiter->GetDefRecordName());
 	SendDlgItemMessage (hDlg, IDC_REC_ROLLDOWN, BM_SETIMAGE, IMAGE_BITMAP,
 		(LPARAM)LoadImage (hInst, MAKEINTRESOURCE(IDB_DNARROW), IMAGE_BITMAP, 0, 0, LR_SHARED|LR_LOADTRANSPARENT|LR_LOADMAP3DCOLORS));
 	SendDlgItemMessage (hDlg, IDC_REC_ROLLUP, BM_SETIMAGE, IMAGE_BITMAP,
 		(LPARAM)LoadImage (hInst, MAKEINTRESOURCE(IDB_UPARROW), IMAGE_BITMAP, 0, 0, LR_SHARED|LR_LOADTRANSPARENT|LR_LOADMAP3DCOLORS));
+    */
 
 	return TRUE;
 }
@@ -121,6 +141,7 @@ BOOL DlgRecorder::OnInitDialog (HWND hDlg, WPARAM wParam, LPARAM lParam)
 
 BOOL DlgRecorder::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 {
+    /* TODO(jec)
 	switch (id) {
 	case IDC_REC_CTRL:
 		switch (g_pOrbiter->RecorderStatus()) {
@@ -199,6 +220,7 @@ BOOL DlgRecorder::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 		g_pOrbiter->CloseDialog (hDlg);
 		break;
 	}
+    */
 	return DialogWin::OnCommand (hDlg, id, code, hControl);
 }
 

@@ -6,6 +6,8 @@
 #include "Planet.h"
 #include "Orbiter.h"
 
+#include <cstdint>
+
 using std::min;
 using std::max;
 
@@ -74,10 +76,10 @@ bool ElevationManager::TileIdx (double lat, double lng, int lvl, int *ilat, int 
 	return true;
 }
 
-INT16 *ElevationManager::LoadElevationTile (int lvl, int ilat, int ilng, double tgt_res) const
+std::int16_t *ElevationManager::LoadElevationTile (int lvl, int ilat, int ilng, double tgt_res) const
 {
-	INT16 *elev = 0;
-	INT16 ofs;
+    std::int16_t *elev = 0;
+    std::int16_t ofs;
 
 	if (mode) {
 		int i;
@@ -89,7 +91,7 @@ INT16 *ElevationManager::LoadElevationTile (int lvl, int ilat, int ilng, double 
 			sprintf (fname, "%s\\Elev\\%02d\\%06d\\%06d.elv", cbody->Name(), lvl, ilat, ilng);
 			g_pOrbiter->Cfg()->PTexPath(path, fname);
 			if (f = fopen(path, "rb")) {
-				elev = new INT16[ndat];
+				elev = new std::int16_t[ndat];
 				ELEVFILEHEADER hdr;
 				fread (&hdr, sizeof(ELEVFILEHEADER), 1, f);
 				if (hdr.hdrsize != sizeof(ELEVFILEHEADER)) {
@@ -105,13 +107,13 @@ INT16 *ElevationManager::LoadElevationTile (int lvl, int ilat, int ilng, double 
 					UINT8 *tmp = new UINT8[ndat];
 					fread (tmp, sizeof(UINT8), ndat, f);
 					for (i = 0; i < ndat; i++)
-						elev[i] = (INT16)tmp[i];
+						elev[i] = (std::int16_t)tmp[i];
 					delete []tmp;
 					tmp = NULL;
 					}
 					break;
 				case -16:
-					fread (elev, sizeof(INT16), ndat, f);
+					fread (elev, sizeof(std::int16_t), ndat, f);
 					break;
 				}
 				fclose(f);
@@ -122,7 +124,7 @@ INT16 *ElevationManager::LoadElevationTile (int lvl, int ilat, int ilng, double 
 			DWORD ndata = treeMgr[0]->ReadData(lvl, ilat, ilng, &buf);
 			if (ndata) {
 				BYTE *p = buf;
-				elev = new INT16[ndat];
+				elev = new std::int16_t[ndat];
 				ELEVFILEHEADER *phdr = (ELEVFILEHEADER*)p;
 				p += phdr->hdrsize;
 				scale  = phdr->scale;
@@ -133,11 +135,11 @@ INT16 *ElevationManager::LoadElevationTile (int lvl, int ilat, int ilng, double 
 					break;
 				case 8:
 					for (i = 0; i < ndat; i++)
-						elev[i] = (INT16)(*p++);
+						elev[i] = (std::int16_t)(*p++);
 					break;
 				case -16:
-					memcpy(elev, p, ndat*sizeof(INT16));
-					p += ndat*sizeof(INT16);
+					memcpy(elev, p, ndat*sizeof(std::int16_t));
+					p += ndat*sizeof(std::int16_t);
 					break;
 				}
 				treeMgr[0]->ReleaseData(buf);
@@ -147,10 +149,10 @@ INT16 *ElevationManager::LoadElevationTile (int lvl, int ilat, int ilng, double 
 			if (scale != tgt_res) { // rescale the data
 				double rescale = scale/tgt_res;
 				for (i = 0; i < ndat; i++)
-					elev[i] = (INT16)(elev[i]*rescale);
+					elev[i] = (std::int16_t)(elev[i]*rescale);
 			}
 			if (offset) {
-				INT16 sofs = (INT16)(offset/tgt_res);
+                std::int16_t sofs = (std::int16_t)(offset/tgt_res);
 				for (i = 0; i < ndat; i++)
 					elev[i] += sofs;
 			}
@@ -159,13 +161,13 @@ INT16 *ElevationManager::LoadElevationTile (int lvl, int ilat, int ilng, double 
 	return elev;
 }
 
-bool ElevationManager::LoadElevationTile_mod (int lvl, int ilat, int ilng, double tgt_res, INT16 *elev) const
+bool ElevationManager::LoadElevationTile_mod (int lvl, int ilat, int ilng, double tgt_res, std::int16_t *elev) const
 {
 	if (mode) {
 		int i;
 		const int ndat = elev_stride*elev_stride;
 		double rescale;
-		INT16 offset;
+        std::int16_t offset;
 		bool do_shift, do_rescale;
 		if (tilesource & 0x0001) {
 			FILE *f;
@@ -179,7 +181,7 @@ bool ElevationManager::LoadElevationTile_mod (int lvl, int ilat, int ilng, doubl
 					fseek (f, hdr.hdrsize, SEEK_SET);
 				}
 				rescale = (do_rescale = (hdr.scale != tgt_res)) ? hdr.scale/tgt_res : 1.0;
-				offset  = (do_shift   = (hdr.offset != 0.0)) ? (INT16)(hdr.offset/tgt_res) : 0;
+				offset  = (do_shift   = (hdr.offset != 0.0)) ? (std::int16_t)(hdr.offset/tgt_res) : 0;
 				switch (hdr.dtype) {
 				case 0: // overwrite the entire tile with a flat offset
 					for (i = 0; i < ndat; i++) elev[i] = offset;
@@ -190,7 +192,7 @@ bool ElevationManager::LoadElevationTile_mod (int lvl, int ilat, int ilng, doubl
 					fread (tmp, sizeof(UINT8), ndat, f);
 					for (i = 0; i < ndat; i++) {
 						if (tmp[i] != mask) {
-							elev[i] = (INT16)(do_rescale ? (INT16)(tmp[i]*rescale) : (INT16)tmp[i]);
+							elev[i] = (std::int16_t)(do_rescale ? (std::int16_t)(tmp[i]*rescale) : (std::int16_t)tmp[i]);
 							if (do_shift) elev[i] += offset;
 						}
 					}
@@ -199,13 +201,13 @@ bool ElevationManager::LoadElevationTile_mod (int lvl, int ilat, int ilng, doubl
 					}
 					break;
 				case -16: {
-					const INT16 mask = SHRT_MAX;
-					INT16 *tmp = new INT16[ndat];
-					INT16 ofs = (INT16)hdr.offset;
-					fread (tmp, sizeof(INT16), ndat, f);
+					const std::int16_t mask = SHRT_MAX;
+                    std::int16_t *tmp = new std::int16_t[ndat];
+                    std::int16_t ofs = (std::int16_t)hdr.offset;
+					fread (tmp, sizeof(std::int16_t), ndat, f);
 					for (i = 0; i < ndat; i++) {
 						if (tmp[i] != mask) {
-							elev[i] = (do_rescale ? (INT16)(tmp[i]*rescale) : tmp[i]);
+							elev[i] = (do_rescale ? (std::int16_t)(tmp[i]*rescale) : tmp[i]);
 							if (do_shift) elev[i] += offset;
 						}
 					}
@@ -225,9 +227,9 @@ bool ElevationManager::LoadElevationTile_mod (int lvl, int ilat, int ilng, doubl
 				BYTE *p = buf;
 				ELEVFILEHEADER *phdr = (ELEVFILEHEADER*)p;
 				p += phdr->hdrsize;
-				INT16 ofs = (INT16)phdr->offset;
+                std::int16_t ofs = (std::int16_t)phdr->offset;
 				rescale = (do_rescale = (phdr->scale != tgt_res)) ? phdr->scale/tgt_res : 1.0;
-				offset  = (do_shift   = (phdr->offset != 0.0)) ? (INT16)(phdr->offset/tgt_res) : 0;
+				offset  = (do_shift   = (phdr->offset != 0.0)) ? (std::int16_t)(phdr->offset/tgt_res) : 0;
 				switch (phdr->dtype) {
 				case 0:
 					for (i = 0; i < ndat; i++) elev[i] = offset;
@@ -236,17 +238,17 @@ bool ElevationManager::LoadElevationTile_mod (int lvl, int ilat, int ilng, doubl
 					const UINT8 mask = UCHAR_MAX;
 					for (i = 0; i < ndat; i++) {
 						if (p[i] != mask) {
-							elev[i] = (INT16)(do_rescale ? p[i]*rescale : p[i]);
+							elev[i] = (std::int16_t)(do_rescale ? p[i]*rescale : p[i]);
 							if (do_shift) elev[i] += offset;
 						}
 					}
 					} break;
 				case -16: {
-					const INT16 mask = SHRT_MAX;
-					INT16 *buf16 = (INT16*)p;
+					const std::int16_t mask = SHRT_MAX;
+                    std::int16_t *buf16 = (std::int16_t*)p;
 					for (i = 0; i < ndat; i++) {
 						if (buf16[i] != mask) {
-							elev[i] = (do_rescale ? (INT16)(buf16[i]*rescale) : buf16[i]);
+							elev[i] = (do_rescale ? (std::int16_t)(buf16[i]*rescale) : buf16[i]);
 							if (do_shift) elev[i] += offset;
 						}
 					}
@@ -326,12 +328,12 @@ double ElevationManager::Elevation (double lat, double lng, int reqlvl, std::vec
 		}
 
 		if (t->data) {
-			INT16 *elev_base = t->data+elev_stride+1; // strip padding
+            std::int16_t *elev_base = t->data+elev_stride+1; // strip padding
 			double latidx = (lat-t->latmin) * elev_grid/(t->latmax-t->latmin);
 			double lngidx = (lng-t->lngmin) * elev_grid/(t->lngmax-t->lngmin);
 			int lat0 = (int)latidx;
 			int lng0 = (int)lngidx;
-			INT16 *eptr = elev_base + lat0*elev_stride + lng0;
+            std::int16_t *eptr = elev_base + lat0*elev_stride + lng0;
 			if (mode == 1) { // linear interpolation
 				bool tri;
 				double w_lat = latidx-lat0;
@@ -425,7 +427,7 @@ double ElevationManager::Elevation (double lat, double lng, int reqlvl, std::vec
 	return e*elev_res;
 }
 
-void ElevationManager::ElevationGrid (int ilat, int ilng, int lvl, int pilat, int pilng, int plvl, INT16 *pelev, float *elev, double *emean) const
+void ElevationManager::ElevationGrid (int ilat, int ilng, int lvl, int pilat, int pilng, int plvl, std::int16_t *pelev, float *elev, double *emean) const
 {
 	int i, j, nmean;
 	int nlng = 2 << lvl;
@@ -448,7 +450,7 @@ void ElevationManager::ElevationGrid (int ilat, int ilng, int lvl, int pilat, in
 	bool pcelldiag = false;
 
 	float *elev_base = elev + elev_stride+1;
-	INT16 *pelev_base = pelev + elev_stride+1;
+    std::int16_t *pelev_base = pelev + elev_stride+1;
 	if (emean) {
 		*emean = 0.0;
 		nmean = 0;
@@ -462,7 +464,7 @@ void ElevationManager::ElevationGrid (int ilat, int ilng, int lvl, int pilat, in
 			double lngidx = (lng-plngmin) * elev_grid/(plngmax-plngmin);
 			int lng0 = (int)floor(lngidx);
 
-			INT16 *eptr = pelev_base + lat0*elev_stride + lng0;
+            std::int16_t *eptr = pelev_base + lat0*elev_stride + lng0;
 			if (mode == 1) { // linear interpolation
 
 				double w_lat = latidx-lat0;
@@ -530,7 +532,7 @@ void ElevationManager::ElevationGrid (int ilat, int ilng, int lvl, int pilat, in
 
 
 
-void ElevationManager::ElevationGrid(int ilat, int ilng, int lvl, int pilat, int pilng, int plvl, INT16* pelev, INT16* elev, double* emean) const
+void ElevationManager::ElevationGrid(int ilat, int ilng, int lvl, int pilat, int pilng, int plvl, std::int16_t* pelev, std::int16_t* elev, double* emean) const
 {
 	int i, j, nmean;
 	int nlng = 2 << lvl;
@@ -552,8 +554,8 @@ void ElevationManager::ElevationGrid(int ilat, int ilng, int lvl, int pilat, int
 	int plat0 = -1000, plng0 = -1000;
 	bool pcelldiag = false;
 
-	INT16* elev_base = elev + elev_stride + 1;
-	INT16* pelev_base = pelev + elev_stride + 1;
+    std::int16_t* elev_base = elev + elev_stride + 1;
+    std::int16_t* pelev_base = pelev + elev_stride + 1;
 	if (emean) {
 		*emean = 0.0;
 		nmean = 0;
@@ -567,7 +569,7 @@ void ElevationManager::ElevationGrid(int ilat, int ilng, int lvl, int pilat, int
 			double lngidx = (lng - plngmin) * elev_grid / (plngmax - plngmin);
 			int lng0 = (int)floor(lngidx);
 
-			INT16* eptr = pelev_base + lat0 * elev_stride + lng0;
+            std::int16_t* eptr = pelev_base + lat0 * elev_stride + lng0;
 			if (mode == 1) { // linear interpolation
 
 				double w_lat = latidx - lat0;
@@ -623,7 +625,7 @@ void ElevationManager::ElevationGrid(int ilat, int ilng, int lvl, int pilat, int
 			}
 			plat0 = lat0;
 			plng0 = lng0;
-			elev_base[i * elev_stride + j] = (INT16)e;
+			elev_base[i * elev_stride + j] = (std::int16_t)e;
 			if (emean && i >= 0 && j >= 0 && i <= elev_grid && j <= elev_grid) {
 				*emean += e;
 				nmean++;

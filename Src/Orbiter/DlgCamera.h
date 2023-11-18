@@ -9,7 +9,13 @@
 #define __DLGCAMERA_H
 
 #include "DialogWin.h"
+/* (jec) DEPS?
 #include "CommCtrl.h"
+*/
+// Substitute definitions for the compiler
+using LPNMHDR = void*;
+using HTREEITEM = void*;
+
 #include "Celbody.h"
 #include "Camera.h"
 

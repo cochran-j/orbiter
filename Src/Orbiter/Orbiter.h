@@ -4,16 +4,24 @@
 #ifndef ORBITER_H
 #define ORBITER_H
 
+#include <filesystem>
+
 #include "Config.h"
 #include "Input.h"
 #include "Select.h"
 #include "Keymap.h"
 #include <stdio.h>
+/* NOTE(jec):  Missing header
 #include <commctrl.h>
+*/
 #include "Mesh.h"
 #include "TimeData.h"
+#include "DllCompat.h"
 
-class DInput;
+#include <memory>
+#include <vector>
+#include <chrono>
+
 class Config;
 class State;
 class Body;
@@ -28,6 +36,7 @@ class PlaybackEditor;
 class MemStat;
 class DDEServer;
 class ImageIO;
+class ScriptInterface;
 namespace orbiter {
 	class ConsoleNG;
 	class LaunchpadDialog;
@@ -56,6 +65,7 @@ public:
 	void CloseApp (bool fast_shutdown = false);
 	int GetVersion () const;
 	HWND CreateRenderWindow (Config *pCfg, const char *scenario);
+    HWND CreateChildWindow(HINSTANCE hInstance, void* context);
 	void PreCloseSession();
 	void CloseSession ();
 	void GetRenderParameters ();
@@ -171,11 +181,6 @@ public:
 	inline void    SetFastExit (bool fexit) { bFastExit = fexit; }
 	inline bool    UseHtmlInline() { return (pConfig->CfgDebugPrm.bHtmlScnDesc == 1 || pConfig->CfgDebugPrm.bHtmlScnDesc == 2 && !bWINEenv); }
 
-	// DirectInput components
-	inline CDIFramework7 *GetDInput() const { return pDI->GetDIFrame(); }
-	inline LPDIRECTINPUTDEVICE8 GetKbdDevice() const { return pDI->GetKbdDevice(); }
-	inline LPDIRECTINPUTDEVICE8 GetJoyDevice() const { return pDI->GetJoyDevice(); }
-
 	// memory monitor
 	MemStat *memstat;
 	long simheapsize; // memory allocated during CreateRenderWindow
@@ -206,7 +211,7 @@ public:
 	bool DeactivateRoughType(); // re-enable font smoothing
 
 	// Flight recorder
-	char *FRsysname;             // system event playback name
+    std::filesystem::path FRsysname; // system event playback name
 	std::ifstream *FRsys_stream; // system event playback file
 	double frec_sys_simt;        // system event timer
 	PlaybackEditor *FReditor;    // playback editor instance
@@ -305,14 +310,15 @@ protected:
 	HRESULT UserInput ();
 	void KbdInputImmediate_System    (char *kstate);
 	void KbdInputImmediate_OnRunning (char *buffer);
-	void KbdInputBuffered_System     (char *kstate, DIDEVICEOBJECTDATA *dod, DWORD n);
-	void KbdInputBuffered_OnRunning  (char *kstate, DIDEVICEOBJECTDATA *dod, DWORD n);
-	void UserJoyInput_System (DIJOYSTATE2 *js);
-	void UserJoyInput_OnRunning (DIJOYSTATE2 *js);
+	void KbdInputBuffered_System     (char *kstate, const std::vector<I_KbdDevice::KeyEvent>& keysBuffered);
+	void KbdInputBuffered_OnRunning  (char *kstate, const std::vector<I_KbdDevice::KeyEvent>& keysBuffered);
+	void UserJoyInput_System (I_JoyDevice& joyDevice);
+	void UserJoyInput_OnRunning (I_JoyDevice& joyDevice);
+
 	bool MouseEvent (UINT event, DWORD state, DWORD x, DWORD y);
 	bool BroadcastMouseEvent (UINT event, DWORD state, DWORD x, DWORD y);
 	bool BroadcastImmediateKeyboardEvent (char *kstate);
-	void BroadcastBufferedKeyboardEvent (char *kstate, DIDEVICEOBJECTDATA *dod, DWORD n);
+	void BroadcastBufferedKeyboardEvent (char *kstate, const std::vector<I_KbdDevice::KeyEvent>& keysBuffered);
 
 	void BroadcastGlobalInit();
 
@@ -341,8 +347,10 @@ protected:
     HRESULT InitDeviceObjects ();
 	HRESULT RestoreDeviceObjects ();
     HRESULT DeleteDeviceObjects ();
+    /* DELETE(jec)
 	void InitializeGDIResources (HWND hWnd);
 	void ReleaseGDIResources ();
+    */
 
 private:
 	Config         *pConfig;
@@ -350,7 +358,7 @@ private:
 	orbiter::LaunchpadDialog *m_pLaunchpad;
 	DialogManager  *pDlgMgr;
 	orbiter::ConsoleNG* m_pConsole;    // The console window opened when Orbiter server is launched without a graphics client
-	DInput         *pDI;
+    std::unique_ptr<I_Input>         pDI;
 	HINSTANCE       hInst;         // orbiter instance handle
 	HWND            hRenderWnd;    // render window handle (NULL if no render support)
 	HWND            hBk;           // background window handle (demo mode only)
@@ -378,8 +386,8 @@ private:
 	int             cfglen;
 	char            simkstate[256];// accumulated simulated key state
 
-	DWORD           ms_prev;       // used for time step calculation
-	DWORD           ms_suspend;    // used for time-skipping within a step
+    std::chrono::steady_clock::time_point ms_prev;       // used for time step calculation
+    std::chrono::steady_clock::time_point ms_suspend;    // used for time-skipping within a step
 	bool            bActive;       // render window has focus
 	bool            bAllowInput;   // allow input processing for the next frame even if render window doesn't have focus
 	bool            bVisible;      // render window exists and is visible

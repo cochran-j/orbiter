@@ -4,6 +4,8 @@
 #ifndef __BASEOBJ_H
 #define __BASEOBJ_H
 
+#include <string>
+
 #include "D3dmath.h"
 #include "D3d7util.h"
 #include "Shadow.h"
@@ -152,9 +154,9 @@ public:
 	void RenderShadow (LPDIRECT3DDEVICE7 dev);
 	
 private:
-	bool LoadMesh (char *fname); // load mesh into local buffer
+	bool LoadMesh (std::string& fname); // load mesh into local buffer
 	DWORD specs;      // object specs as returned by GetSpecs()
-	char *fname;      // mesh file name
+    std::string fname;      // mesh file name
 	LONGLONG texid;   // overall texture
 	bool undersh;     // render mesh before shadows?
 	bool preload;     // load mesh at program start?

@@ -17,10 +17,13 @@
 #ifndef __PLANET_H
 #define __PLANET_H
 
+#include <filesystem>
+#include <string>
+
 #include "Celbody.h"
 #include "Nav.h"
 #include "GraphicsAPI.h"
-#include "VObject.h" // temporary
+#include "Vobject.h" // temporary
 
 #define FILETYPE_MARKER 1
 
@@ -69,6 +72,9 @@ typedef struct {
 
 // =======================================================================
 // Class Planet
+
+template <class T>
+class TileManager2;
 
 class Planet: public CelestialBody {
 	friend class VPlanet;
@@ -182,8 +188,13 @@ public:
 	ElevationManager *ElevMgr() const { return emgr; }
 	TileManager2<CloudTile> *CloudMgr2() const { return cmgr2; }
 
-	intptr_t FindFirst (int type, _finddata_t *fdata, char *path, char *fname);
-	intptr_t FindNext (intptr_t fh, _finddata_t *fdata, char *fname);
+	bool FindFirst (const char* extension,
+                    std::filesystem::directory_iterator& dir_it,
+                    std::string& path,
+                    std::string& fname);
+	bool FindNext (const char* extension,
+                   std::filesystem::directory_iterator& dir_it,
+                   std::string& fname);
 
 	//USERLABELSPEC const *GetUserLabel (int idx) const { return userlabel+idx; }
 	//int nUserLabel () const { return nuserlabel; }
@@ -260,7 +271,7 @@ private:
 
 	oapi::GraphicsClient::LABELLIST *labellist;
 	int nlabellist;
-	char *labelpath;
+    std::filesystem::path labelpath;
 
 	DWORD max_patch_level;
 	// resolution limit for sphere patch representation of planet's visual (<= 10)

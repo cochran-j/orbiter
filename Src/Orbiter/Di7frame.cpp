@@ -6,6 +6,8 @@
 // Desc: Class to manage the DirectInput environment objects
 // ====================================================================================
 
+#if CONFIG_DIRECT_INPUT
+
 #include "Di7frame.h"
 #include "D3d7util.h"
 #include "Log.h"
@@ -217,4 +219,7 @@ void CDIFramework7::DestroyDevices()
 	}
 	DestroyJoyDevice();
 }
+
+#endif /* CONFIG_DIRECT_INPUT */
+
 

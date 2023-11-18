@@ -1,6 +1,8 @@
 #ifndef TIMEDATA_H
 #define TIMEDATA_H
 
+#include <cstddef>
+
 //-----------------------------------------------------------------------------
 // Name: class TimeData
 // Desc: stores timing information for current time step
@@ -31,7 +33,7 @@ public:
 	void SetWarp (double warp, double delay = 0.0);
 	inline double Warp () const { return TWarp; }
 	inline bool WarpChanged () const { return bWarpChanged; }
-	inline size_t FrameCount() const { return framecount; }
+	inline std::size_t FrameCount() const { return framecount; }
 
 	double MJD(double simt) const;
 	// Convert simulation time to MJD
@@ -60,9 +62,9 @@ private:
 	double  TWarpDelay;   // warp acceleration delay
 	bool    bWarpChanged; // time acceleration changed in last step?
 	bool    bFixedStep;   // use fixed time steps?
-	size_t  framecount;   // number of frames since simulation start (including pause)
-	size_t  frame_tick;   // number of frames since last fps calculation
-	size_t  sys_tick;     // flush index for fps calculation
+    std::size_t  framecount;   // number of frames since simulation start (including pause)
+    std::size_t  frame_tick;   // number of frames since last fps calculation
+    std::size_t  sys_tick;     // flush index for fps calculation
 	double  syst_acc;     // accumulated system time for fps calculation
 	double  fps;          // current frame rate [Hz]
 };

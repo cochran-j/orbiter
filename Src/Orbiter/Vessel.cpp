@@ -22,7 +22,7 @@
 
 #include "Orbiter.h"
 #include "Vessel.h"
-#include "Supervessel.h"
+#include "SuperVessel.h"
 #include "Config.h"
 #include "Camera.h"
 #include "Pane.h"
@@ -37,6 +37,10 @@
 #include "State.h"
 #include "Util.h"
 #include "elevmgr.h"
+#include "DllCompat.h"
+
+#include <filesystem>
+#include <cstddef>
 #include <fstream>
 #include <iomanip>
 #include <stdio.h>
@@ -48,6 +52,7 @@
 #endif // INLINEGRAPHICS
 
 using namespace std;
+
 
 extern Orbiter *g_pOrbiter;
 extern Vessel *g_focusobj;
@@ -251,7 +256,7 @@ bool Vessel::OpenConfigFile (ifstream &cfgfile) const
 	if (cfgfile.good()) return true;
 	else {
 		cfgfile.clear();
-		LOGOUT_ERR_FILENOTFOUND_MSG(g_pOrbiter->ConfigPath(cbuf + 8), "No vessel class configuration file found for: %s", classname ? classname : name);
+		LOGOUT_ERR_FILENOTFOUND_MSG(g_pOrbiter->ConfigPath(cbuf + 8), "No vessel class configuration file found for: %s", classname ? classname : name.c_str());
 		//LogOut (">>> ERROR: No vessel class configuration file found for:");
 		//LOGOUT_ERR(classname ? classname : name);
 		return false;
@@ -687,7 +692,7 @@ void Vessel::ReadGenericCaps (ifstream &ifs)
 		for (;;) {
 			Vector pos, dir, rot;
 			int n, ids_step;
-			if (!ifs.getline (cbuf, 256) || !_strnicmp (cbuf, "END_DOCKLIST", 12)) break;
+			if (!ifs.getline (cbuf, 256) || caseInsensitiveStartsWith(cbuf, "END_DOCKLIST")) break;
 			n = sscanf (cbuf, "%lf%lf%lf%lf%lf%lf%lf%lf%lf%d",
 				&pos.x, &pos.y, &pos.z,
 				&dir.x, &dir.y, &dir.z,
@@ -705,7 +710,7 @@ void Vessel::ReadGenericCaps (ifstream &ifs)
 		int n;
 		bool toparent;
 		for (;;) {
-			if (!ifs.getline (cbuf, 256) || !_strnicmp (cbuf, "END_ATTACHMENT", 14)) break;
+			if (!ifs.getline (cbuf, 256) || caseInsensitiveStartsWith(cbuf, "END_ATTACHMENT")) break;
 			n = sscanf (trim_string (cbuf), "%c%lf%lf%lf%lf%lf%lf%lf%lf%lf%s",
 				&type,
 				&pos.x, &pos.y, &pos.z,
@@ -3204,11 +3209,11 @@ UINT Vessel::InsertMesh (const char *mname, UINT idx, const VECTOR3 *ofs)
 	meshlist[idx]->crc = 0;
 	for (i = 0; i < strlen(mname); i++)
 		*((BYTE*)&meshlist[idx]->crc + (i%4)) += (BYTE)mname[i];
-	mesh_crc += meshlist[idx]->crc; // encode mesh name
+	mesh_crc += reinterpret_cast<std::uintptr_t>(meshlist[idx]->crc); // encode mesh name
 	for (i = 0; i < sizeof(ofs); i++)
 		*((BYTE*)&mesh_crc + (i%4)) += *((BYTE*)&ofs+i); // encode offset
 	ScanMeshCaps();
-	BroadcastVisMsg (EVENT_VESSEL_INSMESH, idx); // notify visuals
+	BroadcastVisMsg (EVENT_VESSEL_INSMESH, reinterpret_cast<DWORD_PTR>(idx)); // notify visuals
 
 	return idx;
 }
@@ -3229,12 +3234,11 @@ UINT Vessel::InsertMesh (MESHHANDLE hMesh, UINT idx, const VECTOR3 *ofs)
 
 	meshlist[idx]->hMesh = hMesh; // pointer to preloaded mesh
 	meshlist[idx]->vismode = MESHVIS_EXTERNAL; // external view only by default
-	meshlist[idx]->crc = (DWORD_PTR)hMesh;
-	mesh_crc += meshlist[idx]->crc; // encode mesh pointer
+	meshlist[idx]->crc = (DWORD_PTR)hMesh; mesh_crc += reinterpret_cast<std::uintptr_t>(meshlist[idx]->crc); // encode mesh pointer
 	for (i = 0; i < sizeof(ofs); i++)
 		*((BYTE*)&mesh_crc + (i%4)) += *((BYTE*)&ofs+i); // encode offset
 	ScanMeshCaps();
-	BroadcastVisMsg (EVENT_VESSEL_INSMESH, idx); // notify visuals
+	BroadcastVisMsg (EVENT_VESSEL_INSMESH, reinterpret_cast<DWORD_PTR>(idx)); // notify visuals
 
 	return idx;
 }
@@ -3244,7 +3248,7 @@ bool Vessel::DelMesh (UINT idx, bool retain_anim)
 	if (idx >= nmesh) return false; // mesh index out of range
 	if (!meshlist[idx]) return false; // mesh already deleted
 	
-	BroadcastVisMsg (EVENT_VESSEL_DELMESH, idx); // notify visuals
+	BroadcastVisMsg (EVENT_VESSEL_DELMESH, reinterpret_cast<DWORD_PTR>(idx)); // notify visuals
 	//g_pOrbiter->VesselEvent (this, EVENT_VESSEL_DELMESH, (void*)idx);
 	delete meshlist[idx];
 	meshlist[idx] = 0;
@@ -3288,7 +3292,7 @@ bool Vessel::ShiftMesh (UINT idx, const VECTOR3 &ofs)
 {
 	if (idx >= nmesh || !meshlist[idx]) return false;
 	meshlist[idx]->meshofs += ofs;
-	BroadcastVisMsg (EVENT_VESSEL_MESHOFS, idx);
+	BroadcastVisMsg (EVENT_VESSEL_MESHOFS, reinterpret_cast<DWORD_PTR>(idx));
 	return true;
 }
 
@@ -3326,7 +3330,7 @@ void Vessel::SetMeshVisibilityMode (UINT meshidx, WORD mode)
 	if (meshidx < nmesh) {
 		meshlist[meshidx]->vismode = mode;
 		if (mode & MESHVIS_EXTPASS) extpassmesh = true;
-		BroadcastVisMsg (EVENT_VESSEL_MESHVISMODE, meshidx);
+		BroadcastVisMsg (EVENT_VESSEL_MESHVISMODE, reinterpret_cast<DWORD_PTR>(meshidx));
 	}
 }
 
@@ -5652,8 +5656,8 @@ UINT Vessel::CreateAnimation (double initial_state)
 	anim[nanim].defstate = initial_state;
 	anim[nanim].state    = initial_state;
 	anim[nanim].ncomp    = 0;
-	BroadcastVisMsg (EVENT_VESSEL_NEWANIM, nanim);
-	return nanim++;
+	BroadcastVisMsg (EVENT_VESSEL_NEWANIM, reinterpret_cast<DWORD_PTR>(nanim));
+	return static_cast<UINT>(nanim++);
 }
 
 ANIMATIONCOMP *Vessel::AddAnimationComponent (UINT an, double state0, double state1,
@@ -5795,7 +5799,7 @@ bool Vessel::DelAnimation (UINT an)
 
 void Vessel::ClearAnimations (bool reset)
 {
-	BroadcastVisMsg (EVENT_VESSEL_CLEARANIM, (UINT)reset); // clear animations on visuals
+	BroadcastVisMsg (EVENT_VESSEL_CLEARANIM, reinterpret_cast<DWORD_PTR>(reset)); // clear animations on visuals
 
 	for (UINT i = 0; i < nanim; i++) {
 		if (anim[i].ncomp && anim[i].comp != NULL) {
@@ -5831,7 +5835,7 @@ bool Vessel::LoadModule (ifstream &classf)
 	if (found = GetItemString (classf, "Module", cbuf)) {
 		found = RegisterModule (cbuf);
 		if (!found) {
-			DWORD code = GetLastError();
+			DWORD code = DLL::GetLastError();
 			char errbuf[256];
 			sprintf(errbuf, "Could not load vessel module: %s (code %d)", cbuf, code);
 			LOGOUT_ERR (errbuf);
@@ -5848,25 +5852,27 @@ bool Vessel::LoadModule (ifstream &classf)
 
 bool Vessel::RegisterModule (const char *dllname)
 {
-	char cbuf[256];
-	sprintf (cbuf, "Modules\\%s.dll", dllname);
-	hMod = LoadLibrary (cbuf);
+    auto dllPath = std::filesystem::path{"Modules"};
+    dllPath /= dllname;
+    dllPath += ".";
+    dllPath += DLL::DLLExt;
+	hMod = DLL::LoadDLL (dllPath.c_str());
 	if (!hMod)
 		return false;
 
 	// retrieve module version
-	int (*fversion)() = (int(*)())GetProcAddress (hMod, "GetModuleVersion");
+	int (*fversion)() = (int(*)())DLL::GetProcAddress (hMod, "GetModuleVersion");
 	modIntf.version = (fversion ? fversion() : 0);
 
-	modIntf.ovcInit = (VESSEL_Init)GetProcAddress (hMod, "ovcInit");
-	modIntf.ovcExit = (VESSEL_Exit)GetProcAddress (hMod, "ovcExit");
+	modIntf.ovcInit = (VESSEL_Init)DLL::GetProcAddress (hMod, "ovcInit");
+	modIntf.ovcExit = (VESSEL_Exit)DLL::GetProcAddress (hMod, "ovcExit");
 	return true;
 }
 
 void Vessel::ClearModule ()
 {
 	if (hMod) {
-		FreeLibrary (hMod);
+		DLL::UnloadDLL(hMod);
 		hMod = 0;
 	}
 	memset (&modIntf, 0, sizeof (modIntf));
@@ -5969,7 +5975,7 @@ bool Vessel::ParseScenario (ifstream &scn, VESSELSTATUS &vs)
 	for (;;) {
 		if (!scn.getline (cbuf, 256)) break;
 		pc = trim_string (cbuf);
-		if (!_stricmp (pc, "END")) break;
+		if (caseInsensitiveEquals(pc, "END")) break;
 		ParseScenarioLine (pc, vs);
 	}
 	return true;
@@ -5982,7 +5988,7 @@ bool Vessel::ParseScenarioEx (ifstream &scn, void *status)
 	for (;;) {
 		if (!scn.getline (cbuf, 256)) break;
 		pc = trim_string (cbuf);
-		if (!_stricmp (pc, "END")) break;
+		if (caseInsensitiveEquals(pc, "END")) break;
 		ParseScenarioLineEx (pc, status);
 	}
 	return true;

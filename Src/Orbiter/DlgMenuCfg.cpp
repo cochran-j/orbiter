@@ -11,8 +11,10 @@
 #include "Pane.h"
 #include "MenuInfoBar.h"
 #include "DlgMenuCfg.h"
+/* TODO(jec)
 #include "Resource.h"
 #include "Resource2.h"
+*/
 #include "DlgCtrl.h"
 
 extern Orbiter *g_pOrbiter;
@@ -22,7 +24,7 @@ extern HELPCONTEXT DefHelpContext;
 // ======================================================================
 
 DlgMenuCfg::DlgMenuCfg (HINSTANCE hInstance, HWND hParent, void *context)
-: DialogWin (hInstance, hParent, IDD_MENU_CONFIG, 0, 0, context)
+: DialogWin (hInstance, hParent, /* TODO(jec) IDD_MENU_CONFIG*/0, 0, 0, context)
 {
 }
 
@@ -36,6 +38,7 @@ DlgMenuCfg::~DlgMenuCfg ()
 
 BOOL DlgMenuCfg::OnInitDialog (HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_MNUCFG_SHOWMENU + g_pOrbiter->Cfg()->CfgUIPrm.MenuMode,
 		BM_SETCHECK, BST_CHECKED, 0);
 	SendDlgItemMessage (hDlg, IDC_MNUCFG_SHOWINFO + g_pOrbiter->Cfg()->CfgUIPrm.InfoMode,
@@ -60,21 +63,34 @@ BOOL DlgMenuCfg::OnInitDialog (HWND hDlg, WPARAM wParam, LPARAM lParam)
 	SendDlgItemMessage (hDlg, IDC_PAUSEINDICATOR, CB_ADDSTRING, 0, (LPARAM)"Show on pause/record/playback");
 	SendDlgItemMessage (hDlg, IDC_PAUSEINDICATOR, CB_ADDSTRING, 0, (LPARAM)"Don't show");
 	SendDlgItemMessage (hDlg, IDC_PAUSEINDICATOR, CB_SETCURSEL, g_pOrbiter->Cfg()->CfgUIPrm.PauseIndMode, 0);
+    */
 
 	GAUGEPARAM gp1 = { 0, 10, GAUGEPARAM::LEFT, GAUGEPARAM::BLACK };
+    /* TODO(jec)
 	oapiSetGaugeParams (GetDlgItem (hDlg, IDC_MNUCFG_MENUOPACITY), &gp1);
+    */
 	int scl = g_pOrbiter->Cfg()->CfgUIPrm.MenuOpacity;
+    /* TODO(jec)
 	oapiSetGaugePos (GetDlgItem (hDlg, IDC_MNUCFG_MENUOPACITY), scl);
+    */
 
 	GAUGEPARAM gp2 = { 0, 10, GAUGEPARAM::LEFT, GAUGEPARAM::BLACK };
+    /* TODO(jec)
 	oapiSetGaugeParams (GetDlgItem (hDlg, IDC_MNUCFG_INFOOPACITY), &gp2);
+    */
 	scl = g_pOrbiter->Cfg()->CfgUIPrm.InfoOpacity;
+    /* TODO(jec)
 	oapiSetGaugePos (GetDlgItem (hDlg, IDC_MNUCFG_INFOOPACITY), scl);
+    */
 
 	GAUGEPARAM gp3 = { 1, 20, GAUGEPARAM::LEFT, GAUGEPARAM::BLACK };
+    /* TODO(jec)
 	oapiSetGaugeParams (GetDlgItem (hDlg, IDC_MNUCFG_SCROLLSPEED), &gp3);
+    */
 	scl = g_pOrbiter->Cfg()->CfgUIPrm.MenuScrollspeed;
+    /* TODO(jec)
 	oapiSetGaugePos (GetDlgItem (hDlg, IDC_MNUCFG_SCROLLSPEED), scl);
+    */
 
 	return TRUE;
 }
@@ -83,6 +99,7 @@ BOOL DlgMenuCfg::OnInitDialog (HWND hDlg, WPARAM wParam, LPARAM lParam)
 
 BOOL DlgMenuCfg::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 {
+    /* TODO(jec)
 	switch (id) {
 	case IDHELP:
 		DefHelpContext.topic = (char*)"/menucfg.htm";
@@ -155,6 +172,7 @@ BOOL DlgMenuCfg::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 			}
 		}
 	}
+    */
 	return DialogWin::OnCommand (hDlg, id, code, hControl);
 }
 
@@ -162,6 +180,7 @@ BOOL DlgMenuCfg::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 
 BOOL DlgMenuCfg::OnHScroll (HWND hDlg, WORD request, WORD curpos, HWND hControl)
 {
+    /* TODO(jec)
 	switch (GetDlgCtrlID (hControl)) {
 	case IDC_MNUCFG_MENUOPACITY:
 		switch (request) {
@@ -194,5 +213,6 @@ BOOL DlgMenuCfg::OnHScroll (HWND hDlg, WORD request, WORD curpos, HWND hControl)
 		}
 		break;
 	}
+    */
 	return DialogWin::OnHScroll (hDlg, request, curpos, hControl);
 }

@@ -12,6 +12,9 @@
 #include "OGraphics.h"
 #endif // INLINEGRAPHICS
 
+/* NOTE(jec):  Compatibility definition */
+using LONG = std::int32_t;
+
 using namespace std;
 
 extern Orbiter *g_pOrbiter;
@@ -146,14 +149,18 @@ void Panel::DefineBackground (HBITMAP hBmp, DWORD flag, DWORD _ck)
 	if (!gc) return;
 
 	//HRESULT res;
+    /* TODO(jec)
 	BITMAP bm;
+    */
 
 	if (surf) gc->clbkReleaseSurface (surf);
 
 	// bitmap size
+    /* TODO(jec)
     GetObject (hBmp, sizeof(bm), &bm);
     srcW = bm.bmWidth;
 	srcH = bm.bmHeight;
+    */
 	tgtW = (int)(scale*srcW);
 	tgtH = (int)(scale*srcH);
 
@@ -361,7 +368,7 @@ void Panel::RegisterMFD (int id, const MFDSPEC &spec)
 	mfd[id].exist = true;
 }
 
-void Panel::Point2Screen (long srcX, long srcY, long &tgtX, long &tgtY) const
+void Panel::Point2Screen (long srcX, long srcY, LONG &tgtX, LONG &tgtY) const
 {
 	if (scaled) {
 		srcX = (long)(srcX*scale);
@@ -379,6 +386,12 @@ void Panel::Area2Screen (const RECT &srcR, RECT &tgtR) const
 
 bool Panel::ProcessMouse (UINT event, DWORD state, int x, int y)
 {
+    /* TODO(jec):  Compatibility definitions */
+    constexpr UINT WM_LBUTTONDOWN = 0x0201;
+    constexpr UINT WM_RBUTTONDOWN = 0x0204;
+    constexpr UINT WM_LBUTTONUP = 0x0202;
+    constexpr UINT WM_RBUTTONUP = 0x0205;
+
 	mstate = 0;
 	switch (event) {
 	case WM_LBUTTONDOWN:
@@ -425,9 +438,11 @@ void Panel::GetMouseState (int &idx, int &state, int &mx, int &my) const
 {
 	if (mstate & PANEL_MOUSE_PRESSED) {
 		POINT pt;
+        /* TODO(jec)
 		GetCursorPos (&pt);
 		if (cwnd) // need to subtract client window offset
 			ScreenToClient (cwnd, &pt);
+        */
 		pt.x -= X0, pt.y -= Y0;
 		if (scaled) pt.x = (int)(pt.x*iscale), pt.y = (int)(pt.y*iscale);
 		mousex = pt.x - area[idx_mfocus]->pos.left;

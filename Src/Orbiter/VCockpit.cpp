@@ -349,6 +349,7 @@ bool VirtualCockpit::SetClickZone_Quadrilateral (int i,
 bool VirtualCockpit::ProcessMouse (UINT event, DWORD state, int x, int y)
 {
 	mstate = 0;
+    /* TODO(jec)
 	switch (event) {
 	case WM_LBUTTONDOWN:
 		state = PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED;
@@ -363,6 +364,7 @@ bool VirtualCockpit::ProcessMouse (UINT event, DWORD state, int x, int y)
 		state = PANEL_MOUSE_RBUP;
 		break;
 	}
+    */
 	if (state & PANEL_MOUSE_DOWN) { // locate mouse event
 		idx_mfocus = -1;
 
@@ -428,9 +430,11 @@ void VirtualCockpit::GetMouseState (int &idx, int &state, Vector &xs) const
 {
 	if (mstate & PANEL_MOUSE_PRESSED) {
 		POINT pt;
+        /* TODO(jec)
 		GetCursorPos (&pt);
 		if (cwnd) // need to subtract client window offset
 			ScreenToClient (cwnd, &pt);
+        */
 
 		// calculate ray intersection with current focus area
 		Vector gdir, ldir;

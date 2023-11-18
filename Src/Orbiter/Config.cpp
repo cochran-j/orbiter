@@ -20,6 +20,7 @@
 #include "VectorMap.h"
 #include "GraphicsAPI.h"
 #include "resource.h"
+#include "Util.h"
 
 using namespace std;
 
@@ -339,13 +340,13 @@ bool GetItemString (istream &is, const char *label, char *val)
 
 	while (is.getline (cbuf, 512)) {
 		cl = trim_string(cbuf);
-		if (!_stricmp(cl, "END_PARSE")) return false;
+		if (caseInsensitiveEquals(cl, "END_PARSE")) return false;
 		
 		for (i = 0; cl[i] && cl[i] != '='; i++);
 		cv = (cl[i] ? cl+(i+1) : cl+i);
 		for (cl[i--] = '\0'; i >= 0 && (cl[i] == ' ' || cl[i] == '\t'); i--)
 			cl[i] = '\0';
-		if (!_stricmp (cl, label)) {
+		if (caseInsensitiveEquals(cl, label)) {
 			while (*cv == ' ' || *cv == '\t') cv++;
 			if (*cv) {
 				strcpy (val, cv);
@@ -387,8 +388,8 @@ bool GetItemHex (istream &is, const char *label, int &val)
 bool GetItemBool (istream &is, const char *label, bool &val)
 {
 	if (!GetItemString (is, label, g_cbuf)) return false;
-	if (!_strnicmp (g_cbuf, "true", 4)) { val = true; return true; }
-	else if (!_strnicmp (g_cbuf, "false", 5)) { val = false; return true; }
+	if (caseInsensitiveStartsWith(g_cbuf, "true")) { val = true; return true; }
+	else if (caseInsensitiveStartsWith(g_cbuf, "false")) { val = false; return true; }
 	return false;
 }
 
@@ -415,13 +416,12 @@ bool FindLine (istream &is, const char *line)
 	bool ok = false;
 	is.seekg (0); // rewind stream
 	if (is.good()) {
-		int len = strlen(line);
 		for (;;) {
 			if (!is.getline (g_cbuf, g_buflen)) {
 				if (is.eof()) break;               // EOF
 				else is.clear();                   // heal stream to continue after truncation error
 			}
-			if (!_strnicmp (g_cbuf, line, len)) {  // found string
+			if (caseInsensitiveStartsWith(g_cbuf, line)) {  // found string
 				ok = true;
 				break;
 			}
@@ -437,7 +437,7 @@ bool FindLine (istream &is, const char *line)
 int ListIndex (int listlen, char **list, char *label)
 {
 	for (int i = 0; i < listlen; i++)
-		if (!_stricmp (label, list[i])) return i;
+		if (caseInsensitiveEquals(label, list[i])) return i;
 	return -1;
 }
 
@@ -789,7 +789,7 @@ bool Config::Load(const char *fname)
 	// list of active modules
 	if (FindLine (ifs, "ACTIVE_MODULES")) {
 		char cbuf[256];
-		while (ifs.getline (cbuf, 256) && _strnicmp (cbuf, "END_MODULES", 11))
+		while (ifs.getline (cbuf, 256) && !caseInsensitiveStartsWith(cbuf, "END_MODULES"))
 			m_activeModules.push_back(std::string(trim_string(cbuf)));
 	}
 	return true;
@@ -824,10 +824,14 @@ void Config::SetDefaults ()
 
 	bEchoAll = bEchoAll_default;
 	memset (&rLaunchpad, 0, sizeof(RECT));
-
+ 
+    // TODO(jec): x-platform screen resolution
+    /*
 	RECT r;
 	GetWindowRect (GetDesktopWindow(), &r);
 	CfgDevPrm_default.WinW = r.right-r.left; CfgDevPrm_default.WinH = r.bottom-r.top;
+    */
+    CfgDevPrm_default.WinW = 1920; CfgDevPrm_default.WinH = 1080;
 	// use the screen size as the default render window size
 
 	AmbientColour = 0x0c0c0c0c;
@@ -1490,8 +1494,8 @@ bool Config::GetSize (istream& is, const char* category, size_t& val)
 bool Config::GetBool (istream &is, const char *category, bool &val)
 {
 	if (!GetString (is, category, g_cbuf)) return false;
-	if (!_strnicmp (g_cbuf, "true", 4)) { val = true; return true; }
-	else if (!_strnicmp (g_cbuf, "false", 5)) { val = false; return true; }
+	if (caseInsensitiveStartsWith (g_cbuf, "true")) { val = true; return true; }
+	else if (caseInsensitiveStartsWith (g_cbuf, "false")) { val = false; return true; }
 	return false;
 }
 
@@ -1554,6 +1558,9 @@ bool Config::GetVector (const char *category, Vector &val)
 
 // =============================================================
 
+
+/* DELETE(jec)
+
 GDIResources::GDIResources (HWND hWnd, DWORD winW, DWORD winH, const Config &config)
 {
 	TEXTMETRIC tm;
@@ -1586,3 +1593,5 @@ GDIResources::~GDIResources ()
 	DeleteObject (dlgF1i);
 	DeleteObject (dlgF2);
 }
+
+*/

@@ -14,9 +14,16 @@
 #define __OPTIONSPAGES_H
 
 #include <windows.h>
+/* TODO(jec) compatibility
 #include <CommCtrl.h>
+*/
 #include "CustomControls.h"
 #include "OrbiterAPI.h"
+
+/* TODO(jec) Compat definitions */
+using HTREEITEM = void*;
+using LPNMHDR = void*;
+
 
 class OptionsPage;
 class Config;
@@ -207,7 +214,7 @@ protected:
 	 * \param pNmHdr pointer to a NMHDR structure with details of the notification
 	 * \default Nothing, returns FALSE
 	 */
-	virtual BOOL OnNotify(HWND hPage, DWORD ctrlId, const NMHDR* pNmHdr) { return FALSE; }
+	virtual BOOL OnNotify(HWND hPage, DWORD ctrlId, LPNMHDR pNmHdr) { return FALSE; }
 
 	/**
 	 * \brief Default generic message handler.
@@ -228,7 +235,7 @@ private:
 	 * \note This function dereferences the page instance and then calls
 	 *    the specific page's DlgProc method.
 	 */
-	static INT_PTR CALLBACK s_DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	static INT_PTR s_DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	OptionsPageContainer* m_container; ///< container owning the page
 	HWND m_hPage;      ///< page window handle (0 before MakePage has been called)
@@ -284,7 +291,7 @@ public:
 protected:
 	BOOL OnInitDialog(HWND hPage, WPARAM wParam, LPARAM lParam);
 	BOOL OnCommand(HWND hPage, WORD ctrlId, WORD notification, HWND hCtrl);
-	BOOL OnNotify(HWND hPage, DWORD ctrlId, const NMHDR* pNmHdr);
+	BOOL OnNotify(HWND hPage, DWORD ctrlId, LPNMHDR pNmHdr);
 };
 
 /************************************************************************
@@ -351,7 +358,7 @@ protected:
 	BOOL OnInitDialog(HWND hPage, WPARAM wParam, LPARAM lParam);
 	BOOL OnCommand(HWND hPage, WORD ctrlId, WORD notification, HWND hCtrl);
 	BOOL OnHScroll(HWND hTab, WPARAM wParam, LPARAM lParam);
-	BOOL OnNotify(HWND hPage, DWORD ctrlId, const NMHDR* pNmHdr);
+	BOOL OnNotify(HWND hPage, DWORD ctrlId, LPNMHDR pNmHdr);
 	void PopulateStarmapList(HWND hPage);
 	void PopulateBgImageList(HWND hPage);
 	void StarPixelActivationChanged(HWND hPage);

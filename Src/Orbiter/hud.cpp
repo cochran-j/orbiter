@@ -10,6 +10,7 @@
 #include "Psys.h"
 #include "Pane.h"
 #include "Log.h"
+#include "Util.h"
 #include <fstream>
 
 using namespace std;
@@ -218,8 +219,8 @@ void HUD::Resize (bool isVC)
 			if (skp) {
 				skp->SetFont (font);
 				DWORD charsize = skp->GetCharSize();
-				fW = HIWORD(charsize);
-				fH = LOWORD(charsize);
+				fW = ((charsize & 0xFFFF0000) >> 16);
+				fH = (charsize & 0x0000FFFF);
 				gc->clbkReleaseSketchpad (skp);
 			}
 		}
@@ -1257,12 +1258,12 @@ HUD *HUD::Create (ifstream &ifs, const Pane *_pane, oapi::GraphicsClient *gc)
 	for (;hud == 0;) {
 		if (!ifs.getline (cbuf, 256)) return 0;
 		pc = trim_string (cbuf);
-		if (!_strnicmp (pc, "END_HUD", 7)) return 0;
-		if (!_strnicmp (pc, "TYPE", 4)) {
+		if (caseInsensitiveStartsWith(pc, "END_HUD")) return 0;
+		if (caseInsensitiveStartsWith(pc, "TYPE")) {
 			pc = trim_string (pc+4);
-			if (!_strnicmp (pc, "Orbit", 5)) { hud = new HUD_Orbit (_pane); TRACENEW }
-			else if (!_strnicmp (pc, "Surface", 7)) { hud = new HUD_Surface (_pane); TRACENEW }
-			else if (!_strnicmp (pc, "Docking", 7)) { hud = new HUD_Docking (_pane); TRACENEW }
+			if (caseInsensitiveStartsWith(pc, "Orbit")) { hud = new HUD_Orbit (_pane); TRACENEW }
+			else if (caseInsensitiveStartsWith(pc, "Surface")) { hud = new HUD_Surface (_pane); TRACENEW }
+			else if (caseInsensitiveStartsWith(pc, "Docking")) { hud = new HUD_Docking (_pane); TRACENEW }
 		}
 	}
 	if (hud) hud->ReadParams (ifs);
@@ -1443,7 +1444,7 @@ void HUD_Orbit::UpdateMesh (int &ivtx, int &iidx)
 
 	// Output HUD mode and reference object
 	const char *name = cntobj->Name();
-	if (_strnicmp(name, refname, 63)) {
+	if (!caseInsensitiveStartsWith(name, refname)) {
 		int i;
 		for (i = 0; name[i] && i<63; i++) refname[i] = toupper(name[i]);
 		refname[i] = '\0';
@@ -1547,10 +1548,10 @@ void HUD_Orbit::ReadParams (ifstream &ifs)
 			ifs.clear(); break;
 		}
 		pc = trim_string (cbuf);
-		if (!_strnicmp (pc, "END_HUD", 7)) break;
-		if (!_strnicmp (pc, "REF", 3)) {
+		if (caseInsensitiveStartsWith(pc, "END_HUD")) break;
+		if (caseInsensitiveStartsWith(pc, "REF")) {
 			pc = trim_string (pc+3);
-			if (!_strnicmp (pc, "AUTO", 4)) ref = 0;
+			if (caseInsensitiveStartsWith(pc, "AUTO")) ref = 0;
 			else ref = g_psys->GetObj (pc, true);
 		}
 	}
@@ -1711,7 +1712,7 @@ void HUD_Surface::UpdateMesh (int &ivtx, int &iidx)
 
 	// Output HUD mode and reference object
 	const char *name = sp->ref->Name();
-	if (_strnicmp(name, refname, 63)) {
+	if (!caseInsensitiveStartsWith(name, refname)) {
 		int i;
 		for (i = 0; name[i] && i<63; i++) refname[i] = toupper(name[i]);
 		refname[i] = '\0';
@@ -1972,7 +1973,7 @@ void HUD_Docking::UpdateMesh (int &ivtx, int &iidx)
 		NavRadioSpec *nav = self->nav+nv;
 
 		sprintf (cbuf, "NAV%d %0.2fMHz", nv+1, nav->freq);
-		if (_strnicmp(cbuf, navname, 127)) {
+		if (!caseInsensitiveStartsWith(cbuf, navname)) {
 			for (i = 0; cbuf[i] && i<127; i++) navname[i] = cbuf[i];
 			navname[i] = '\0';
 			navwidth = TexBltString (navname, 256, 230);
@@ -1996,7 +1997,7 @@ void HUD_Docking::UpdateMesh (int &ivtx, int &iidx)
 	}
 
 	// Output HUD mode and reference object
-	if (_strnicmp(refstr, refname, 127)) {
+	if (!caseInsensitiveStartsWith(refstr, refname)) {
 		for (i = 0; refstr[i] && i<127; i++) refname[i] = toupper(refstr[i]);
 		refname[i] = '\0';
 		refwidth = TexBltString (refname, 47, 230) + 47;
@@ -2021,7 +2022,7 @@ void HUD_Docking::UpdateMesh (int &ivtx, int &iidx)
 			AddMesh_DirectionMarker (ivtx, iidx, Vunit, false, &xcnt, &ycnt);
 	}
 
-	if (_strnicmp (pc,vstr1, 127)) {
+	if (!caseInsensitiveStartsWith(pc,vstr1)) {
 		strncpy (vstr1, pc, 127);
 		vstr1width = TexBltString (vstr1, 0, 217);
 	}
@@ -2033,7 +2034,7 @@ void HUD_Docking::UpdateMesh (int &ivtx, int &iidx)
 	if (!AddMesh_Marker (ivtx, iidx, prel, 2, &xcnt, &ycnt))
 		AddMesh_DirectionMarker (ivtx, iidx, prel, false, &xcnt, &ycnt);
 	sprintf (cbuf, "D[%s]%s", tgt->Name(), DistStr(len));
-	if (_strnicmp (cbuf, pstr1, 127)) {
+	if (!caseInsensitiveStartsWith(cbuf, pstr1)) {
 		strncpy (pstr1, cbuf, 127);
 		pstr1width = TexBltString (pstr1, 256, 217);
 	}
@@ -2125,11 +2126,11 @@ void HUD_Docking::ReadParams (ifstream &ifs)
 			ifs.clear(); break;
 		}
 		pc = trim_string (cbuf);
-		if (!_strnicmp (pc, "END_HUD", 7)) break;
-		if (!_strnicmp (pc, "NAV", 3)) {
+		if (caseInsensitiveStartsWith(pc, "END_HUD")) break;
+		if (caseInsensitiveStartsWith(pc, "NAV")) {
 			sscanf (pc+3, "%d", &nv);
 			bUseLegacyReference = false;
-		} else if (!_strnicmp (pc, "REF", 3)) {
+		} else if (caseInsensitiveStartsWith(pc, "REF")) {
 			char name[256];
 			int res, port;
 			res = sscanf (pc+3, "%s%d", name, &port);

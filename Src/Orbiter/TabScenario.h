@@ -9,9 +9,17 @@
 #ifndef __TABSCENARIO_H
 #define __TABSCENARIO_H
 
+#include <thread>
+
+/* TODO(jec)
 #include <CommCtrl.h>
+*/
 #include "LpadTab.h"
 #include "CustomControls.h"
+
+/* TODO(jec):  Compatibility definitions */
+using LPNMHDR = void*;
+using HIMAGELIST = void*;
 
 namespace orbiter {
 
@@ -68,7 +76,7 @@ namespace orbiter {
 		static INT_PTR CALLBACK SaveProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		// callback function for "scenario save" dialog
 
-		static DWORD WINAPI threadWatchScnList(LPVOID pPrm);
+		static void threadWatchScnList(LPVOID pPrm);
 		// thread function for scenario list watcher
 
 		SplitterCtrl splitListDesc;  // splitter control for scenario list(left) and description(right)
@@ -84,7 +92,7 @@ namespace orbiter {
 		RECT r_pause0;           // initial position of "start paused" button
 		int infoId;              // IDC_SCN_HTML or IDC_SCN_INFO, depending on which is active
 		bool htmldesc;           // Use embedded html viewer for scenario description
-		HANDLE hThread;          // scenario directory tree watcher
+        std::thread hThread;          // scenario directory tree watcher
 	};
 
 }

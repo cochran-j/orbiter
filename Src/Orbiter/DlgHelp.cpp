@@ -7,12 +7,16 @@
 
 #define STRICT 1
 
+#include <filesystem>
+
 #include "DlgHelp.h"
 #include "DlgMgr.h"
 #include "Orbiter.h"
+/* TODO(jec)
 #include "Resource.h"
 #include <htmlhelp.h>
 #include <io.h>
+*/
 
 extern Orbiter *g_pOrbiter;
 extern HELPCONTEXT DefHelpContext;
@@ -30,7 +34,7 @@ static HWND hHelpClient = NULL;
 // ======================================================================
 
 DlgHelp::DlgHelp (HINSTANCE hInstance, HWND hParent, void *context)
-: DialogWin (hInstance, hParent, IDD_HELP, (DLGPROC)DlgProc, 0, context)
+: DialogWin (hInstance, hParent, /* TODO(jec) IDD_HELP*/0, (DLGPROC)DlgProc, 0, context)
 {
 	hfooter = 0;
 	RegisterClientClass (hInstance);
@@ -47,6 +51,7 @@ DlgHelp::~DlgHelp ()
 
 void DlgHelp::RegisterClientClass (HINSTANCE hInstance)
 {
+    /* TODO(jec)
 	// Register help window class
 	WNDCLASS wndClass;
 	wndClass.style         = CS_HREDRAW | CS_VREDRAW;
@@ -60,13 +65,16 @@ void DlgHelp::RegisterClientClass (HINSTANCE hInstance)
 	wndClass.lpszMenuName  = NULL;
 	wndClass.lpszClassName = "OrbiterHelp";
 	RegisterClass (&wndClass);
+    */
 }
 
 // ======================================================================
 
 void DlgHelp::UnregisterClientClass (HINSTANCE hInstance)
 {
+    /* TODO(jec)
 	UnregisterClass ("OrbiterHelp", hInstance);
+    */
 }
 
 // ======================================================================
@@ -77,7 +85,7 @@ void DlgHelp::SetScenarioHelp (const char *_helpf)
 		char cbuf[256];
 		strcpy (cbuf, _helpf);
 		sprintf (helpf, "html/Scenarios/%s.chm", strtok (cbuf, ","));
-		if (_access(helpf,0) == 0) {
+		if (std::filesystem::exists(helpf)) {
 			sprintf (deftopic, "%s::/%s.htm", helpf, strtok (NULL, ","));
 			pTopic = 0;
 			bScnHelp = true;
@@ -109,6 +117,7 @@ void DlgHelp::SetVesselHelp (const char *_helpf)
 
 void DlgHelp::InitHelp (HWND hWnd, HELPCONTEXT *hcontext)
 {
+    /* TODO(jec)
 	HH_WINTYPE hhwt;
 	memset (&hhwt, 0, sizeof(hhwt));
 	hhwt.cbStruct = sizeof (hhwt);
@@ -158,6 +167,7 @@ void DlgHelp::InitHelp (HWND hWnd, HELPCONTEXT *hcontext)
 	hhwt.rcMinSize.bottom = 0;
 
 	HtmlHelp (hWnd, NULL, HH_SET_WIN_TYPE, (DWORD_PTR)&hhwt);
+    */
 }
 
 // ======================================================================
@@ -165,6 +175,7 @@ void DlgHelp::InitHelp (HWND hWnd, HELPCONTEXT *hcontext)
 BOOL DlgHelp::OnInitdialog (HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
 	RECT r, rh;
+    /* TODO(jec)
 	GetClientRect (hWnd, &r);
 	dlgw = r.right, dlgh = r.bottom;
 	GetWindowRect (GetDlgItem (hWnd, IDC_CUSTOM1), &rh);
@@ -172,6 +183,7 @@ BOOL DlgHelp::OnInitdialog (HWND hWnd, WPARAM wParam, LPARAM lParam)
 	GetWindowRect (GetDlgItem (hWnd, IDCANCEL), &rh);
 	pClose.x = rh.left, pClose.y = rh.top;
 	ScreenToClient (hWnd, &pClose);
+    */
 
 	return OnRequest (hWnd, wParam, lParam);
 }
@@ -180,7 +192,9 @@ BOOL DlgHelp::OnInitdialog (HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 BOOL DlgHelp::OnRequest (HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_CUSTOM1, WM_USER, wParam, lParam);
+    */
 	return TRUE;
 }
 
@@ -189,17 +203,20 @@ BOOL DlgHelp::OnRequest (HWND hWnd, WPARAM wParam, LPARAM lParam)
 BOOL DlgHelp::OnSize (HWND hWnd, WPARAM wParam, int w, int h)
 {
 	RECT r;
+    /* TODO(jec)
 	GetClientRect (hWnd, &r);
 	int dx = r.right - dlgw, dy = r.bottom - dlgh;
 	SetWindowPos (GetDlgItem (hWnd, IDC_CUSTOM1), HWND_TOP, 0, 0, r.right, r.bottom-hfooter, SWP_SHOWWINDOW);
 	SetWindowPos (GetDlgItem (hWnd, IDCANCEL), HWND_TOP, pClose.x+dx, pClose.y+dy, 0, 0, SWP_NOSIZE);
+    */
 	return DialogWin::OnSize (hWnd, wParam, w, h);
 }
 
 // ======================================================================
 
-INT_PTR CALLBACK DlgHelp::DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR DlgHelp::DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		return ((DlgHelp*)GetDialogWin (hDlg))->OnInitdialog (hDlg, wParam, lParam);
@@ -219,15 +236,17 @@ INT_PTR CALLBACK DlgHelp::DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 		}
 		break;
 	}
+    */
 	return OrbiterDefDialogProc (hDlg, uMsg, wParam, lParam);
 }
 
 // ======================================================================
 
-LRESULT FAR PASCAL DlgHelp::ClientProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT DlgHelp::ClientProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	RECT r;
 
+    /* TODO(jec)
 	switch (msg) {
 	case WM_CREATE:
 		//InitHelp (hwnd);
@@ -263,5 +282,7 @@ LRESULT FAR PASCAL DlgHelp::ClientProc (HWND hwnd, UINT msg, WPARAM wParam, LPAR
 		return TRUE;
 	}
 	return DefWindowProc (hwnd, msg, wParam, lParam);
+    */
+    return FALSE;
 }
 

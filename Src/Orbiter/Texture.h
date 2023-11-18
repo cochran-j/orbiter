@@ -4,6 +4,8 @@
 #ifndef __TEXTURE_H
 #define __TEXTURE_H
 
+#include <cstdint>
+
 #define STRICT 1
 #include <windows.h>
 #include <d3d.h>
@@ -13,7 +15,7 @@
 
 struct RAWDDS {
 	DDSURFACEDESC2 ddsd;
-	LPBYTE data;
+    std::uint8_t* data;
 };
 
 // =======================================================================

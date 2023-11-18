@@ -22,7 +22,7 @@ namespace orbiter {
 
 		BOOL OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam);
 
-		void OnGraphicsClientLoaded(oapi::GraphicsClient* gc, const PSTR moduleName);
+		void OnGraphicsClientLoaded(oapi::GraphicsClient* gc, const char* moduleName);
 
 		void SetConfig(Config* cfg);
 

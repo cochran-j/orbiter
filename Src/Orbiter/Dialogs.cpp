@@ -8,14 +8,18 @@
 
 #define STRICT 1
 #define OEMRESOURCE
+/* TODO(jec)
 #include <io.h>
+*/
 #include "Orbiter.h"
 #include "Vessel.h"
 #include "Psys.h"
 #include "Camera.h"
 #include "Pane.h"
 #include "Nav.h"
+/* TODO(jec)
 #include "Resource.h"
+*/
 #include "Dialogs.h"
 #include "DlgMgr.h" // to be removed
 
@@ -34,8 +38,10 @@ void Navaid_BuildNavList (HWND hDlg)
 	char cbuf[256];
 	double lng, lat;
 
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hDlg, IDC_INFO_TEXT), "");
 	GetWindowText (GetDlgItem (hDlg, IDC_INFO_NAME), cbuf, 256);
+    */
 	Planet *p = g_psys->GetPlanet (cbuf[0] == ' ' ? cbuf+5:cbuf);
 	if (p && p->nNav()) {
 		for (DWORD n = 0; n < p->nNav(); n++) {
@@ -53,8 +59,11 @@ void Navaid_BuildNavList (HWND hDlg)
 				);
 				} break;
 			}
-			if (cbuf[0])
+			if (cbuf[0]) {
+                /* TODO(jec)
 				SendDlgItemMessage (hDlg, IDC_INFO_TEXT, EM_REPLACESEL, FALSE, (LPARAM)cbuf);
+                */
+            }
 		}
 	}
 }
@@ -64,12 +73,16 @@ void Navaid_BuildPlanetList (HWND hDlg)
 	char cbuf[256];
 	const Planet *p;
 
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_INFO_NAME, CB_RESETCONTENT, 0, 0);
+    */
 	for (int i = 0; i < g_psys->nPlanet(); i++) {
 		p = g_psys->GetPlanet(i);
 		if (p->isMoon()) strcpy (cbuf, "     ");
 		strcpy (cbuf + (p->isMoon()?5:0), p->Name());
+        /* TODO(jec)
 		SendDlgItemMessage (hDlg, IDC_INFO_NAME, CB_ADDSTRING, 0, (LPARAM)cbuf);
+        */
 	}
 
 	// select a default planet from the list
@@ -77,17 +90,22 @@ void Navaid_BuildPlanetList (HWND hDlg)
 	if (p = g_focusobj->ProxyPlanet()) {
 		if (p->isMoon()) strcpy (cbuf, "     ");
 		strcpy (cbuf + (p->isMoon()?5:0), p->Name());
+        /* TODO(jec)
 		idx = SendDlgItemMessage (hDlg, IDC_INFO_NAME, CB_FINDSTRINGEXACT, 0, (LPARAM)cbuf);
+        */
 		if (idx == CB_ERR) idx = 0;
 	}
+    /* TODO(jec)
 	if (SendDlgItemMessage (hDlg, IDC_INFO_NAME, CB_SETCURSEL, idx, 0) != CB_ERR)
 		Navaid_BuildNavList (hDlg);
+    */
 }
 
-INT_PTR CALLBACK Navaid_DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR Navaid_DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static DWORD ts[4] = {32, 68, 110, 143};
 
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		Navaid_BuildPlanetList (hDlg);
@@ -105,6 +123,7 @@ INT_PTR CALLBACK Navaid_DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		}
 		break;
 	}
+    */
 	return OrbiterDefDialogProc (hDlg, uMsg, wParam, lParam);
 }
 #endif
@@ -113,8 +132,9 @@ INT_PTR CALLBACK Navaid_DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 // "Recorder/player" dialog
 // ======================================================================
 
-INT_PTR CALLBACK FRecorderMsg_DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR FRecorderMsg_DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
@@ -127,6 +147,7 @@ INT_PTR CALLBACK FRecorderMsg_DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 		}
 		break;
 	}
+    */
 	return OrbiterDefDialogProc (hDlg, uMsg, wParam, lParam);
 }
 
@@ -144,7 +165,9 @@ void CBodySelectComboBox::BuildListFromNode (HWND hDlg, int resid, const Celesti
 {
 	if (!node) node = g_camera->ProxyPlanet();
 
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, resid, CB_RESETCONTENT, 0, 0);
+    */
 
 	char path[256] = "", cbuf[256];
 	int i, len;
@@ -160,24 +183,32 @@ void CBodySelectComboBox::BuildListFromNode (HWND hDlg, int resid, const Celesti
 			strcat (path, pathsep);
 			strcat (path, cbuf);
 		}
+        /* TODO(jec)
 		SendDlgItemMessage (hDlg, resid, CB_ADDSTRING, 0, (LPARAM)path);
+        */
 		strcat (path, pathsep);
 	}
 
 	// add node itself
 	strcat (path, node->Name());
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, resid, CB_ADDSTRING, 0, (LPARAM)path);
+    */
 	strcat (path, pathsep);
 	len = strlen (path);
 
 	// add child nodes, if exist
 	for (i = 0; i < node->nSecondary(); i++) {
 		strcpy (path+len, node->Secondary(i)->Name());
+        /* TODO(jec)
 		SendDlgItemMessage (hDlg, resid, CB_ADDSTRING, 0, (LPARAM)path);
+        */
 	}
 
 	// select node
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, resid, CB_SETCURSEL, parent ? 1:0, 0);
+    */
 }
 
 CelestialBody *CBodySelectComboBox::OnSelectionChanged (HWND hDlg, int resid)
@@ -185,7 +216,9 @@ CelestialBody *CBodySelectComboBox::OnSelectionChanged (HWND hDlg, int resid)
 	char cbuf[256], *c;
 	int i;
 
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hDlg, resid), cbuf, 256);
+    */
 	c = cbuf;
 	for (i = strlen (cbuf)-1; i; i--)
 		if (cbuf[i] == pathsep[1]) { c = cbuf+i+2; break; }

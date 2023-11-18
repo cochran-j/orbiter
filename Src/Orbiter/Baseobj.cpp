@@ -1,10 +1,18 @@
 // Copyright (c) Martin Schweiger
 // Licensed under the MIT License
 
+/* NOTE(jec):  Compatibility definition */
+#ifndef CALLBACK
+#define CALLBACK
+#endif
+
 #include <d3d.h>
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
+
+#include <cstdio>
+
 #include "Orbiter.h"
 #include "Config.h"
 #include "Planet.h"
@@ -49,37 +57,37 @@ BaseObject *BaseObject::Create (const Base *_base, istream &is)
 		if (!is.getline (cbuf, 256)) return 0;
 		trim_string (cbuf);
 		if ((tok = strtok (cbuf, " \t")) == NULL) continue;
-		if      (!_stricmp (tok, "END_OBJECTLIST"))
+		if      (caseInsensitiveEquals(tok, "END_OBJECTLIST"))
 			return 0;
-		else if (!_stricmp (tok, "MESH")) {
+		else if (caseInsensitiveEquals(tok, "MESH")) {
 			bo = new MeshObject (_base); TRACENEW
-		} else if (!_stricmp (tok, "BLOCK")) {
+		} else if (caseInsensitiveEquals(tok, "BLOCK")) {
 			bo = new Block (_base); TRACENEW
-		} else if (!_stricmp (tok, "HANGAR")) {
+		} else if (caseInsensitiveEquals(tok, "HANGAR")) {
 			bo = new Hangar (_base); TRACENEW
-		} else if (!_stricmp (tok, "HANGAR2")) {
+		} else if (caseInsensitiveEquals(tok, "HANGAR2")) {
 			bo = new Hangar2 (_base); TRACENEW
-		} else if (!_stricmp (tok, "HANGAR3")) {
+		} else if (caseInsensitiveEquals(tok, "HANGAR3")) {
 			bo = new Hangar3 (_base); TRACENEW
-		} else if (!_stricmp (tok, "TANK")) {
+		} else if (caseInsensitiveEquals(tok, "TANK")) {
 			bo = new Tank (_base); TRACENEW
-		} else if (!_stricmp (tok, "LPAD1")) {
+		} else if (caseInsensitiveEquals(tok, "LPAD1")) {
 			bo = new Lpad01 (_base); TRACENEW
-		} else if (!_stricmp (tok, "LPAD2")) {
+		} else if (caseInsensitiveEquals(tok, "LPAD2")) {
 			bo = new Lpad02 (_base); TRACENEW
-		} else if (!_stricmp (tok, "LPAD2A")) {
+		} else if (caseInsensitiveEquals(tok, "LPAD2A")) {
 			bo = new Lpad02a (_base); TRACENEW
-		} else if (!_stricmp (tok, "RUNWAY")) {
+		} else if (caseInsensitiveEquals(tok, "RUNWAY")) {
 			bo = new Runway (_base); TRACENEW
-		} else if (!_stricmp (tok, "RUNWAYLIGHTS")) {
+		} else if (caseInsensitiveEquals(tok, "RUNWAYLIGHTS")) {
 			bo = new RunwayLights (_base); TRACENEW
-		} else if (!_stricmp (tok, "BEACONARRAY")) {
+		} else if (caseInsensitiveEquals(tok, "BEACONARRAY")) {
 			bo = new BeaconArray (_base); TRACENEW
-		} else if (!_stricmp (tok, "TRAIN1")) {
+		} else if (caseInsensitiveEquals(tok, "TRAIN1")) {
 			bo = new Train1 (_base); TRACENEW
-		} else if (!_stricmp (tok, "TRAIN2")) {
+		} else if (caseInsensitiveEquals(tok, "TRAIN2")) {
 			bo = new Train2 (_base); TRACENEW
-		} else if (!_stricmp (tok, "SOLARPLANT")) {
+		} else if (caseInsensitiveEquals(tok, "SOLARPLANT")) {
 			bo = new SolarPlant (_base); TRACENEW
 		} else {
 			LOGOUT ("BaseObject: Parse error");
@@ -108,12 +116,12 @@ int BaseObject::Read (istream &is)
 			continue; // empty line
 		sscanf (cp, "%s", label);
 		value = trim_string(cp+strlen(label));
-		if (!_stricmp (label, "POS")) {
+		if (caseInsensitiveEquals(label, "POS")) {
 			if (sscanf (value, "%lf%lf%lf", &relpos.x, &relpos.y, &relpos.z) != 3) {
 				ParseError("POS: expected 3 scalar values");
 				res = 2;
 			}
-		} else if (!_stricmp (label, "SCALE")) {
+		} else if (caseInsensitiveEquals(label, "SCALE")) {
 			int nv = sscanf (value, "%lf%lf%lf", &scale.x, &scale.y, &scale.z);
 			if (nv < 3) {
 				if (nv == 1) {
@@ -123,7 +131,7 @@ int BaseObject::Read (istream &is)
 					res = 2;
 				}
 			}
-		} else if (!_stricmp (label, "ROT")) {
+		} else if (caseInsensitiveEquals(label, "ROT")) {
 			if (sscanf (value, "%lf", &rot) != 1) {
 				ParseError("ROT: expected a scalar value");
 				res = 2;
@@ -134,7 +142,7 @@ int BaseObject::Read (istream &is)
 			r = ParseLine (label, value);
 			if (!res) res = r;
 		}
-	} while (_stricmp (label, "END"));
+	} while (!caseInsensitiveEquals(label, "END"));
 	return res;
 }
 
@@ -183,7 +191,7 @@ void BaseObject::MapToAltitude (NTVERTEX *vtx, int nvtx)
 void BaseObject::ParseError (const char *msg) const
 {
 	char errmsg[256];
-	_snprintf (errmsg, 255, "Parse error from base definition file for %s: %s", base->Name(), msg);
+    std::snprintf (errmsg, 255, "Parse error from base definition file for %s: %s", base->Name(), msg);
 	LOGOUT_ERR(errmsg);
 }
 
@@ -194,7 +202,7 @@ MeshObject::MeshObject (const Base *_base): BaseObject (_base)
 {
 	specs = OBJSPEC_EXPORTVERTEX | OBJSPEC_RENDERSHADOW;
 	texid = 0;
-	fname = 0;
+	fname = "";
 	ownmat = false;
 	undersh = false;
 	preload = false;
@@ -204,32 +212,31 @@ MeshObject::MeshObject (const Base *_base): BaseObject (_base)
 
 MeshObject::~MeshObject ()
 {
-	if (fname) free (fname);
 	if (mesh) delete mesh;
 }
 
 int MeshObject::ParseLine (const char *label, const char *value)
 {
 	int res = 0;
-	if (!_stricmp (label, "FILE")) {
-		fname = _strdup (value);
-	} else if (!_stricmp (label, "WRAPTOSURFACE")) {
+	if (caseInsensitiveEquals(label, "FILE")) {
+		fname = value;
+	} else if (caseInsensitiveEquals(label, "WRAPTOSURFACE")) {
 		specs |= OBJSPEC_WRAPTOSURFACE;
-	} else if (!_stricmp (label, "SHADOW")) {
+	} else if (caseInsensitiveEquals(label, "SHADOW")) {
 		specs |= OBJSPEC_RENDERSHADOW /*| OBJSPEC_EXPORTSHADOWMESH*/;
 		// removed OBJSPEC_EXPORTSHADOWMESH to avoid accumulated shadow meshes with excessive
 		// vertex numbers (vertex buffers are limited to 64000 vertices)
-	} else if (!_stricmp (label, "OWNSHADOW")) {
+	} else if (caseInsensitiveEquals(label, "OWNSHADOW")) {
 		specs |= OBJSPEC_OWNSHADOW;
-	} else if (!_stricmp (label, "UNDERSHADOWS")) {
+	} else if (caseInsensitiveEquals(label, "UNDERSHADOWS")) {
 		undersh = true;
-	} else if (!_stricmp (label, "PRELOAD")) {
+	} else if (caseInsensitiveEquals(label, "PRELOAD")) {
 		preload = true;
-	} else if (!_stricmp (label, "LPAD")) {
+	} else if (caseInsensitiveEquals(label, "LPAD")) {
 		specs |= OBJSPEC_LPAD;
-	} else if (!_stricmp (label, "OWNMATERIAL")) {
+	} else if (caseInsensitiveEquals(label, "OWNMATERIAL")) {
 		ownmat = true;
-	} else if (!_stricmp (label, "TEX")) {
+	} else if (caseInsensitiveEquals(label, "TEX")) {
 		texid = NameToId (value);
 	}
 	return res;
@@ -237,13 +244,13 @@ int MeshObject::ParseLine (const char *label, const char *value)
 
 int MeshObject::Read (istream &is)
 {
-	if (fname) { free (fname); fname = 0; }
+	if (!fname.empty()) fname.clear();
 	specs = 0; //OBJSPEC_EXPORTVERTEX;  // default specs
 	ownmat = undersh = preload = false;
 
 	int res = BaseObject::Read (is);
 
-	if (!fname) return 2; // we need a file name
+	if (fname.empty()) return 2; // we need a file name
 
 	if (ownmat)
 		//specs |= (undersh ? OBJSPEC_RENDERBEFORESHADOW : OBJSPEC_RENDERAFTERSHADOW);
@@ -260,8 +267,7 @@ void MeshObject::Setup ()
 	BaseObject::Setup ();
 	if (preload) {
 		LoadMesh (fname);
-		free (fname);
-		fname = 0;
+        fname.clear();
 	}
 }
 
@@ -341,12 +347,12 @@ Mesh *MeshObject::ExportShadowMesh (double &shelev)
 	else return NULL;
 }
 
-bool MeshObject::LoadMesh (char *fname)
+bool MeshObject::LoadMesh (std::string& fname)
 {
 	int i;
 
 	if (!mesh) { mesh = new Mesh; TRACENEW }
-	if (!::LoadMesh (fname, *mesh)) {
+	if (!::LoadMesh (fname.c_str(), *mesh)) {
 		delete mesh; mesh = 0;
 		ngrp = 0;
 		return false;
@@ -425,7 +431,7 @@ Block::~Block ()
 int Block::ParseLine (const char *label, const char *value)
 {
 	int res = 0;
-	if (!_strnicmp (label, "TEX", 3)) {
+	if (caseInsensitiveStartsWith(label, "TEX")) {
 		D3DVALUE su, sv;
 		int i;
 		char name[32];
@@ -674,7 +680,7 @@ Hangar::~Hangar ()
 int Hangar::ParseLine (const char *label, const char *value)
 {
 	int res = 0;
-	if (!_strnicmp (label, "TEX", 3)) {
+	if (caseInsensitiveStartsWith(label, "TEX")) {
 		D3DVALUE su, sv;
 		int i;
 		char name[32];
@@ -918,12 +924,12 @@ Hangar2::~Hangar2 ()
 int Hangar2::ParseLine (const char *label, const char *value)
 {
 	int res = 0;
-	if (!_stricmp (label, "ROOFH")) {
+	if (caseInsensitiveEquals(label, "ROOFH")) {
 		if (sscanf (value, "%f", &roofh) != 1) {
 			ParseError("Hangar2: ROOFH: Expected scalar value");
 			res = 2;
 		}
-	} else if (!_strnicmp (label, "TEX", 3)) {
+	} else if (caseInsensitiveStartsWith(label, "TEX")) {
 		D3DVALUE su, sv;
 		int i;
 		char name[32];
@@ -1129,7 +1135,7 @@ Hangar3::~Hangar3 ()
 int Hangar3::ParseLine (const char *label, const char *value)
 {
 	int res = 0;
-	if (!_strnicmp (label, "TEX", 3)) {
+	if (caseInsensitiveStartsWith(label, "TEX")) {
 		D3DVALUE su, sv;
 		int i;
 		char name[32];
@@ -1364,13 +1370,13 @@ Tank::Tank (const Base *_base): BaseObject (_base)
 int Tank::ParseLine (const char *label, const char *value)
 {
 	int res = 0;
-	if (!_stricmp (label, "NSTEP")) {
+	if (caseInsensitiveEquals(label, "NSTEP")) {
 		if (sscanf (value, "%d", &nstep) != 1) {
 			ParseError("Tank: NSTEP: Expected integer value");
 			res = 2;
 		}
 		if (nstep < 3) nstep = 3;
-	} else if (!_strnicmp (label, "TEX", 3)) {
+	} else if (caseInsensitiveStartsWith(label, "TEX")) {
 		D3DVALUE su, sv;
 		int i;
 		char name[32];
@@ -1648,9 +1654,9 @@ Lpad01::Lpad01 (const Base *_base): Lpad (_base)
 int Lpad01::ParseLine (const char *label, const char *value)
 {
 	int res = 0;
-	if (!_stricmp (label, "TEX")) {
+	if (caseInsensitiveEquals(label, "TEX")) {
 		texid = NameToId (value);
-	} else if (!_stricmp (label, "NAV")) {
+	} else if (caseInsensitiveEquals(label, "NAV")) {
 		if (sscanf (value, "%f", &ILSfreq) != 1) {
 			ParseError ("Lpad1: NAV: expected scalar value");
 			res = 2;
@@ -1747,9 +1753,9 @@ Lpad02::Lpad02 (const Base *_base): Lpad (_base)
 int Lpad02::ParseLine (const char *label, const char *value)
 {
 	int res = 0;
-	if (!_stricmp (label, "TEX")) {
+	if (caseInsensitiveEquals(label, "TEX")) {
 		texid = NameToId (value);
-	} else if (!_stricmp (label, "NAV")) {
+	} else if (caseInsensitiveEquals(label, "NAV")) {
 		if (sscanf (value, "%f", &ILSfreq) != 1) {
 			ParseError ("Lpad2: NAV: expected scalar value");
 			res = 2;
@@ -1865,9 +1871,9 @@ Lpad02a::Lpad02a (const Base *_base): Lpad (_base)
 int Lpad02a::ParseLine (const char *label, const char *value)
 {
 	int res = 0;
-	if (!_stricmp (label, "TEX")) {
+	if (caseInsensitiveEquals(label, "TEX")) {
 		texid = NameToId (value);
-	} else if (!_stricmp (label, "NAV")) {
+	} else if (caseInsensitiveEquals(label, "NAV")) {
 		if (sscanf (value, "%f", &ILSfreq) != 1) {
 			ParseError ("Lpad2a: NAV: expected scalar value");
 			res = 2;
@@ -1994,18 +2000,18 @@ int Runway::Read (istream &is)
 		if (!is.getline (cbuf, 256)) return 1; // premature end of file
 		cp = trim_string (cbuf);
 		sscanf (cp, "%s", label);
-		if (!_stricmp (label, "END1"))
+		if (caseInsensitiveEquals(label, "END1"))
 			sscanf (cp+4, "%f%f%f", &end1.x, &end1.y, &end1.z);
-		else if (!_stricmp (label, "END2"))
+		else if (caseInsensitiveEquals(label, "END2"))
 			sscanf (cp+4, "%f%f%f", &end2.x, &end2.y, &end2.z);
-		else if (!_stricmp (label, "WIDTH")) {
+		else if (caseInsensitiveEquals(label, "WIDTH")) {
 			sscanf (cp+5, "%f", &width);
 			width *= 0.5f;
-		} else if (!_strnicmp (label, "ILS", 3)) {
+		} else if (caseInsensitiveStartsWith(label, "ILS")) {
 			float freq;
 			sscanf (cp+3, "%d%f", &i, &freq);
 			ILSfreq[i-1] = freq;
-		} else if (!_stricmp (label, "NRWSEG")) {
+		} else if (caseInsensitiveEquals(label, "NRWSEG")) {
 			if (nrwseg) {
 				delete []rwseg;
 				rwseg = NULL;
@@ -2022,7 +2028,7 @@ int Runway::Read (istream &is)
 					rwseg[k].tv1    = 10.0f;
 				}
 			}
-		} else if (!_strnicmp (label, "RWSEG", 5)) {
+		} else if (caseInsensitiveStartsWith(label, "RWSEG")) {
 			D3DVALUE seglen, tu0, tu1, tv0, tv1;
 			DWORD subseg;
 			sscanf (cp+5, "%d%d%f%f%f%f%f", &i, &subseg, &seglen, &tu0, &tu1, &tv0, &tv1);
@@ -2034,11 +2040,11 @@ int Runway::Read (istream &is)
 				rwseg[i].tv0    = tv0;
 				rwseg[i].tv1    = tv1;
 			}
-		} else if (!_stricmp (label, "RWTEX")) {
+		} else if (caseInsensitiveEquals(label, "RWTEX")) {
 			sscanf (cp+5, "%s", label);
 			texid[0] = NameToId (label);
 		}
-	} while (_stricmp (label, "END"));
+	} while (!caseInsensitiveEquals(label, "END"));
 	return 0;
 }
 
@@ -2149,26 +2155,26 @@ int RunwayLights::Read (istream &is)
 		if (!is.getline (cbuf, 256)) return 1; // premature end of file
 		cp = trim_string (cbuf);
 		sscanf (cp, "%s", label);
-		if (!_stricmp (label, "END1"))
+		if (caseInsensitiveEquals(label, "END1"))
 			sscanf (cp+4, "%f%f%f", &end1.x, &end1.y, &end1.z);
-		else if (!_stricmp (label, "END2"))
+		else if (caseInsensitiveEquals(label, "END2"))
 			sscanf (cp+4, "%f%f%f", &end2.x, &end2.y, &end2.z);
-		else if (!_stricmp (label, "COUNT1"))
+		else if (caseInsensitiveEquals(label, "COUNT1"))
 			sscanf (cp+6, "%d", &count1);
-		else if (!_stricmp (label, "WIDTH")) {
+		else if (caseInsensitiveEquals(label, "WIDTH")) {
 			sscanf (cp+5, "%f", &width);
 			width *= 0.5f;
-		} else if (!_stricmp (label, "PAPI")) {
+		} else if (caseInsensitiveEquals(label, "PAPI")) {
 			if (!papi) { papi = new struct PAPIDATA; TRACENEW }
 			sscanf (cp+4, "%f%f%f", &papi->apprangle, &papi->aperture, &papi->ofs);
 			papi->apprangle *= (float)RAD;
 			papi->aperture *= (float)RAD;
-		} else if (!_stricmp (label, "VASI")) {
+		} else if (caseInsensitiveEquals(label, "VASI")) {
 			if (!vasi) { vasi = new struct VASIDATA; TRACENEW }
 			sscanf (cp+4, "%f%f%f", &vasi->apprangle, &vasi->lightsep, &vasi->ofs);
 			vasi->apprangle *= (float)RAD;
 		}
-	} while (_stricmp (label, "END"));
+	} while (!caseInsensitiveEquals(label, "END"));
 	return 0;
 }
 
@@ -2511,17 +2517,17 @@ int BeaconArray::Read (istream &is)
 		if (!is.getline (cbuf, 256)) return 1; // premature end of file
 		cp = trim_string (cbuf);
 		sscanf (cp, "%s", label);
-		if (!_stricmp (label, "END1"))
+		if (caseInsensitiveEquals(label, "END1"))
 			sscanf (cp+4, "%f%f%f", &end1.x, &end1.y, &end1.z);
-		else if (!_stricmp (label, "END2"))
+		else if (caseInsensitiveEquals(label, "END2"))
 			sscanf (cp+4, "%f%f%f", &end2.x, &end2.y, &end2.z);
-		else if (!_stricmp (label, "COUNT"))
+		else if (caseInsensitiveEquals(label, "COUNT"))
 			sscanf (cp+5, "%d", &count);
-		else if (!_stricmp (label, "SIZE"))
+		else if (caseInsensitiveEquals(label, "SIZE"))
 			sscanf (cp+4, "%lf", &size);
-		else if (!_stricmp (label, "COL"))
+		else if (caseInsensitiveEquals(label, "COL"))
 			sscanf (cp+3, "%f%f%f", &col_r, &col_g, &col_b);
-	} while (_stricmp (label, "END"));
+	} while (!caseInsensitiveEquals(label, "END"));
 	return 0;
 }
 
@@ -2785,19 +2791,19 @@ int Train1::Read (istream &is)
 		if (!is.getline (cbuf, 256)) return 1; // premature end of file
 		cp = trim_string (cbuf);
 		sscanf (cp, "%s", label);
-		if (!_stricmp (label, "END1"))
+		if (caseInsensitiveEquals(label, "END1"))
 			sscanf (cp+4, "%f%f%f", &end1.x, &end1.y, &end1.z);
-		else if (!_stricmp (label, "END2"))
+		else if (caseInsensitiveEquals(label, "END2"))
 			sscanf (cp+4, "%f%f%f", &end2.x, &end2.y, &end2.z);
-		else if (!_stricmp (label, "MAXSPEED"))
+		else if (caseInsensitiveEquals(label, "MAXSPEED"))
 			sscanf (cp+8, "%f", &maxspeed);
-		else if (!_stricmp (label, "SLOWZONE"))
+		else if (caseInsensitiveEquals(label, "SLOWZONE"))
 			sscanf (cp+8, "%f", &slowzone);
-		else if (!_stricmp (label, "TEX")) {
+		else if (caseInsensitiveEquals(label, "TEX")) {
 			sscanf (cp+3, "%s%f", label, &tuscale_track);
 			texid = NameToId (label);
 		}
-	} while (_stricmp (label, "END"));
+	} while (!caseInsensitiveEquals(label, "END"));
 
 	Init (end1, end2);
 	return 0;
@@ -3060,21 +3066,21 @@ int Train2::Read (istream &is)
 		if (!is.getline (cbuf, 256)) return 1; // premature end of file
 		cp = trim_string (cbuf);
 		sscanf (cp, "%s", label);
-		if (!_stricmp (label, "END1"))
+		if (caseInsensitiveEquals(label, "END1"))
 			sscanf (cp+4, "%f%f%f", &end1.x, &end1.y, &end1.z);
-		else if (!_stricmp (label, "END2"))
+		else if (caseInsensitiveEquals(label, "END2"))
 			sscanf (cp+4, "%f%f%f", &end2.x, &end2.y, &end2.z);
-		else if (!_stricmp (label, "HEIGHT"))
+		else if (caseInsensitiveEquals(label, "HEIGHT"))
 			sscanf (cp+6, "%f", &height);
-		else if (!_stricmp (label, "MAXSPEED"))
+		else if (caseInsensitiveEquals(label, "MAXSPEED"))
 			sscanf (cp+8, "%f", &maxspeed);
-		else if (!_stricmp (label, "SLOWZONE"))
+		else if (caseInsensitiveEquals(label, "SLOWZONE"))
 			sscanf (cp+8, "%f", &slowzone);
-		else if (!_stricmp (label, "TEX")) {
+		else if (caseInsensitiveEquals(label, "TEX")) {
 			sscanf (cp+3, "%s%f", label, &tuscale_track);
 			texid = NameToId (label);
 		}
-	} while (_stricmp (label, "END"));
+	} while (!caseInsensitiveEquals(label, "END"));
 
 	Init (end1, end2);
 	return 0;
@@ -3384,25 +3390,25 @@ int SolarPlant::Read (istream &is)
 		if (!is.getline (cbuf, 256)) return 1; // premature end of file
 		cp = trim_string (cbuf);
 		sscanf (cp, "%s", label);
-		if (!_stricmp (label, "POS"))
+		if (caseInsensitiveEquals(label, "POS"))
 			sscanf (cp+3, "%f%f%f", &pos.x, &pos.y, &pos.z);
-		else if (!_stricmp (label, "SCALE"))
+		else if (caseInsensitiveEquals(label, "SCALE"))
 			sscanf (cp+5, "%f", &scale);
-		else if (!_stricmp (label, "SPACING"))
+		else if (caseInsensitiveEquals(label, "SPACING"))
 			sscanf (cp+7, "%f%f", &sepx, &sepz);
-		else if (!_stricmp (label, "GRID"))
+		else if (caseInsensitiveEquals(label, "GRID"))
 			sscanf (cp+4, "%d%d", &nrow, &ncol);
-		else if (!_stricmp (label, "ROT")) {
+		else if (caseInsensitiveEquals(label, "ROT")) {
 			sscanf (cp+3, "%f", &rot);
 			rot *= (D3DVALUE)RAD;
-		} else if (!_stricmp (label, "TEX")) {
+		} else if (caseInsensitiveEquals(label, "TEX")) {
 			D3DVALUE su, sv;
 			i = sscanf (cp+3, "%s%f%f", label, &su, &sv);
 			texid = NameToId (label);
 			if (i > 1) tuscale = su;
 			if (i > 2) tvscale = sv;
 		}
-	} while (_stricmp (label, "END"));
+	} while (!caseInsensitiveEquals(label, "END"));
 	npanel = nrow*ncol;
 	return 0;
 }

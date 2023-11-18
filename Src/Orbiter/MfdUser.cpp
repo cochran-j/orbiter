@@ -44,8 +44,10 @@ Instrument_User::Instrument_User (Pane *_pane, INT_PTR _id, const Spec &spec, Ve
 	selkey = Key2Char[mode.spec->key];
 	MFDMODEOPENSPEC ospec = {IW, IH, mode.spec};
 	mfd = (MFD*)msgproc (OAPI_MSG_MFD_OPENEDEX, _id, (WPARAM)&ospec, (LPARAM)vessel->GetModuleInterface());
-	if (!mfd)
-		mfd = (MFD*)msgproc (OAPI_MSG_MFD_OPENED, _id, MAKEWPARAM(IW, IH), (LPARAM)vessel->GetModuleInterface());
+	if (!mfd) {
+        WPARAM wParam = (IW << 16) | IH;
+		mfd = (MFD*)msgproc (OAPI_MSG_MFD_OPENED, _id, wParam, (LPARAM)vessel->GetModuleInterface());
+    }
 	try {
 		mfd2 = dynamic_cast<MFD2*>(mfd); // will return 0 if not an MFD2 instance
 	}
@@ -98,7 +100,7 @@ bool Instrument_User::ReadParams (ifstream &ifs)
 	MFDMODESPECEX *spec;
 	if (!ifs.getline (cbuf, 256)) return false;
 	pc = trim_string (cbuf);
-	if (_strnicmp (pc, "MODE", 4)) return false;
+	if (!caseInsensitiveStartsWith(pc, "MODE")) return false;
 	modestr = trim_string (pc+4);
 	int tp = ModeFromName (modestr, &spec);
 	if (tp <= BUILTIN_MFD_MODES)
@@ -111,8 +113,10 @@ bool Instrument_User::ReadParams (ifstream &ifs)
 	selkey = Key2Char[spec->key];
 	MFDMODEOPENSPEC ospec = {IW, IH, spec};
 	mfd = (MFD*)msgproc (OAPI_MSG_MFD_OPENEDEX, id, (WPARAM)&ospec, (LPARAM)vessel->GetModuleInterface());
-	if (!mfd)
-		mfd = (MFD*)msgproc (OAPI_MSG_MFD_OPENED, id, MAKEWPARAM(IW, IH), (LPARAM)vessel->GetModuleInterface());
+	if (!mfd) {
+        WPARAM wParam = (IW << 16) | IH;
+		mfd = (MFD*)msgproc (OAPI_MSG_MFD_OPENED, id, wParam, (LPARAM)vessel->GetModuleInterface());
+    }
 	try {
 		mfd2 = dynamic_cast<MFD2*>(mfd); // will return 0 if not an MFD2 instance
 	}
@@ -371,29 +375,37 @@ void GraphMFD::Plot (HDC hDC, int g, int h0, int h1, const char *title)
 	iyrange = (y0-y1)/(maxy-miny);
 
 	SelectDefaultFont (hDC, 1);
+    /* TODO(jec)
 	SetTextColor (hDC, 0x00A000);
 
 	// abscissa ticks/labels
 	SelectDefaultPen (hDC, 3);
 	SetTextAlign (hDC, TA_CENTER);
+    */
 	for (f = gf.absc_tickmin; f <= gf.absc_max; f += gf.absc_dtick) {
 		x = x0 + (int)((f-minx)*ixrange+0.5);
+        /* TODO(jec)
 		MoveToEx (hDC, x, y0, 0);
 		LineTo (hDC, x, y1);
 		sprintf (cbuf, "%0.0f", f*gf.absc_tickscale);
 		TextOut (hDC, x, y0, cbuf, strlen(cbuf));
+        */
 	}
 	if (gf.absc_minortick > 1) {
 		SelectDefaultPen (hDC, 4);
 		for (f = gf.absc_tickmin, i = 0; f > gf.absc_min; f -= gf.absc_dtick/(float)gf.absc_minortick, i++) {
 			if (!(i%gf.absc_minortick)) continue;
 			x = x0 + (int)((f-minx)*ixrange+0.5);
+            /* TODO(jec)
 			MoveToEx (hDC, x, y0, 0); LineTo (hDC, x, y1);
+            */
 		}
 		for (f = gf.absc_tickmin, i = 0; f < gf.absc_max; f += gf.absc_dtick/(float)gf.absc_minortick, i++) {
 			if (!(i%gf.absc_minortick)) continue;
 			x = x0 + (int)((f-minx)*ixrange+0.5);
+            /* TODO(jec)
 			MoveToEx (hDC, x, y0, 0); LineTo (hDC, x, y1);
+            */
 		}
 	}
 	if (gf.absc_title[0]) {
@@ -401,50 +413,70 @@ void GraphMFD::Plot (HDC hDC, int g, int h0, int h1, const char *title)
 		oss << gf.absc_title;
 		if (gf.absc_tickscale != 1.0f) oss << " x " << 1.0/gf.absc_tickscale;
 		oss << '\0';
+        /* TODO(jec)
 		TextOut (hDC, (x0+x1)/2, y0+(3*ch)/4, oss.str(), strlen(oss.str()));
+        */
 	}
 
 	// ordinate ticks/labels
+    /* TODO(jec)
 	SelectDefaultPen (hDC, 3);
 	SetTextAlign (hDC, TA_RIGHT);
+    */
 	for (f = gf.data_tickmin; f <= gf.data_max; f += gf.data_dtick) {
 		y = y0 - (int)((f-miny)*iyrange+0.5);
+        /* TODO(jec)
 		MoveToEx (hDC, x0, y, 0);
 		LineTo (hDC, x1, y);
 		sprintf (cbuf, "%0.0f", f*gf.data_tickscale);
 		TextOut (hDC, x0, y-ch/2, cbuf, strlen(cbuf));
+        */
 	}
 	if (gf.data_minortick > 1) {
+        /* TODO(jec)
 		SelectDefaultPen (hDC, 4);
+        */
 		for (f = gf.data_tickmin, i = 0; f > gf.data_min; f -= gf.data_dtick/(float)gf.data_minortick, i++) {
 			if (!(i%gf.data_minortick)) continue;
 			y = y0 - (int)((f-miny)*iyrange+0.5);
+            /* TODO(jec)
 			MoveToEx (hDC, x0, y, 0); LineTo (hDC, x1, y);
+            */
 		}
 		for (f = gf.data_tickmin, i = 0; f < gf.data_max; f += gf.data_dtick/(float)gf.data_minortick, i++) {
 			if (!(i%gf.data_minortick)) continue;
 			y = y0 - (int)((f-miny)*iyrange+0.5);
+            /* TODO(jec)
 			MoveToEx (hDC, x0, y, 0); LineTo (hDC, x1, y);
+            */
 		}
 	}
+    /* TODO(jec)
 	SetTextAlign (hDC, TA_CENTER);
+    */
 	if (gf.data_title[0]) {
 		SelectDefaultFont (hDC, 2);
 		ostrstream oss(cbuf, 64);
 		oss << gf.data_title;
 		if (gf.data_tickscale != 1.0f) oss << " x " << 1.0/gf.data_tickscale;
 		oss << '\0';
+        /* TODO(jec)
 		TextOut (hDC, 0, (y0+y1)/2, oss.str(), strlen(oss.str()));
+        */
 	}
 
 	// plot frame
+    /* TODO(jec)
 	SelectDefaultPen (hDC, 2);
 	Rectangle (hDC, x0, y1, x1+1, y0+1);
+    */
 
 	// plot line
 	for (pl = 0; pl < gf.nplot; pl++) {
 		GRAPH::PLOT &p = gf.plot[pl];
+        /* TODO(jec)
 		SelectDefaultPen (hDC, p.col);
+        */
 		float fx, fy, pfx=0, pfy=0, xa, ya, xb, yb;
 		bool clip, vis;
 		int sample = (p.ofs ? *p.ofs : 0);
@@ -472,7 +504,9 @@ void GraphMFD::Plot (HDC hDC, int g, int h0, int h1, const char *title)
 						if (xb > maxx) vis = false;
 						else ya += (maxx-xa)/(xb-xa)*(yb-ya), xa = maxx;
 					}
+                    /* TODO(jec)
 					if (vis) MoveToEx (hDC, x0 + (int)((xa-minx)*ixrange), y0 - (int)((ya-miny)*iyrange), 0);
+                    */
 				} else vis = true;
 
 				if (vis) { // clip second point
@@ -495,7 +529,9 @@ void GraphMFD::Plot (HDC hDC, int g, int h0, int h1, const char *title)
 						else yb += (maxx-xb)/(xa-xb)*(ya-yb), xb = maxx;
 						clip = true;
 					}
+                    /* TODO(jec)
 					if (vis) LineTo (hDC, x0 + (int)((xb-minx)*ixrange), y0 - (int)((yb-miny)*iyrange));
+                    */
 				} else clip = true;
 			}
 			pfx = fx, pfy = fy;
@@ -503,9 +539,11 @@ void GraphMFD::Plot (HDC hDC, int g, int h0, int h1, const char *title)
 	}
 
 	if (title) {
+        /* TODO(jec)
 		SelectDefaultFont (hDC, 1);
 		SetTextColor (hDC, 0x00FF00);
 		TextOut (hDC, (x0+x1)/2, y1, title, strlen(title));
+        */
 	}
 }
 

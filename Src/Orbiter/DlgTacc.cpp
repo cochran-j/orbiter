@@ -9,8 +9,10 @@
 
 #include "DlgTacc.h"
 #include "Orbiter.h"
+/* TODO(jec)
 #include "resource.h"
 #include "resource2.h"
+*/
 
 extern Orbiter *g_pOrbiter;
 extern TimeData td;
@@ -19,7 +21,7 @@ extern HELPCONTEXT DefHelpContext;
 // ======================================================================
 
 DlgTacc::DlgTacc (HINSTANCE hInstance, HWND hParent, void *context)
-: DialogWin (hInstance, hParent, IDD_TIMEWARP, 0, 0, context)
+: DialogWin (hInstance, hParent, /* TODO(jec) IDD_TIMEWARP*/0, 0, 0, context)
 {
 	pos = &g_pOrbiter->Cfg()->CfgWindowPos.DlgTacc;
 }
@@ -29,7 +31,9 @@ DlgTacc::DlgTacc (HINSTANCE hInstance, HWND hParent, void *context)
 void DlgTacc::Message (DWORD msg, void *data)
 {
 	bool paused = (data != 0);
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hWnd, IDC_WARP_PAUSE), paused ? "Resume" : "Pause");
+    */
 }
 
 // ======================================================================
@@ -43,16 +47,22 @@ void DlgTacc::RegisterWarp (HWND hDlg, double warp, bool commit, bool edit, bool
 		else if (warp <=  10.0) sliderpos = (int)(warp+9.0);
 		else if (warp <= 100.0) sliderpos = (int)(0.1*warp+18.0);
 		else                    sliderpos = (int)(0.01*warp+27.0);
+        /* TODO(jec)
 		SendDlgItemMessage (hDlg, IDC_WARP_SLIDER, TBM_SETPOS, TRUE, (LONG)sliderpos);
+        */
 	}
 	if (edit) {
 		char cbuf[256];
 		double pwarp;
+        /* TODO(jec)
 		GetWindowText (GetDlgItem (hDlg, IDC_WARP_EDIT), cbuf, 256);
+        */
 		int res = sscanf (cbuf, "%lf", &pwarp);
 		if (res != 1 || fabs (warp-pwarp) > 1e-8) {
 			sprintf (cbuf, "%0.1f", warp);
+            /* TODO(jec)
 			SetWindowText (GetDlgItem (hDlg, IDC_WARP_EDIT), cbuf);
+            */
 		}
 	}
 }
@@ -61,11 +71,15 @@ void DlgTacc::RegisterWarp (HWND hDlg, double warp, bool commit, bool edit, bool
 
 BOOL DlgTacc::OnInitDialog (HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_WARP_SLIDER, TBM_SETRANGE, FALSE, MAKELONG(1,37));
 	SendDlgItemMessage (hDlg, IDC_WARP_SLIDER, TBM_SETPAGESIZE, 0, 9L);
 	SendDlgItemMessage (hDlg, IDC_WARP_SLIDER, TBM_SETTICFREQ, 9, 0);
+    */
 	RegisterWarp (hDlg, td.Warp(), false);
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hDlg, IDC_WARP_PAUSE), g_pOrbiter->IsRunning() ? "Pause": "Resume");
+    */
 	return TRUE;
 }
 
@@ -73,6 +87,7 @@ BOOL DlgTacc::OnInitDialog (HWND hDlg, WPARAM wParam, LPARAM lParam)
 
 BOOL DlgTacc::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 {
+    /* TODO(jec)
 	switch (id) {
 	case IDHELP:
 		DefHelpContext.topic = (char*)"/timeacc.htm";
@@ -108,6 +123,7 @@ BOOL DlgTacc::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 		g_pOrbiter->TogglePause();
 		return TRUE;
 	}
+    */
 	return DialogWin::OnCommand (hDlg, id, code, hControl);
 }
 
@@ -115,6 +131,7 @@ BOOL DlgTacc::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 
 BOOL DlgTacc::OnHScroll (HWND hDlg, WORD request, WORD curpos, HWND hControl)
 {
+    /* TODO(jec)
 	if (request == TB_THUMBTRACK) {
 		int sliderpos = SendDlgItemMessage (hDlg, IDC_WARP_SLIDER, TBM_GETPOS, 0, 0);
 		if      (sliderpos <= 10) RegisterWarp (hDlg, sliderpos*0.1);
@@ -123,5 +140,6 @@ BOOL DlgTacc::OnHScroll (HWND hDlg, WORD request, WORD curpos, HWND hControl)
 		else                      RegisterWarp (hDlg, (sliderpos-27)*100);
 		return TRUE;
 	}
+    */
 	return DialogWin::OnHScroll (hDlg, request, curpos, hControl);
 }

@@ -8,6 +8,9 @@
 
 #ifndef DI7FRAME_H
 #define DI7FRAME_H
+
+#if CONFIG_DIRECT_INPUT
+
 #define STRICT 1
 #include <windows.h>
 #include <dinput.h>
@@ -68,4 +71,5 @@ public:
 	inline LPDIRECTINPUTDEVICE8 GetJoyDevice() { return m_pdidJoyDevice; }
 };
 
+#endif /* CONFIG_DIRECT_INPUT */
 #endif // !DI7FRAME_H

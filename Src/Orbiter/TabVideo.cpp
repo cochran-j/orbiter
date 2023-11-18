@@ -7,12 +7,17 @@
 
 #define OAPI_IMPLEMENTATION
 
+#include <filesystem>
+
 #include <windows.h>
+/* TODO(jec)
 #include <commctrl.h>
 #include <io.h>
+*/
 #include "Orbiter.h"
 #include "TabVideo.h"
 #include "resource.h"
+#include "DllCompat.h"
 
 using namespace std;
 
@@ -46,13 +51,16 @@ orbiter::DefVideoTab::~DefVideoTab()
 
 void orbiter::DefVideoTab::Create ()
 {
+    /* TODO(jec)
 	hTab = CreateTab (IDD_PAGE_DEV);
+    */
 }
 
 //-----------------------------------------------------------------------------
 
 void orbiter::DefVideoTab::ShowInterface(HWND hTab, bool show)
 {
+    /* TODO(jec)
 	static int item[] = {
 		IDC_VID_STATIC1, IDC_VID_STATIC2, IDC_VID_STATIC3, IDC_VID_STATIC5,
 		IDC_VID_STATIC6, IDC_VID_STATIC7, IDC_VID_STATIC8, IDC_VID_STATIC9,
@@ -67,6 +75,7 @@ void orbiter::DefVideoTab::ShowInterface(HWND hTab, bool show)
 	for (int i = 0; i < ARRAYSIZE(item); i++) {
 		ShowWindow(GetDlgItem(hTab, item[i]), show ? SW_SHOW : SW_HIDE);
 	}
+    */
 }
 
 //-----------------------------------------------------------------------------
@@ -84,11 +93,11 @@ BOOL orbiter::DefVideoTab::OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 //-----------------------------------------------------------------------------
 
-void orbiter::DefVideoTab::OnGraphicsClientLoaded(oapi::GraphicsClient* gc, const PSTR moduleName)
+void orbiter::DefVideoTab::OnGraphicsClientLoaded(oapi::GraphicsClient* gc, const char* moduleName)
 {
-	char fname[256];
-	_splitpath(moduleName, NULL, NULL, fname, NULL);
+    std::string fname = std::filesystem::path{moduleName}.filename().string();
 
+    /* TODO(jec)
 	int newIdx = SendDlgItemMessage(hTab, IDC_VID_COMBO_MODULE, CB_FINDSTRING, -1, (LPARAM)fname);
 	if (newIdx != idxClient) {
 		SendDlgItemMessage(hTab, IDC_VID_COMBO_MODULE, CB_SETCURSEL, newIdx, 0);
@@ -96,7 +105,9 @@ void orbiter::DefVideoTab::OnGraphicsClientLoaded(oapi::GraphicsClient* gc, cons
 		pCfg->AddActiveModule(fname);
 		idxClient = newIdx;
 	}
+    */
 
+    /* TODO(jec):  Get strings from stringtable.
 	HMODULE hMod = LoadLibraryEx(moduleName, 0, LOAD_LIBRARY_AS_DATAFILE);
 	if (hMod) {
 		char buf[1024];
@@ -107,6 +118,7 @@ void orbiter::DefVideoTab::OnGraphicsClientLoaded(oapi::GraphicsClient* gc, cons
 		}
 		FreeLibrary(hMod);
 	}
+    */
 }
 
 //-----------------------------------------------------------------------------
@@ -154,6 +166,7 @@ bool orbiter::DefVideoTab::OpenHelp ()
 
 void orbiter::DefVideoTab::EnumerateClients(HWND hTab)
 {
+    /* TODO(jec)
 	SendDlgItemMessage(hTab, IDC_VID_COMBO_MODULE, CB_RESETCONTENT, 0, 0);
 #ifdef INLINEGRAPHICS
 	PCSTR strGraphics = "Built-in graphics engine";
@@ -164,11 +177,12 @@ void orbiter::DefVideoTab::EnumerateClients(HWND hTab)
 	ScanDir(hTab, "Modules\\Plugin");
 #endif
 	SendDlgItemMessage(hTab, IDC_VID_COMBO_MODULE, CB_SETCURSEL, 0, 0);
+    */
 }
 
 static bool FileExists(const char* path)
 {
-	return access(path, 0) != -1;
+	return std::filesystem::exists(path);
 }
 
 //! @param extension is a file extension without the '.'
@@ -188,27 +202,43 @@ static std::string GetNameWithoutFileExtension(const char* filepath)
 //! Find Graphics engine DLLs in dir
 void orbiter::DefVideoTab::ScanDir(HWND hTab, PCSTR dir)
 {
+    std::filesystem::path path_{dir};
+    /*
 	char pattern[256], filepath[256];
 	sprintf(pattern, "%s\\*", dir);
 	struct _finddata_t fdata;
 	intptr_t fh = _findfirst(pattern, &fdata);
-	if (fh == -1) return; // nothing found
-	do {
-		if (fdata.attrib & _A_SUBDIR) { // directory found
-			if (fdata.name[0] == '.')
-				continue; // skip self and parent directory entries
-			// Special case: look for DLLs in subdirectories if subdir and DLL names match
-			sprintf(filepath, "%s\\%s\\%s.dll", dir, fdata.name, fdata.name);
-			if (!FileExists(filepath))
-				continue;
-		}
-		else { // file found
-			if (!HasExtension(fdata.name, "dll")) // skip if not a DLL
-				continue;
-			sprintf(filepath, "%s\\%s", dir, fdata.name);
-		}
+    */
+    for (auto& dir_entry : std::filesystem::directory_iterator{path_}) {
+        const auto& found_path = dir_entry.path();
+        std::filesystem::path final_path;
+        if (dir_entry.is_directory()) {
+            //Skip '.dotfiles'
+            const auto& dirname = found_path.filename().string();
+            if (dirname.empty() || dirname.front() == '.') {
+                continue;
+            }
+
+            // Special case: look for DLLs in subdirectories if subdir and DLL names match
+            auto special_path = found_path;
+            special_path /= found_path.filename();
+            special_path += ".";
+            special_path += DLL::DLLExt;
+
+            if (!std::filesystem::exists(special_path)) {
+                continue;
+            }
+
+            final_path = special_path;
+        } else {
+            if (found_path.extension() != DLL::DLLExt) {
+                continue;
+            }
+            final_path = found_path;
+        }
 
 		// We've found a potential module DLL. Load it.
+        /* TODO(jec):  LoadLibrary() to get strings out of string table.
 		HMODULE hMod = LoadLibraryEx(filepath, 0, LOAD_LIBRARY_AS_DATAFILE);
 		if (hMod) {
 			char catstr[256];
@@ -220,8 +250,8 @@ void orbiter::DefVideoTab::ScanDir(HWND hTab, PCSTR dir)
 				}
 			}
 		}
-	} while (!_findnext(fh, &fdata));
-	_findclose(fh);
+        */
+	};
 }
 
 //-----------------------------------------------------------------------------
@@ -232,14 +262,18 @@ void orbiter::DefVideoTab::SelectClientIndex(UINT idx)
 
 	char name[256];
 	if (idxClient) { // unload the current client
+        /* TODO(jec)
 		SendDlgItemMessage(hTab, IDC_VID_COMBO_MODULE, CB_GETLBTEXT, idxClient, (LPARAM)name);
+        */
 		pCfg->DelActiveModule(name);
 		pLp->App()->UnloadModule(name);
 		pCfg->CfgDevPrm.Device_idx = -1;
 	}
 	if (idx) { // load the new client
-		const char* path = "Modules\\Plugin";
+		const char* path = "Modules/Plugin";
+        /* TODO(jec)
 		SendDlgItemMessage(hTab, IDC_VID_COMBO_MODULE, CB_GETLBTEXT, idx, (LPARAM)name);
+        */
 		pLp->App()->LoadModule(path, name);
 	}
 	else
@@ -256,8 +290,9 @@ void orbiter::DefVideoTab::SetInfoString(PCSTR str)
 
 //-----------------------------------------------------------------------------
 
-INT_PTR CALLBACK orbiter::DefVideoTab::InfoProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR orbiter::DefVideoTab::InfoProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		SetWindowText(GetDlgItem(hWnd, IDC_MSG), (PSTR)lParam);
@@ -267,6 +302,7 @@ INT_PTR CALLBACK orbiter::DefVideoTab::InfoProc(HWND hWnd, UINT uMsg, WPARAM wPa
 			EndDialog(hWnd, TRUE);
 		return TRUE;
 	}
+    */
 	return FALSE;
 }
 
@@ -274,6 +310,7 @@ INT_PTR CALLBACK orbiter::DefVideoTab::InfoProc(HWND hWnd, UINT uMsg, WPARAM wPa
 
 BOOL orbiter::DefVideoTab::OnMessage (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
@@ -291,6 +328,7 @@ BOOL orbiter::DefVideoTab::OnMessage (HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		}
 		break;
 	}
+    */
 
 	// divert video parameters to graphics clients
 	oapi::GraphicsClient *gc = pLp->App()->GetGraphicsClient();

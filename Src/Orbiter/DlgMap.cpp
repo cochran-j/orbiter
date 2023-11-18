@@ -13,19 +13,29 @@
 #include "Orbiter.h"
 #include "Psys.h"
 #include "Planet.h"
+/* TODO(jec)
 #include "Resource.h"
+*/
 #include "DlgMgr.h" // to be removed
 #include "Pane.h"
 #include "Util.h"
 
+/* TODO(jec) Compatibility definition */
+#ifndef WHEEL_DELTA
+#define WHEEL_DELTA 120
+#endif
+
 using std::min;
 using std::max;
 
+// TODO(jec):  Fix extern definitions here.
 extern Orbiter *g_pOrbiter;
 extern TimeData td;
 extern Vessel *g_focusobj;
 extern PlanetarySystem *g_psys;
+/* TODO(jec)
 extern HELPCONTEXT DefHelpContext;
+*/
 extern char DBG_MSG[256];
 
 static int count = 0;
@@ -59,6 +69,7 @@ MapWin::~MapWin ()
 
 void MapWin::RegisterWindow (HINSTANCE hInst)
 {
+    /* TODO(jec)
 	// Register map window class
 	WNDCLASS wndClass;
 	wndClass.style = CS_HREDRAW | CS_VREDRAW;
@@ -72,13 +83,16 @@ void MapWin::RegisterWindow (HINSTANCE hInst)
 	wndClass.lpszMenuName  = NULL;
 	wndClass.lpszClassName = "MapWindow";
 	RegisterClass (&wndClass);
+    */
 }
 
 // ======================================================================
 
 void MapWin::UnregisterWindow (HINSTANCE hInst)
 {
+    /* TODO(jec)
 	UnregisterClass ("MapWindow", hInst);
+    */
 }
 
 // ======================================================================
@@ -86,9 +100,11 @@ void MapWin::UnregisterWindow (HINSTANCE hInst)
 int MapWin::Create ()
 {
 	DlgMap::MAP_PARAM *prm = &dlg->MapPrm;
+    /* TODO(jec)
 	font = CreateFont (-9, 0, 0, 0, 400, 0, 0, 0, 0, 3, 2, 1, 49, "Arial");
 	pen[0] = CreatePen (PS_SOLID, 3, 0xffff00);
 	pen[1] = CreatePen (PS_SOLID, 1, 0xff0000);
+    */
 
 	return 0;
 }
@@ -99,8 +115,10 @@ int MapWin::Destroy ()
 {
 	int i;
 
+    /* TODO(jec)j
 	DeleteObject (font);
 	for (i = 0; i < 2; i++) DeleteObject (pen[i]);
+    */
 	return 0;
 }
 
@@ -109,7 +127,9 @@ int MapWin::Destroy ()
 void MapWin::PostCreation (HWND hw)
 {
 	hWnd = hw;
+    /* TODO(jec)
 	SetWindowLongPtr (hWnd, GWLP_USERDATA, (LONG_PTR)this);
+    */
 }
 
 // ======================================================================
@@ -126,7 +146,9 @@ void MapWin::Update (bool force)
 	// needs a rethink
 	if (!ThreadBusy()) {
 		bPaintPending = true;
+        /* TODO(jec)
 		InvalidateRect (hWnd, NULL, FALSE);
+        */
 	}
 	if (!bPaintPending && (bForceUpdate || td.SysT > updTmax || td.SysT < updTmin)) {
 		updTmax = td.SysT + updDT;
@@ -141,7 +163,9 @@ void MapWin::Update (bool force)
 		updTmin = td.SysT1 - updDT;
 		VectorMap::Update ();
 		DrawMap();
+        /* TODO(jec)
 		InvalidateRect(hWnd, NULL, FALSE);
+        */
 		bPaintPending = true; // ?
 		bForceUpdate = false;
 	}
@@ -165,6 +189,7 @@ bool MapWin::SetCBody (const CelestialBody *body)
 
 int MapWin::Paint ()
 {
+    /* TDOO(jec)
 	HDC hDCtgt;
 	PAINTSTRUCT ps;
 
@@ -177,6 +202,7 @@ int MapWin::Paint ()
 	}
 	EndPaint (hWnd, &ps);
 	bPaintPending = false;
+    */
 	return 0;
 }
 
@@ -184,9 +210,11 @@ int MapWin::Paint ()
 
 int MapWin::Size (DWORD w, DWORD h)
 {
+    /* TODO(jec)
 	HDC hDC = GetDC(NULL);
 	SetCanvas (hDC, w, h);
 	ReleaseDC (NULL, hDC);
+    */
 	Update (true);
 	return 0;
 }
@@ -236,8 +264,11 @@ void MapWin::OnLButtonUp (int mx, int my)
 
 void MapWin::OnMouseMove (int mx, int my)
 {
+    /* TODO(jec)
 	if (GetForegroundWindow() == dlg->hWnd) SetFocus (hWnd);
 	SetCursor (LoadCursor (NULL, mousemode == MOUSE_DRAG ? IDC_HAND : IDC_CROSS));
+    */
+
 	if (bDragActive) {
 		int dx = mx-mousex;
 		int dy = my-mousey;
@@ -287,15 +318,19 @@ bool MapWin::FindTarget (int mx, int my)
 
 MapWin *MapWin::GetMapInstance (HWND hw)
 {
+    /* TODO(jec)
 	MapWin *map = (MapWin*)GetWindowLongPtr (hw, GWLP_USERDATA);
 	if (!map) map = map_in_creation;
 	return map;
+    */
+    return nullptr;
 }
 
 // ======================================================================
 
-LRESULT FAR PASCAL MapWin::Map_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT MapWin::Map_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_CREATE:
 		return GetMapInstance (hWnd)->Create ();
@@ -323,20 +358,26 @@ LRESULT FAR PASCAL MapWin::Map_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		return 0;
 	}
 	return DefWindowProc (hWnd, uMsg, wParam, lParam);
+    */
+    return FALSE;
 }
 
 // ======================================================================
 // ======================================================================
 
 const int nbtl = 1;
+/* TODO(jec)
 const int btlid[nbtl] = {IDC_MAP_TRACK};
+*/
 const int nbtr = 4;
+/* TODO(jec)
 const int btrid[nbtr] = {IDC_MAP_INFO, IDC_MAP_OPTIONS, IDCANCEL, IDHELP};
+*/
 
 DlgMap::MapPrmPersist DlgMap::prm_store = { NULL };
 
 DlgMap::DlgMap (HINSTANCE hInstance, HWND hParent, void *context)
-: DialogWin (hInstance, hParent, IDD_MAP, 0, 0, context)
+: DialogWin (hInstance, hParent, /* TODO(jec) IDD_MAP*/0, 0, 0, context)
 {
 	map = new MapWin (this);
 	prm = &g_pOrbiter->Cfg()->CfgMapPrm;
@@ -375,7 +416,9 @@ HWND DlgMap::Open ()
 	if (!dlgmgr) return 0;
 	HINSTANCE hInst = g_pOrbiter->GetInstance();
 	HWND hParent = g_pOrbiter->GetRenderWnd();
+    /* TDOO(jec)
 	if (dlgmgr->IsEntry (hInst, IDD_MAP)) return 0; // already open
+    */
 	DlgMap *dlg = new DlgMap (hInst, hParent);
 	return dlgmgr->AddEntry (dlg);
 }
@@ -387,8 +430,10 @@ HWND DlgMap::OpenWindow ()
 {
 	MapWin::map_in_creation = map;
 	HWND hw = DialogWin::OpenWindow ();
+    /* TODO(jec)
 	HWND hMap = GetDlgItem (hw, IDC_MAP);
 	map->PostCreation (hMap);
+    */
 	MapWin::map_in_creation = 0;
 	return hw;
 }
@@ -438,18 +483,26 @@ void DlgMap::SetPlanet (const char *name)
 
 void DlgMap::EchoSelection (const VectorMap::OBJTYPE &obj)
 {
+    /* TODO(jec)
 	HWND hNameBox = GetDlgItem (hWnd, IDC_MAP_FINDNAME);
+    */
 	switch (obj.type) {
 	case DISP_VESSEL:
 	case DISP_BASE:
 	case DISP_MOON:
+        /* TODO(jec)
 		SetWindowText (hNameBox, ((Body*)obj.obj)->Name());
+        */
 		break;
 	case DISP_NAVAID:
+        /* TODO(jec)
 		SetWindowText (hNameBox, ((Nav*)obj.obj)->GetId());
+        */
 		break;
 	default:
+        /* TODO(jec)
 		SetWindowText (hNameBox, "");
+        */
 		break;
 	}
 }
@@ -484,7 +537,7 @@ void DlgMap::SetSelection (const Body *body)
 	const CelestialBody *cbody = GetMapWin()->GetCBody();
 	if (cbody != ref) {
 		GetMapWin()->SetCBody(ref);
-		CBodySelectComboBox::BuildListFromNode (GetHwnd(), IDC_MAP_REFERENCE, ref);
+		CBodySelectComboBox::BuildListFromNode (GetHwnd(), /* TODO(jec) IDC_MAP_REFERENCE*/0, ref);
 	}
 	SetSelection (sel);
 }
@@ -513,10 +566,10 @@ bool DlgMap::SetSelection (const char *name, int type)
 	if ((type == 1 || type == 0) && map->GetDisplayFlags() & DISP_VESSEL) { // search for vessel
 		for (i = 0; i < g_psys->nVessel(); i++) {
 			Vessel *v = g_psys->GetVessel(i);
-			if (!_strnicmp (v->Name(), name, len)) {
+			if (caseInsensitiveStartsWith(v->Name(), name)) {
 				if (nhit < maxhit) hitstr[nhit] = v->Name();
 				nhit++;
-				if (!found_exact && !_stricmp (v->Name(), name)) {
+				if (!found_exact && caseInsensitiveEquals(v->Name(), name)) {
 					sel.type = DISP_VESSEL;
 					sel.obj = v;
 					found_exact = true;
@@ -529,10 +582,10 @@ bool DlgMap::SetSelection (const char *name, int type)
 		if (planet) {
 			for (i = 0; i < planet->nBase(); i++) {
 				const Base *base = planet->GetBase(i);
-				if (!_strnicmp (base->Name(), name, len)) {
+				if (caseInsensitiveStartsWith(base->Name(), name)) {
 					if (nhit < maxhit) hitstr[nhit] = base->Name();
 					nhit++;
-					if (!found_exact && !_stricmp (base->Name(), name)) {
+					if (!found_exact && caseInsensitiveEquals(base->Name(), name)) {
 						sel.type = DISP_BASE;
 						sel.obj = base;
 						found_exact = true;
@@ -548,10 +601,10 @@ bool DlgMap::SetSelection (const char *name, int type)
 				const Nav *nav = planet->NavMgr().GetNav(i);
 				if (nav->Type() == TRANSMITTER_VOR) {
 					const Nav_VOR *vor = (const Nav_VOR*)nav;
-					if (!_strnicmp (vor->GetId(), name, len)) {
+					if (caseInsensitiveStartsWith(vor->GetId(), name)) {
 						if (nhit < maxhit) hitstr[nhit] = vor->GetId();
 						nhit++;
-						if (!found_exact && !_stricmp (vor->GetId(), name)) {
+						if (!found_exact && caseInsensitiveEquals(vor->GetId(), name)) {
 							sel.type = DISP_NAVAID;
 							sel.obj = vor;
 							found_exact = true;
@@ -564,10 +617,10 @@ bool DlgMap::SetSelection (const char *name, int type)
 	if ((type == 5 || type == 0) && map->GetDisplayFlags() & DISP_MOON) { // search for moons
 		for (i = 0; i < map->GetCBody()->nSecondary(); i++) {
 			const CelestialBody *moon = map->GetCBody()->Secondary (i);
-			if (!_strnicmp (moon->Name(), name, len)) {
+			if (caseInsensitiveStartsWith(moon->Name(), name)) {
 				if (nhit < maxhit) hitstr[nhit] = moon->Name();
 				nhit++;
-				if (!found_exact && !_stricmp (moon->Name(), name)) {
+				if (!found_exact && caseInsensitiveEquals(moon->Name(), name)) {
 					sel.type = DISP_MOON;
 					sel.obj = moon;
 					found_exact = true;
@@ -576,24 +629,37 @@ bool DlgMap::SetSelection (const char *name, int type)
 		}
 	}
 
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_MAP_FINDNAME, CB_RESETCONTENT, 0, 0);
+    */
 
 	if (found_exact) {
 		map->SetSelection (sel);
+        /* TODO(jec)
 		SendDlgItemMessage (hWnd, IDC_MAP_FINDNAME, CB_ADDSTRING, 0, (LPARAM)name);
 		SendDlgItemMessage (hWnd, IDC_MAP_FINDNAME, CB_SHOWDROPDOWN, FALSE, 0);
 		SendDlgItemMessage (hWnd, IDC_MAP_FINDNAME, CB_SETCURSEL, 0, 0);
 		EnableInfo (sel.type == DISP_BASE || sel.type == DISP_VESSEL || sel.type == DISP_MOON);
+        */
 	} else {
 		if (nhit <= maxhit) {
-			for (i = 0; i < nhit; i++)
+			for (i = 0; i < nhit; i++) {
+                /* TODO(jec)
 				SendDlgItemMessage (hWnd, IDC_MAP_FINDNAME, CB_ADDSTRING, 0, (LPARAM)hitstr[i]);
+                */
+            }
+            /* TODO(jec)
 			SendDlgItemMessage (hWnd, IDC_MAP_FINDNAME, CB_SHOWDROPDOWN, nhit > 0 ? TRUE:FALSE, 0);
+            */
 		}
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (hWnd, IDC_MAP_FINDNAME), name);
+        */
 	}
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_MAP_FINDNAME, CB_SETEDITSEL, 0, MAKELPARAM(len,len));
 	SendMessage (GetDlgItem (hWnd, IDC_MAP_FINDNAME), WM_SETCURSOR, 0, 0);
+    */
 
 	return found_exact;
 }
@@ -625,7 +691,9 @@ void DlgMap::SetDragMode (bool drag)
 
 void DlgMap::EnableInfo (bool enable)
 {
+    /* TODO(jec)
 	EnableWindow (GetDlgItem (hWnd, IDC_MAP_INFO), enable ? 1:0);
+    */
 }
 
 // ======================================================================
@@ -638,8 +706,10 @@ void DlgMap::OpenInfo ()
 		pInfo->SetBody ((Body*)obj.obj);
 
 		RECT r;
+        /* TODO(jec)
 		GetWindowRect (hWnd, &r);
 		SetWindowPos (pInfo->GetHwnd(), NULL, r.right, r.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+        */
 	}
 }
 
@@ -651,43 +721,68 @@ BOOL DlgMap::OnInitDialog (HWND hDlg, WPARAM wParam, LPARAM lParam)
 	RECT rect;
 	char cbuf[64];
 
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_MAP_SELECT, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIcon (g_pOrbiter->GetInstance(), MAKEINTRESOURCE(IDI_CROSS)));
 	SendDlgItemMessage (hDlg, IDC_MAP_DRAG, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIcon (g_pOrbiter->GetInstance(), MAKEINTRESOURCE(IDI_FINGER)));
 	SendDlgItemMessage (hDlg, IDC_MAP_DRAG, BM_SETCHECK, BST_CHECKED, 0);
+    */
 	map->SetZoom (prm_store.zoom);
 	sprintf (cbuf, "Zoom %dx", prm_store.zoom);
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hDlg, IDC_MAP_ZOOMBOX), cbuf);
+    */
 	map->SetDisplayFlags (prm->DispFlag);
+    /* TODO(jec)
 	GetClientRect (hDlg, &rect);
+    */
 	MapPrm.dlgw = rect.right, MapPrm.dlgh = rect.bottom;
+    /* TODO(jec)
 	GetWindowRect (GetDlgItem (hDlg, IDC_MAP), &rect);
+    */
 	MapPrm.mapw = rect.right-rect.left, MapPrm.maph = rect.bottom-rect.top;
 	for (i = 0; i < nbtl; i++) {
+        /* TODO(jec)
 		GetWindowRect (GetDlgItem (hDlg, btlid[i]), &rect);
+        */
 		MapPrm.btlp[i].x = rect.left, MapPrm.btlp[i].y = rect.top;
+        /* TODO(jec)
 		ScreenToClient (hDlg, &MapPrm.btlp[i]);
+        */
 	}
 	for (i = 0; i < nbtr; i++) {
+        /* TODO(jec)
 		GetWindowRect (GetDlgItem (hDlg, btrid[i]), &rect);
+        */
 		MapPrm.btrp[i].x = rect.left, MapPrm.btrp[i].y = rect.top;
+        /* TODO(jec)
 		ScreenToClient (hDlg, &MapPrm.btrp[i]);
+        */
 	}
 
 	if (!prm_store.cbody) prm_store.cbody = g_focusobj->ProxyPlanet();
-	CBodySelectComboBox::BuildListFromNode (hDlg, IDC_MAP_REFERENCE, prm_store.cbody);
+	CBodySelectComboBox::BuildListFromNode (hDlg, /* TODO(jec) IDC_MAP_REFERENCE*/0, prm_store.cbody);
 	map->SetCBody (prm_store.cbody);
 	map->SetCenter (prm_store.lngcnt, prm_store.latcnt);
 	if (map->SetSelection (prm_store.sel))
 		EchoSelection (prm_store.sel);
 	if (prm_store.track) {
+        /* TODO(jec)
 		SendDlgItemMessage (hDlg, IDC_MAP_TRACK, BM_SETCHECK, BST_CHECKED, 0);
+        */
 		map->SetCenterMode (2);
 	}
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_MAP_FINDTYPE, CB_RESETCONTENT, 0, 0);
+    */
 	const char *tpstr[6] = {"Any", "Vessel", "Base", "VOR", "Marker", "Moons"};
-	for (i = 0; i < 6; i++)
+	for (i = 0; i < 6; i++) {
+        /* TODO(jec)
 		SendDlgItemMessage (hDlg, IDC_MAP_FINDTYPE, CB_ADDSTRING, 0, (LPARAM)tpstr[i]);
+        */
+    }
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_MAP_FINDTYPE, CB_SETCURSEL, 0, 0);
+    */
 
 	return TRUE;
 }
@@ -699,8 +794,11 @@ BOOL DlgMap::OnSize (HWND hDlg, WPARAM wParam, int w, int h)
 	RECT rect;
 	int i, dx, dy;
 
+    /* TODO(jec)
 	GetClientRect (hWnd, &rect);
+    */
 	dx = rect.right - MapPrm.dlgw, dy = rect.bottom - MapPrm.dlgh;
+    /* TODO(jec)
 	SetWindowPos (GetDlgItem (hWnd, IDC_MAP), HWND_TOP, 0, 0, MapPrm.mapw+dx, MapPrm.maph+dy, SWP_NOMOVE);
 	for (i = 0; i < nbtr; i++) ShowWindow (GetDlgItem (hWnd, btrid[i]), SW_HIDE);
 	for (i = 0; i < nbtr; i++)
@@ -708,6 +806,7 @@ BOOL DlgMap::OnSize (HWND hDlg, WPARAM wParam, int w, int h)
 	for (i = 0; i < nbtr; i++) ShowWindow (GetDlgItem (hWnd, btrid[i]), SW_SHOW);
 	for (i = 0; i < nbtl; i++)
 		SetWindowPos (GetDlgItem (hWnd, btlid[i]), HWND_TOP, MapPrm.btlp[i].x, MapPrm.btlp[i].y+dy, 0, 0, SWP_NOSIZE);
+    */
 	return DialogWin::OnSize (hDlg, wParam, w, h);
 }
 
@@ -718,6 +817,7 @@ BOOL DlgMap::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 	char cbuf[1024];
 	int i;
 
+    /* TODO(jec)
 	switch (id) {
 	case IDHELP:
 		DefHelpContext.topic = (char*)"/map.htm";
@@ -769,6 +869,7 @@ BOOL DlgMap::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 			SetDragMode (id == IDC_MAP_DRAG);
 		return TRUE;
 	}
+    */
 	return DialogWin::OnCommand (hDlg, id, code, hControl);
 }
 
@@ -776,6 +877,7 @@ BOOL DlgMap::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 
 BOOL DlgMap::OnNotify (HWND hWnd, int idCtrl, LPNMHDR pnmh)
 {
+    /* TODO(jec)
 	if (pnmh->code == UDN_DELTAPOS) {
 		NMUPDOWN *nmud = (NMUPDOWN*)pnmh;
 		switch (pnmh->idFrom) {
@@ -785,6 +887,7 @@ BOOL DlgMap::OnNotify (HWND hWnd, int idCtrl, LPNMHDR pnmh)
 			break;
 		}
 	}
+    */
 	return DialogWin::OnNotify (hWnd, idCtrl, pnmh);
 }
 
@@ -804,7 +907,9 @@ BOOL DlgMap::OnUserMessage (HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 BOOL DlgMap::OnMouseWheel (HWND hDlg, int vk, int dist, int x, int y)
 {
+    /* TODO(jec)
 	PostMessage (GetDlgItem (hDlg, IDC_MAP), WM_MOUSEWHEEL, MAKEWPARAM(vk,dist), MAKELPARAM(x,y));
+    */
 	return 1;
 }
 
@@ -819,8 +924,10 @@ void DlgMap::SetZoom (int zoom)
 		prm_store.zoom = zoom;
 		map->Update (true);
 		sprintf (cbuf, "Zoom %dx", zoom);
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (hWnd, IDC_MAP_ZOOMBOX), cbuf);
 		InvalidateRect (GetDlgItem (hWnd, IDC_MAP), NULL, FALSE);
+        */
 	}
 }
 
@@ -843,7 +950,10 @@ void DlgMap::ZoomOut ()
 void DlgMap::SetFindMask ()
 {
 	DWORD mask;
+    /* TODO(jec)
 	int idx = SendDlgItemMessage (hWnd, IDC_MAP_FINDTYPE, CB_GETCURSEL, 0, 0);
+    */
+    int idx = 0;
 	switch (idx) {
 	case 0: mask = DISP_NAVAID | DISP_BASE | DISP_CUSTOM1 | DISP_VESSEL | DISP_MOON; break;
 	case 1: mask = DISP_VESSEL; break;
@@ -859,7 +969,7 @@ void DlgMap::SetFindMask ()
 // ======================================================================
 
 DlgMapOpt::DlgMapOpt (HINSTANCE hInstance, HWND hParent, void *context)
-: DialogWin (hInstance, hParent, IDD_MAP_CONFIG, 0, 0, context)
+: DialogWin (hInstance, hParent, /* TODO(jec) IDD_MAP_CONFIG*/0, 0, 0, context)
 {
 	dlgmap = (DlgMap*)context;
 }
@@ -869,6 +979,7 @@ DlgMapOpt::DlgMapOpt (HINSTANCE hInstance, HWND hParent, void *context)
 BOOL DlgMapOpt::OnInitDialog (HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
 	DWORD dispflag = GetMapDlg()->GetMapWin()->GetDisplayFlags();
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_MAPOPT_ORBITFOCUS, BM_SETCHECK, dispflag & DISP_ORBITFOCUS ? BST_CHECKED:BST_UNCHECKED, 0);
 	SendDlgItemMessage (hDlg, IDC_MAPOPT_ORBITSEL, BM_SETCHECK, dispflag & DISP_ORBITSEL ? BST_CHECKED:BST_UNCHECKED, 0);
 	SendDlgItemMessage (hDlg, IDC_MAPOPT_ORBITPLANE, BM_SETCHECK, dispflag & DISP_ORBITPLANE ? BST_CHECKED:BST_UNCHECKED, 0);
@@ -887,6 +998,7 @@ BOOL DlgMapOpt::OnInitDialog (HWND hDlg, WPARAM wParam, LPARAM lParam)
 	const int modeid[3] = {IDC_MAPOPT_VESSELALL, IDC_MAPOPT_VESSELFOCUS, IDC_MAPOPT_VESSELNONE};
 	for (i = 0; i < 3; i++)
 		SendDlgItemMessage (hDlg, modeid[i], BM_SETCHECK, i==vesselmode ? BST_CHECKED:BST_UNCHECKED, 0);
+    */
 	return 0;
 }
 
@@ -894,6 +1006,7 @@ BOOL DlgMapOpt::OnInitDialog (HWND hDlg, WPARAM wParam, LPARAM lParam)
 
 BOOL DlgMapOpt::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 {
+    /* TODO(jec)
 	switch (id) {
 	case IDC_MAPOPT_VESSELALL:
 	case IDC_MAPOPT_VESSELFOCUS:
@@ -947,6 +1060,7 @@ BOOL DlgMapOpt::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 		ToggleDispFlag (DISP_MOON);
 		return TRUE;
 	}
+    */
 	return DialogWin::OnCommand (hDlg, id, code, hControl);
 }
 

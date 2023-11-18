@@ -11,6 +11,10 @@
 #include "DialogWin.h"
 #include "DlgCtrl.h"
 
+/* (jec) Compatibility definitions
+ */
+using HICON = void*;
+
 class Body;
 class CelestialBody;
 class Base;

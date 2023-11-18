@@ -4,7 +4,9 @@
 #include "MenuInfoBar.h"
 #include "Pane.h"
 #include "Camera.h"
+/* TODO(jec)
 #include "Resource.h"
+*/
 #include "Dialogs.h"
 #include "DlgMgr.h"
 #include "DlgMenuCfg.h"
@@ -631,6 +633,11 @@ void MenuInfoBar::Update (double t)
 
 bool MenuInfoBar::ProcessMouse (UINT event, DWORD state, DWORD x, DWORD y)
 {
+    /* TODO(jec) */
+    constexpr UINT WM_MOUSEMOVE = 0x0200;
+    constexpr UINT WM_LBUTTONDOWN = 0x0201;
+    constexpr UINT WM_RBUTTONDOWN = 0x0204;
+
 	x = (DWORD)(x / transf.m11); // account for menu squeezing
 
 	if (event == WM_MOUSEMOVE) {
@@ -702,7 +709,9 @@ bool MenuInfoBar::ProcessMouse (UINT event, DWORD state, DWORD x, DWORD y)
 			return true;
 		case 11:
 			g_pOrbiter->PreCloseSession();
+            /* TODO(jec):  End the sim session.
 			DestroyWindow (g_pOrbiter->GetRenderWnd());
+            */
 			return true;
 		}
 	}

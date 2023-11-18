@@ -5,9 +5,15 @@
 // ScenarioTab class
 //=============================================================================
 
+#include <thread>
+#include <filesystem>
+#include <cstddef>
+
 #include <windows.h>
+/* TODO(jec)
 #include <io.h>
 #include <direct.h>
+*/
 #include <string>
 #include "Orbiter.h"
 #include "TabScenario.h"
@@ -16,21 +22,24 @@
 #include "Help.h"
 #include "htmlctrl.h"
 #include "resource.h"
+#include "Util.h"
 
 using namespace std;
 
-extern const TCHAR* CurrentScenario;
+extern const char* CurrentScenario;
 const char *htmlstyle = "<style type=""text/css"">body{font-family:Arial;font-size:12px} p{margin-top:0;margin-bottom:0.5em} h1{font-size:150%;font-weight:normal;margin-bottom:0.5em;color:#000080;background-color:#E6E6FF;padding:0.1em}</style>";
 
 //-----------------------------------------------------------------------------
 
 orbiter::ScenarioTab::ScenarioTab (const LaunchpadDialog *lp): LaunchpadTab (lp)
 {
+    /* TODO(jec)
 	imglist = ImageList_Create (16, 16, ILC_COLOR8, 4, 0);
 	treeicon_idx[0] = ImageList_Add (imglist, LoadBitmap (AppInstance(), MAKEINTRESOURCE (IDB_TREEICON_FOLDER1)), 0);
 	treeicon_idx[1] = ImageList_Add (imglist, LoadBitmap (AppInstance(), MAKEINTRESOURCE (IDB_TREEICON_FOLDER2)), 0);
 	treeicon_idx[2] = ImageList_Add (imglist, LoadBitmap (AppInstance(), MAKEINTRESOURCE (IDB_TREEICON_SCN1)), 0);
 	treeicon_idx[3] = ImageList_Add (imglist, LoadBitmap (AppInstance(), MAKEINTRESOURCE (IDB_TREEICON_SCN2)), 0);
+    */
 	scnhelp[0] = '\0';
 	htmldesc = pLp->App()->UseHtmlInline();
 }
@@ -39,17 +48,24 @@ orbiter::ScenarioTab::ScenarioTab (const LaunchpadDialog *lp): LaunchpadTab (lp)
 
 orbiter::ScenarioTab::~ScenarioTab ()
 {
+    /* TODO(jec)
 	ImageList_Destroy (imglist);
-	TerminateThread (hThread, 0);
+    */
+    if (hThread.joinable()) {
+        hThread.join();
+    }
 }
 
 //-----------------------------------------------------------------------------
 
 void orbiter::ScenarioTab::Create ()
 {
+    /* TODO(jec)
 	hTab = CreateTab (IDD_PAGE_SCN);
+    */
 
 	RefreshList(false);
+    /* TODO(jec)
 	SendDlgItemMessage (hTab, IDC_SCN_LIST, TVM_SETIMAGELIST, (WPARAM)TVSIL_NORMAL, (LPARAM)imglist);
 
 	r_list0 = GetClientPos (hTab, GetDlgItem (hTab, IDC_SCN_LIST)); // REMOVE!
@@ -73,21 +89,27 @@ void orbiter::ScenarioTab::Create ()
 	}
 
 	splitListDesc.SetHwnd (GetDlgItem (hTab, IDC_SCN_SPLIT1), GetDlgItem (hTab, IDC_SCN_LIST), GetDlgItem (hTab, infoId));
+    */
 
 	// create a thread to monitor changes to the scenario list
-	hThread = CreateThread (NULL, NULL, threadWatchScnList, this, NULL, NULL);
+    hThread = std::thread{threadWatchScnList, this};
+	/* hThread = CreateThread (NULL, NULL, threadWatchScnList, this, NULL, NULL); */
 }
 
 //-----------------------------------------------------------------------------
 
 void orbiter::ScenarioTab::GetConfig (const Config *cfg)
 {
+    /* TODO(jec)
 	SendDlgItemMessage (hTab, IDC_SCN_PAUSED, BM_SETCHECK,
 		cfg->CfgLogicPrm.bStartPaused ? BST_CHECKED : BST_UNCHECKED, 0);
+    */
 	int listw = cfg->CfgWindowPos.LaunchpadScnListWidth;
 	if (!listw) {
 		RECT r;
+        /* TODO(jec)
 		GetClientRect (GetDlgItem (hTab, IDC_SCN_LIST), &r);
+        */
 		listw = r.right-r.left;
 	}
 	splitListDesc.SetStaticPane (SplitterCtrl::PANE1, listw);
@@ -97,7 +119,9 @@ void orbiter::ScenarioTab::GetConfig (const Config *cfg)
 
 void orbiter::ScenarioTab::SetConfig (Config *cfg)
 {
+    /* TODO(jec)
 	cfg->CfgLogicPrm.bStartPaused = (SendDlgItemMessage (hTab, IDC_SCN_PAUSED, BM_GETCHECK, 0, 0) == BST_CHECKED);
+    */
 	cfg->CfgWindowPos.LaunchpadScnListWidth = splitListDesc.GetPaneWidth (SplitterCtrl::PANE1);
 }
 
@@ -105,7 +129,9 @@ void orbiter::ScenarioTab::SetConfig (Config *cfg)
 
 bool orbiter::ScenarioTab::OpenHelp ()
 {
+    /* TODO(jec)
 	OpenTabHelp ("tab_scenario");
+    */
 	return true;
 }
 
@@ -138,6 +164,7 @@ BOOL orbiter::ScenarioTab::OnSize (int w, int h)
 	int xb2 = r_save0.left+wb1+bg;
 	int xb3 = xr+wr-wb3;
 
+    /* TODO(jec)
 	SetWindowPos (GetDlgItem (hTab, IDC_SCN_SPLIT1), NULL,
 		0, 0, w0+dw, h0+dh,
 		SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOOWNERZORDER|SWP_NOZORDER);
@@ -153,6 +180,7 @@ BOOL orbiter::ScenarioTab::OnSize (int w, int h)
 	SetWindowPos (GetDlgItem (hTab, IDC_SCN_PAUSED), NULL,
 		r_pause0.left+dw, r_pause0.top, 0, 0,
 		SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOOWNERZORDER|SWP_NOZORDER|SWP_NOCOPYBITS);
+    */
 
 	return NULL;
 }
@@ -161,6 +189,7 @@ BOOL orbiter::ScenarioTab::OnSize (int w, int h)
 
 BOOL orbiter::ScenarioTab::OnNotify(HWND hDlg, int idCtrl, LPNMHDR pnmh)
 {
+    /* TODO(jec)
 	if (idCtrl == IDC_SCN_LIST) {
 		NM_TREEVIEW* pnmtv = (NM_TREEVIEW FAR*)pnmh;
 		switch (pnmtv->hdr.code) {
@@ -172,6 +201,7 @@ BOOL orbiter::ScenarioTab::OnNotify(HWND hDlg, int idCtrl, LPNMHDR pnmh)
 			return TRUE;
 		}
 	}
+    */
 	return FALSE;
 }
 
@@ -179,6 +209,7 @@ BOOL orbiter::ScenarioTab::OnNotify(HWND hDlg, int idCtrl, LPNMHDR pnmh)
 
 BOOL orbiter::ScenarioTab::OnMessage (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	NM_TREEVIEW *pnmtv;
 
 	switch (uMsg) {
@@ -196,6 +227,7 @@ BOOL orbiter::ScenarioTab::OnMessage (HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		}
 		break;
 	}
+    */
 	return FALSE;
 }
 
@@ -206,6 +238,7 @@ void orbiter::ScenarioTab::RefreshList (bool preserveSelection)
 	if (Launchpad()->Visible()) {
 		char cbuf[256], ch[256], * pc, * c;
 		GetSelScenario(cbuf, 256);
+        /* TODO(jec)
 		SendDlgItemMessage(hTab, IDC_SCN_LIST, TVM_SELECTITEM, TVGN_CARET, NULL);
 		// remove selection to avoid repeated TVN_SELCHANGED messages while the list is cleared
 		//DWORD styles = GetWindowLongPtr(GetDlgItem(hTab, IDC_SCN_LIST), GWL_STYLE);
@@ -214,12 +247,14 @@ void orbiter::ScenarioTab::RefreshList (bool preserveSelection)
 		ScanDirectory(pCfg->CfgDirPrm.ScnDir, NULL);
 
 		HTREEITEM hti = TreeView_GetRoot(GetDlgItem(hTab, IDC_SCN_LIST));
+        */
 		if (preserveSelection) { // find the previous selection in the newly created list and re-select it
 			pc = cbuf;
 			while (*pc) {
 				for (c = pc; *c && *c != '\\'; c++);
 				bool isdir = (*c == '\\');
 				*c = '\0';
+                /* TODO(jec)
 				TV_ITEM tvi = { TVIF_HANDLE | TVIF_TEXT, 0, 0, 0, ch, 256 };
 				for (tvi.hItem = hti; tvi.hItem; tvi.hItem = (HTREEITEM)SendDlgItemMessage(hTab, IDC_SCN_LIST, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)tvi.hItem)) {
 					SendDlgItemMessage(hTab, IDC_SCN_LIST, TVM_GETITEM, 0, (LPARAM)&tvi);
@@ -230,11 +265,13 @@ void orbiter::ScenarioTab::RefreshList (bool preserveSelection)
 						break;
 					}
 				}
+                */
 				pc = c;
 				if (isdir) pc++;
 			}
 		}
 		else { // Select the "current" scenario
+            /* TODO(jec)
 			TV_ITEM tvi = { TVIF_HANDLE | TVIF_TEXT, 0, 0, 0, ch, 256 };
 			for (tvi.hItem = hti; tvi.hItem; tvi.hItem = (HTREEITEM)SendDlgItemMessage(hTab, IDC_SCN_LIST, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)tvi.hItem)) {
 				SendDlgItemMessage(hTab, IDC_SCN_LIST, TVM_GETITEM, 0, (LPARAM)&tvi);
@@ -243,8 +280,11 @@ void orbiter::ScenarioTab::RefreshList (bool preserveSelection)
 					break;
 				}
 			}
+            */
 		}
+        /* TODO(jec)
 		SendDlgItemMessage(hTab, IDC_SCN_LIST, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hti);
+        */
 	}
 }
 
@@ -260,68 +300,91 @@ void orbiter::ScenarioTab::LaunchpadShowing(bool show)
 
 void orbiter::ScenarioTab::ScanDirectory (const char *ppath, HTREEITEM hti)
 {
+    /* TODO(jec)
 	TV_INSERTSTRUCT tvis;
 	HTREEITEM ht, hts0, ht0;
-	struct _finddata_t fdata;
-	intptr_t fh;
-	char cbuf[256], path[256], *fname;
+    */
+	char cbuf[256];
 
-	strcpy (path, ppath);
-	fname = path + strlen(path);
+    std::filesystem::path path_ {ppath};
 
+    /* TODO(jec)
 	tvis.hParent = hti;
 	tvis.item.mask = TVIF_TEXT | TVIF_CHILDREN | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
 	tvis.item.pszText = cbuf;
+    */
 
 	// scan for subdirectories
-	strcpy (fname, "*.*");
-	if ((fh = _findfirst (path, &fdata)) != -1) {
-		tvis.hInsertAfter = TVI_SORT;
-		tvis.item.cChildren = 1;
-		tvis.item.iImage = treeicon_idx[0];
-		tvis.item.iSelectedImage = treeicon_idx[0];
-		do {
-			if ((fdata.attrib & _A_SUBDIR) && fdata.name[0] != '.') {
-				strcpy (cbuf, fdata.name);
-				ht = (HTREEITEM)SendDlgItemMessage (hTab, IDC_SCN_LIST, TVM_INSERTITEM, 0, (LPARAM)&tvis);
-				strcpy (fname, fdata.name); strcat (fname, "\\");
-				ScanDirectory (path, ht);
-			}
-		} while (!_findnext (fh, &fdata));
-		_findclose (fh);
-	}
-	hts0 = (HTREEITEM)SendDlgItemMessage (hTab, IDC_SCN_LIST, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hti);
-	// the first subdirectory entry in this folder
+    bool first_entry = true;
+    for (auto& dir_entry : std::filesystem::recursive_directory_iterator{path_}) {
+        const auto& found_path = dir_entry.path();
 
-	// scan for files
-	strcpy (fname, "*.scn");
-	if ((fh = _findfirst (path, &fdata)) != -1) {
-		tvis.hInsertAfter = TVI_FIRST;
-		tvis.item.cChildren = 0;
-		tvis.item.iImage = treeicon_idx[2];
-		tvis.item.iSelectedImage = treeicon_idx[3];
-		do {
-			strcpy (cbuf, fdata.name);
-			cbuf[strlen(cbuf)-4] = '\0';
+        if (first_entry) {
+            /* TODO(jec)
+            tvis.hInsertAfter = TVI_SORT;
+            tvis.item.cChildren = 1;
+            tvis.item.iImage = treeicon_idx[0];
+            tvis.item.iSelectedImage = treeicon_idx[0];
+            */
+            first_entry = false;
+        }
 
-			char ch[256];
-			TV_ITEM tvi = {TVIF_HANDLE | TVIF_TEXT, 0, 0, 0, ch, 256};
+        auto&& found_fname = found_path.filename().string();
 
-			ht0 = (HTREEITEM)SendDlgItemMessage (hTab, IDC_SCN_LIST, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hti);
-			for (tvi.hItem = ht0; tvi.hItem && tvi.hItem != hts0; tvi.hItem = (HTREEITEM)SendDlgItemMessage (hTab, IDC_SCN_LIST, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)tvi.hItem)) {
-				SendDlgItemMessage (hTab, IDC_SCN_LIST, TVM_GETITEM, 0, (LPARAM)&tvi);
-				if (strcmp (tvi.pszText, cbuf) > 0) break;
-			}
-			if (tvi.hItem) {
-				ht = (HTREEITEM)SendDlgItemMessage (hTab, IDC_SCN_LIST, TVM_GETNEXTITEM, TVGN_PREVIOUS, (LPARAM)tvi.hItem);
-				tvis.hInsertAfter = (ht ? ht : TVI_FIRST);
-			} else {
-				tvis.hInsertAfter = (hts0 ? TVI_FIRST : TVI_LAST);
-			}
-			(HTREEITEM)SendDlgItemMessage (hTab, IDC_SCN_LIST, TVM_INSERTITEM, 0, (LPARAM)&tvis);
-		} while (!_findnext (fh, &fdata));
-		_findclose (fh);
-	}
+        if (dir_entry.is_directory() &&
+            !found_fname.empty() &&
+            (found_fname.front()!= '.')) {
+
+            strcpy (cbuf, found_fname.c_str());
+            /* TODO(jec)
+            ht = (HTREEITEM)SendDlgItemMessage (hTab, IDC_SCN_LIST, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+            */
+            /* strcpy (fname, found_fname.c_str()); strcat (fname, "/"); */
+            /* TODO(jec):  Fix recursion using recursvie_directory_iterator and
+             * treeview.
+            ScanDirectory (path_, ht);
+            */
+        }
+        /* TODO(jec)
+        hts0 = (HTREEITEM)SendDlgItemMessage (hTab, IDC_SCN_LIST, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hti);
+        */
+        // the first subdirectory entry in this folder
+
+        // scan for files
+        bool first_scn = true;
+        if (found_path.extension() == "scn") {
+            if (first_scn) {
+                /* TODO(jec)
+                tvis.hInsertAfter = TVI_FIRST;
+                tvis.item.cChildren = 0;
+                tvis.item.iImage = treeicon_idx[2];
+                tvis.item.iSelectedImage = treeicon_idx[3];
+                */
+                first_scn = false;
+            }
+
+            strcpy (cbuf, found_fname.c_str());
+            cbuf[strlen(cbuf)-4] = '\0';
+
+            char ch[256];
+            /* TODO(jec)
+            TV_ITEM tvi = {TVIF_HANDLE | TVIF_TEXT, 0, 0, 0, ch, 256};
+
+            ht0 = (HTREEITEM)SendDlgItemMessage (hTab, IDC_SCN_LIST, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hti);
+            for (tvi.hItem = ht0; tvi.hItem && tvi.hItem != hts0; tvi.hItem = (HTREEITEM)SendDlgItemMessage (hTab, IDC_SCN_LIST, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)tvi.hItem)) {
+                SendDlgItemMessage (hTab, IDC_SCN_LIST, TVM_GETITEM, 0, (LPARAM)&tvi);
+                if (strcmp (tvi.pszText, cbuf) > 0) break;
+            }
+            if (tvi.hItem) {
+                ht = (HTREEITEM)SendDlgItemMessage (hTab, IDC_SCN_LIST, TVM_GETNEXTITEM, TVGN_PREVIOUS, (LPARAM)tvi.hItem);
+                tvis.hInsertAfter = (ht ? ht : TVI_FIRST);
+            } else {
+                tvis.hInsertAfter = (hts0 ? TVI_FIRST : TVI_LAST);
+            }
+            (HTREEITEM)SendDlgItemMessage (hTab, IDC_SCN_LIST, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+            */
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -343,7 +406,7 @@ char *ScanFileDesc (std::istream &is, const char *blockname)
 				if (is.eof()) break;
 				else is.clear();
 			}
-			if (_strnicmp (line, blockend, strlen(blockend))) {
+			if (!caseInsensitiveStartsWith(line, blockend)) {
 				len = strlen(line);
 				if (len) strcat (line, " "), len++;    // convert newline to space
 				else     strcpy (line, "\r\n"), len=2; // convert empty line to CR
@@ -431,7 +494,7 @@ void Html2Text(std::string& str)
 	}
 
 	// 6. restore ampersands
-	for (int i = 0; i < str.size(); i++)
+	for (std::size_t i = 0; i < str.size(); i++)
 		if (str[i] == '\001')
 			str[i] = '&';
 }
@@ -458,7 +521,7 @@ void orbiter::ScenarioTab::ScenarioChanged ()
 {
 	const int linelen = 256;
 	bool have_info = false;
-	char cbuf[256], path[256], *pc;
+	char cbuf[256], *pc;
 	ifstream ifs;
 	scnhelp[0] = '\0';
 
@@ -469,14 +532,16 @@ void orbiter::ScenarioTab::ScenarioChanged ()
 		ifs.open (pLp->App()->ScnPath (cbuf));
 		pLp->EnableLaunchButton (true);
 		break;
-	case 2: // subdirectory
-		strcpy (path, pCfg->CfgDirPrm.ScnDir);
-		strcat (path, cbuf);
-		strcat (path, "\\Description.txt");
-		ifs.open (path, ios::in);
+	case 2: { // subdirectory
+        auto path = std::filesystem::path{pCfg->CfgDirPrm.ScnDir} /
+                    cbuf /
+                    "Description.txt";
+		ifs.open (path.c_str(), ios::in);
 		pLp->EnableLaunchButton (false);
 		break;
+    }
 	}
+
 	if (ifs) {
 		if (!have_info) {
 			char *buf;
@@ -487,11 +552,16 @@ void orbiter::ScenarioTab::ScenarioChanged ()
 					strncpy(url_ref, trim_string(buf), 255);
 					path = strtok(url_ref, ",");
 					topic = strtok(NULL, "\n");
-					if (topic)
+					if (topic) {
 						sprintf(url, "its:Html\\Scenarios\\%s.chm::%s.htm", path, topic);
-					else
-						sprintf(url, "%s\\Html\\Scenarios\\%s.htm", _getcwd(url, 256), path);
+                    } else {
+						sprintf(url, "%s\\Html\\Scenarios\\%s.htm",
+                                std::filesystem::current_path().c_str(),
+                                path);
+                    }
+                    /* TODO(jec)
 					DisplayHTMLPage(GetDlgItem(hTab, IDC_SCN_HTML), url);
+                    */
 					have_info = true;
 				}
 				else {
@@ -511,18 +581,24 @@ void orbiter::ScenarioTab::ScenarioChanged ()
 						strcpy(buf2, htmlstyle); strcat(buf2, buf);
 						delete[]buf;
 						buf = buf2;
+                        /* TODO(jec)
 						DisplayHTMLStr(GetDlgItem(hTab, IDC_SCN_HTML), buf);
+                        */
 						have_info = true;
 					}
 				}
 			} else {
 				if (buf = ScanFileDesc (ifs, "DESC")) {
+                    /* TODO(jec)
 					SetWindowText(GetDlgItem(hTab, IDC_SCN_DESC), buf);
+                    */
 					have_info = true;
 				} else if (buf = ScanFileDesc (ifs, "HYPERDESC")) {
 					std::string str(buf);
 					Html2Text(str);
+                    /* TODO(jec)
 					SetWindowText(GetDlgItem(hTab, IDC_SCN_DESC), str.c_str());
+                    */
 					have_info = true;
 				}
 			}
@@ -534,18 +610,23 @@ void orbiter::ScenarioTab::ScenarioChanged ()
 	}
 
 	if (!have_info) {
+        /* TODO(jec)
 		if (htmldesc) DisplayHTMLStr (GetDlgItem (hTab, IDC_SCN_HTML), "");
 		else          SetWindowText (GetDlgItem (hTab, IDC_SCN_DESC), "");
+        */
 	}
 
 	if (!htmldesc) {
 		bool enable_info = false;
-		for (int i = 0; scnhelp[i]; i++)
+		for (int i = 0; scnhelp[i]; i++) {
 			if (scnhelp[i] == ',') {
 				enable_info = true;
 				break;
 			}
+        }
+        /* TODO(jec)
 		EnableWindow (GetDlgItem (hTab, IDC_SCN_INFO), enable_info ? TRUE:FALSE);
+        */
 	}
 }
 
@@ -553,10 +634,13 @@ void orbiter::ScenarioTab::ScenarioChanged ()
 
 int orbiter::ScenarioTab::GetSelScenario (char *scn, int len)
 {
+    /* TODO(jec)
 	TV_ITEM tvi;
+    */
 	char cbuf[256];
 	int type;
 
+    /* TODO(jec)
 	tvi.mask = TVIF_HANDLE | TVIF_TEXT | TVIF_CHILDREN;
 	tvi.hItem = TreeView_GetSelection (GetDlgItem (hTab, IDC_SCN_LIST));
 	tvi.pszText = scn;
@@ -575,6 +659,7 @@ int orbiter::ScenarioTab::GetSelScenario (char *scn, int len)
 			strcpy (scn, cbuf);
 		}
 	}
+    */
 	return type;
 }
 
@@ -584,9 +669,13 @@ void orbiter::ScenarioTab::SaveCurScenario ()
 {
 	ifstream ifs (pLp->App()->ScnPath (CurrentScenario), ios::in);
 	if (ifs) {
+        /* TODO(jec)
 		DialogBoxParam (AppInstance(), MAKEINTRESOURCE(IDD_SAVESCN), LaunchpadWnd(), SaveProc, (LPARAM)this);
+        */
 	} else {
+        /* TODO(jec)
 		MessageBox (LaunchpadWnd(), "No current simulation state available", "Save Error", MB_OK|MB_ICONEXCLAMATION);
+        */
 	}
 }
 
@@ -636,6 +725,7 @@ INT_PTR CALLBACK orbiter::ScenarioTab::SaveProc (HWND hWnd, UINT uMsg, WPARAM wP
 	int res, name_len, desc_len;
 	static char name[64], *desc;
 
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		pTab = (ScenarioTab*)lParam;
@@ -670,6 +760,7 @@ INT_PTR CALLBACK orbiter::ScenarioTab::SaveProc (HWND hWnd, UINT uMsg, WPARAM wP
 			return TRUE;
 		}
 	}
+    */
     return FALSE;
 }
 
@@ -679,16 +770,16 @@ INT_PTR CALLBACK orbiter::ScenarioTab::SaveProc (HWND hWnd, UINT uMsg, WPARAM wP
 //-----------------------------------------------------------------------------
 void orbiter::ScenarioTab::ClearQSFolder()
 {
-	char filespec[256], fname[256] = "Quicksave\\";
+	char filespec[256];
 	strcpy (filespec, pLp->App()->ScnPath ("Quicksave\\*"));
-	struct _finddata_t fd;
-	intptr_t hf;
-	while ((hf = _findfirst (filespec, &fd)) != -1) {
-		strcpy (fname+10, fd.name);
-		fname[strlen(fname)-4] = '\0';
-		_findclose (hf);
-		remove (pLp->App()->ScnPath (fname));
-	}
+    // At this point it's "<some_path>/Quicksave/*.scn"
+    std::filesystem::path quicksavePath {filespec};
+    quicksavePath.remove_filename();
+    for (auto& dir_entry : std::filesystem::directory_iterator{quicksavePath}) {
+        if (dir_entry.path().extension() == "scn") {
+            std::filesystem::remove(dir_entry.path());
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -698,20 +789,24 @@ void orbiter::ScenarioTab::ClearQSFolder()
 void orbiter::ScenarioTab::OpenScenarioHelp ()
 {
 	if (!scnhelp[0]) return;
-	char str[256], path[256], *scenario, *topic;
+	char str[256], *scenario, *topic;
 	strncpy (str, scnhelp, 256);
 	scenario = strtok (str, ",");
 	topic = strtok (NULL, "\n");
-	sprintf(path, "html\\scenarios\\%s.chm", scenario);
-	::OpenHelp(LaunchpadWnd(), path, topic);
+    auto path = std::filesystem::path{"html"} / "scenarios" / scenario;
+    path += ".chm";
+	::OpenHelp(LaunchpadWnd(), path.c_str(), topic);
 }
 
 //-----------------------------------------------------------------------------
 // Thread function for scenario directory tree watcher
 //-----------------------------------------------------------------------------
-DWORD WINAPI orbiter::ScenarioTab::threadWatchScnList (LPVOID pPrm)
+void orbiter::ScenarioTab::threadWatchScnList (LPVOID pPrm)
 {
 	ScenarioTab *tab = (ScenarioTab*)pPrm;
+    /* TODO:  This function gets event notifications from the OS on changes in
+     * the scenarios folder, asynchronously.  std::filesystem doesn't have
+     * anything like that.
 	HANDLE dwChangeHandle;
 	DWORD dwWaitStatus;
 
@@ -729,5 +824,5 @@ DWORD WINAPI orbiter::ScenarioTab::threadWatchScnList (LPVOID pPrm)
 		}
 	}
 	FindCloseChangeNotification(dwChangeHandle);
-	return 0;
+    */
 }

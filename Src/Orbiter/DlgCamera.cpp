@@ -9,12 +9,16 @@
 
 #include "DlgCamera.h"
 #include "DlgMgr.h"
+/* TODO(jec)
 #include "Resource.h"
 #include "Resource2.h"
+*/
 #include "Orbiter.h"
 #include "Psys.h"
 #include "Camera.h"
+/* TODO(jec)
 #include "Uxtheme.h"
+*/
 #include "DlgCtrl.h"
 
 using std::min;
@@ -30,7 +34,7 @@ extern HELPCONTEXT DefHelpContext;
 // ======================================================================
 
 DlgCamera::DlgCamera (HINSTANCE hInstance, HWND hParent, void *context)
-: DialogWin (hInstance, hParent, IDD_CAMERA, 0, 0, context)
+: DialogWin (hInstance, hParent, /* TODO(jec) IDD_CAMERA*/ 0, 0, 0, context)
 {
 	nTab = 0;
 	hcontext = 0;
@@ -102,12 +106,14 @@ BOOL DlgCamera::OnInitDialog (HWND hDlg, WPARAM wParam, LPARAM lParam)
 
 BOOL DlgCamera::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 {
+    /* TODO(jec)
 	switch (id) {
 	case IDHELP:
 		DefHelpContext.topic = HelpContext ();
 		g_pOrbiter->OpenHelp (&DefHelpContext);
 		return TRUE;
 	}
+    */
 	return DialogWin::OnCommand (hDlg, id, code, hControl);
 }
 
@@ -115,10 +121,12 @@ BOOL DlgCamera::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 
 BOOL DlgCamera::OnNotify (HWND hDlg, int idCtrl, LPNMHDR pnmh)
 {
+    /* TODO(jec)
 	if (pnmh->idFrom == IDC_CAM_TAB) {
 		if (pnmh->code == TCN_SELCHANGE) SwitchTab (hDlg);
 		return TRUE;
 	}
+    */
 	return MSG_DEFAULT;
 }
 
@@ -126,6 +134,7 @@ BOOL DlgCamera::OnNotify (HWND hDlg, int idCtrl, LPNMHDR pnmh)
 
 BOOL DlgCamera::OnApp (HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (LOWORD (wParam)) {
 	case 0: // FOV change notification
 		FovChanged (2.0*DEG * *(double*)lParam);
@@ -140,6 +149,7 @@ BOOL DlgCamera::OnApp (HWND hWnd, WPARAM wParam, LPARAM lParam)
 		ModeChanged ();
 		return TRUE;
 	}
+    */
 	return FALSE;
 }
 
@@ -162,11 +172,13 @@ int DlgCamera::AddTab (HWND hDlg, CameraTab *tab, const char *label)
 {
 	char cbuf[256];
 	strcpy (cbuf, label);
+    /* TODO(jec)
 	TC_ITEM tie;
 	tie.mask = TCIF_TEXT;
 	tie.iImage = -1;
 	tie.pszText = cbuf;
 	SendDlgItemMessage (hDlg, IDC_CAM_TAB, TCM_INSERTITEM, nTab, (LPARAM)&tie);
+    */
 
 	CameraTab **tmp = new CameraTab*[nTab+1];
 	if (nTab) {
@@ -182,11 +194,13 @@ int DlgCamera::AddTab (HWND hDlg, CameraTab *tab, const char *label)
 
 void DlgCamera::SwitchTab (HWND hDlg)
 {
+    /* TODO(jec)
 	int pg, cpg = TabCtrl_GetCurSel (GetDlgItem (hDlg, IDC_CAM_TAB));
 	for (pg = 0; pg < nTab; pg++)
 		if (pg != cpg) pTab[pg]->Show (false);
 	pTab[cpg]->Show (true);
 	hcontext = pTab[cpg]->HelpContext();
+    */
 }
 
 // ======================================================================
@@ -196,21 +210,27 @@ CameraTab::CameraTab (HWND hParentTab, int dlgId, DLGPROC dlgProc)
 {
 	active = false;
 	hParent = hParentTab;
+    /* TODO(jec)
 	hTab = CreateDialogParam (g_pOrbiter->GetInstance(), MAKEINTRESOURCE(dlgId), hParentTab, dlgProc, (LPARAM)this);
+    */
 }
 
 // ======================================================================
 
 CameraTab::~CameraTab ()
 {
+    /* TODO(jec)
 	DestroyWindow (hTab);
+    */
 }
 
 // ======================================================================
 
 void CameraTab::Show (bool show)
 {
+    /* TODO(jec)
 	ShowWindow (hTab, show ? SW_SHOW : SW_HIDE);
+    */
 	active = show;
 }
 
@@ -218,12 +238,14 @@ void CameraTab::Show (bool show)
 
 INT_PTR CALLBACK CameraTab::DlgProcInit (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		EnableThemeDialogTexture (hWnd, ETDT_ENABLETAB);
 		SetWindowLongPtr (hWnd, DWLP_USER, lParam);
 		return TRUE;
 	}
+    */
 	return FALSE;
 }
 
@@ -231,7 +253,7 @@ INT_PTR CALLBACK CameraTab::DlgProcInit (HWND hWnd, UINT uMsg, WPARAM wParam, LP
 // ======================================================================
 // ======================================================================
 
-TabControl::TabControl (HWND hParentTab): CameraTab (hParentTab, IDD_CAM_PG_CONTROL, DlgProc)
+TabControl::TabControl (HWND hParentTab): CameraTab (hParentTab, /* TODO(jec) IDD_CAM_PG_CONTROL*/ 0, DlgProc)
 {
 }
 
@@ -246,6 +268,7 @@ char *TabControl::HelpContext () const
 
 BOOL TabControl::Init (HWND hWnd)
 {
+    /* TODO(jec)
 	HICON hIcon;
 	HINSTANCE hInst = g_pOrbiter->GetInstance ();
 	hIcon = LoadIcon (hInst, MAKEINTRESOURCE(IDI_LARROW));
@@ -266,11 +289,16 @@ BOOL TabControl::Init (HWND hWnd)
 	SendDlgItemMessage (hWnd, IDC_CAM_CTRL_MOVEL, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
 	hIcon = LoadIcon (hInst, MAKEINTRESOURCE(IDI_RARROW_TILT));
 	SendDlgItemMessage (hWnd, IDC_CAM_CTRL_MOVER, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
+    */
 
 	GAUGEPARAM gp = { 0, 60, GAUGEPARAM::LEFT, GAUGEPARAM::BLACK };
+    /* TODO(jec)
 	oapiSetGaugeParams (GetDlgItem (hWnd, IDC_CAM_CTRL_SENSITIVITY), &gp, true);
+    */
 	int pos = max (0, min (100, (int)((log10 (g_camera->GroundObserver_PanSpeed())+1.0)*10.0)));
+    /* TODO(jec)
 	oapiSetGaugePos (GetDlgItem (hWnd, IDC_CAM_CTRL_SENSITIVITY), pos);
+    */
 
 	return TRUE;
 }
@@ -293,6 +321,7 @@ void TabControl::Update ()
 	double dt = td.SysDT;
 
 	// Get press status of control buttons
+    /* TODO(jec)
 	if (SendDlgItemMessage (hTab, IDC_CAM_CTRL_ROTL, BM_GETSTATE, 0, 0) & BST_PUSHED) {
 		if (rot_is_tilt) g_camera->Rotate   ( dt,  0);
 		else             g_camera->ShiftPhi   (-dt);
@@ -329,12 +358,14 @@ void TabControl::Update ()
 	else if (SendDlgItemMessage (hTab, IDC_CAM_CTRL_MOVED, BM_GETSTATE, 0, 0) & BST_PUSHED) {
 		g_camera->ChangeDist (1.0/(1.0+dt));
 	}
+    */
 }
 
 // ======================================================================
 
 void TabControl::SetLayout ()
 {
+    /* TODO(jec)
 	const int nCockpitCtrl = 5;
 	const int CockpitCtrl[nCockpitCtrl] = {
 		IDC_CAM_CTRL_ROTL, IDC_CAM_CTRL_ROTR, IDC_CAM_CTRL_ROTU, IDC_CAM_CTRL_ROTD,
@@ -400,6 +431,7 @@ void TabControl::SetLayout ()
 		ShowWindow (GetDlgItem (hTab, Ctrl[i]), SW_SHOW);
 
 	SetWindowText (GetDlgItem (hTab, IDC_CAM_CTRL_ROTGROUP), rot_is_tilt ? "Tilt" : "Rotate");
+    */
 }
 
 // ======================================================================
@@ -426,9 +458,10 @@ void TabControl::GetCamMode ()
 
 // ======================================================================
 
-INT_PTR CALLBACK TabControl::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR TabControl::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	CameraTab::DlgProcInit (hWnd, uMsg, wParam, lParam);
+    /* TODO(jec)
 	TabControl *pTab = (TabControl*)(uMsg == WM_INITDIALOG ? lParam : GetWindowLongPtr(hWnd,DWLP_USER));
 
 	switch (uMsg) {
@@ -455,6 +488,7 @@ INT_PTR CALLBACK TabControl::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		}
 		break;
 	}
+    */
 	return FALSE;
 }
 
@@ -462,7 +496,7 @@ INT_PTR CALLBACK TabControl::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 // ======================================================================
 // ======================================================================
 
-TabTarget::TabTarget (HWND hParentTab): CameraTab (hParentTab, IDD_CAM_PG_TARGET, DlgProc)
+TabTarget::TabTarget (HWND hParentTab): CameraTab (hParentTab, /* TODO(jec) IDD_CAM_PG_TARGET*/ 0, DlgProc)
 {
 }
 
@@ -478,6 +512,7 @@ char *TabTarget::HelpContext () const
 void TabTarget::AddCbodyNode (HWND hWnd, const CelestialBody *cbody, HTREEITEM parent)
 {
 	char cbuf[256]; cbuf[255] = '\0';
+    /* TODO(jec)
 	TV_INSERTSTRUCT tvis;
 	tvis.hParent = parent;
 	tvis.hInsertAfter = TVI_LAST;
@@ -491,6 +526,7 @@ void TabTarget::AddCbodyNode (HWND hWnd, const CelestialBody *cbody, HTREEITEM p
 	for (DWORD i = 0; i < cbody->nSecondary(); i++) {
 		AddCbodyNode (hWnd, cbody->Secondary(i), hti);
 	}
+    */
 }
 
 // ======================================================================
@@ -498,6 +534,7 @@ void TabTarget::AddCbodyNode (HWND hWnd, const CelestialBody *cbody, HTREEITEM p
 void TabTarget::AddVessels (HWND hWnd)
 {
 	char cbuf[256]; cbuf[255] = '\0';
+    /* TODO(jec)
 	HTREEITEM hti;
 	TV_INSERTSTRUCT tvis;
 	tvis.hParent = NULL;
@@ -513,6 +550,7 @@ void TabTarget::AddVessels (HWND hWnd)
 		strncpy (cbuf, g_psys->GetVessel(i)->Name(), 255);
 		SendDlgItemMessage (hWnd, IDC_CAM_TGT_TREE, TVM_INSERTITEM, 0, (LPARAM)&tvis);
 	}
+    */
 }
 
 // ======================================================================
@@ -521,6 +559,7 @@ void TabTarget::AddSurfbases (HWND hWnd)
 {
 	int i, j;
 	char cbuf[256]; cbuf[255] = '\0';
+    /* TODO(jec)
 	HTREEITEM hti;
 	TV_INSERTSTRUCT tvis;
 	tvis.hParent = NULL;
@@ -541,6 +580,7 @@ void TabTarget::AddSurfbases (HWND hWnd)
 			SendDlgItemMessage (hWnd, IDC_CAM_TGT_TREE, TVM_INSERTITEM, 0, (LPARAM)&tvis);
 		}
 	}
+    */
 }
 
 // ======================================================================
@@ -549,8 +589,11 @@ void TabTarget::Show (bool show)
 {
 	CameraTab::Show (show);
 
-	if (show)
+	if (show) {
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (hTab, IDC_CAM_TGT_INPUT), g_camera->Target()->Name());
+        */
+    }
 }
 
 // ======================================================================
@@ -570,9 +613,10 @@ BOOL TabTarget::Init (HWND hWnd)
 
 // ======================================================================
 
-INT_PTR CALLBACK TabTarget::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR TabTarget::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	CameraTab::DlgProcInit (hWnd, uMsg, wParam, lParam);
+    /* TODO(jec)
 	TabTarget *pTab = (TabTarget*)(uMsg == WM_INITDIALOG ? lParam : GetWindowLongPtr(hWnd,DWLP_USER));
 
 	switch (uMsg) {
@@ -620,6 +664,7 @@ INT_PTR CALLBACK TabTarget::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 		}
 		} break;
 	}
+    */
 	return FALSE;
 }
 
@@ -627,7 +672,7 @@ INT_PTR CALLBACK TabTarget::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 // ======================================================================
 // ======================================================================
 
-TabView::TabView (HWND hParentTab): CameraTab (hParentTab, IDD_CAM_PG_VIEW, DlgProc)
+TabView::TabView (HWND hParentTab): CameraTab (hParentTab, /* TODO(jec) IDD_CAM_PG_VIEW*/ 0, DlgProc)
 {
 }
 
@@ -646,6 +691,7 @@ BOOL TabView::Init (HWND hWnd)
 	DWORD k;
 
 	// Fill camera reference combo box
+    /* TODO(jec)
 	for (i = 0; i < g_psys->nStar(); i++)
 		SendDlgItemMessage (hWnd, IDC_CAM_VIEW_REFLIST, CB_ADDSTRING, 0, (LPARAM)g_psys->GetStar(i)->Name());
 	for (i = 0; i < g_psys->nPlanet(); i++) {
@@ -670,15 +716,17 @@ BOOL TabView::Init (HWND hWnd)
 	// select first item, usually the central star
 	SendDlgItemMessage (hWnd, IDC_CAM_VIEW_REFLIST, CB_SETCURSEL, 0, 0);
 	return TRUE;
+    */
 
 	return TRUE;
 }
 
 // ======================================================================
 
-INT_PTR CALLBACK TabView::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR TabView::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	CameraTab::DlgProcInit (hWnd, uMsg, wParam, lParam);
+    /* TODO(jec)
 	TabView *pTab = (TabView*)(uMsg == WM_INITDIALOG ? lParam : GetWindowLongPtr(hWnd,DWLP_USER));
 
 	switch (uMsg) {
@@ -709,6 +757,7 @@ INT_PTR CALLBACK TabView::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		}
 		break;
 	}
+    */
 	return FALSE;
 }
 
@@ -716,7 +765,7 @@ INT_PTR CALLBACK TabView::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 // ======================================================================
 // ======================================================================
 
-TabGround::TabGround (HWND hParentTab): CameraTab (hParentTab, IDD_CAM_PG_GROUND, DlgProc)
+TabGround::TabGround (HWND hParentTab): CameraTab (hParentTab, /* TODO(jec) IDD_CAM_PG_GROUND*/ 0, DlgProc)
 {
 }
 
@@ -741,19 +790,25 @@ void TabGround::SelectPlanet (HWND hWnd, int idx)
 {
 	int i;
 	char cbuf[256];
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_CAM_GRND_REFBODY, CB_GETLBTEXT, idx, (LPARAM)cbuf);
 	SendDlgItemMessage (hWnd, IDC_CAM_GRND_SITE, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessage (hWnd, IDC_CAM_GRND_ADDR, CB_RESETCONTENT, 0, 0);
+    */
 	Planet *planet = g_psys->GetPlanet (cbuf);
 	if (!planet) return;
 
 	for (i = 0; i < planet->nGroundObserver(); i++) {
 		const GROUNDOBSERVERSPEC *go = planet->GetGroundObserver (i);
+        /* TODO(jec)
 		if (SendDlgItemMessage (hWnd, IDC_CAM_GRND_SITE, CB_FINDSTRINGEXACT, 0, (LPARAM)go->site) == CB_ERR)
 			SendDlgItemMessage (hWnd, IDC_CAM_GRND_SITE, CB_ADDSTRING, 0, (LPARAM)go->site);
+        */
 	}
 	if (i) {
+        /* TODO(jec)
 		SendDlgItemMessage (hWnd, IDC_CAM_GRND_SITE, CB_SETCURSEL, 0, 0);
+        */
 		SelectSite (hWnd, 0);
 	}
 }
@@ -766,18 +821,24 @@ void TabGround::SelectSite (HWND hWnd, int idx)
 	char cbuf[256];
 	bool found = false;
 	double lng, lat, alt;
+    /* TODO(jec)
 	int pidx = SendDlgItemMessage (hWnd, IDC_CAM_GRND_REFBODY, CB_GETCURSEL, 0, 0);
 	SendDlgItemMessage (hWnd, IDC_CAM_GRND_REFBODY, CB_GETLBTEXT, pidx, (LPARAM)cbuf);
+    */
 	Planet *planet = g_psys->GetPlanet (cbuf);
 	if (!planet) return;
 
+    /* TODO(je)
 	SendDlgItemMessage (hWnd, IDC_CAM_GRND_SITE, CB_GETLBTEXT, idx, (LPARAM)cbuf);
 	SendDlgItemMessage (hWnd, IDC_CAM_GRND_ADDR, CB_RESETCONTENT, 0, 0);
+    */
 
 	for (i = 0; i < planet->nGroundObserver(); i++) {
 		const GROUNDOBSERVERSPEC *go = planet->GetGroundObserver (i);
 		if (!strcmp (go->site, cbuf)) {
+            /* TODO(jec)
 			SendDlgItemMessage (hWnd, IDC_CAM_GRND_ADDR, CB_ADDSTRING, 0, (LPARAM)go->addr);
+            */
 			if (!found) {
 				lng = go->lng;
 				lat = go->lat;
@@ -787,7 +848,9 @@ void TabGround::SelectSite (HWND hWnd, int idx)
 		}
 	}
 	if (found) {
+        /* TODO(jec)
 		SendDlgItemMessage (hWnd, IDC_CAM_GRND_ADDR, CB_SETCURSEL, 0, 0);
+        */
 		EchoGroundpos (hWnd, lng, lat, alt);
 	}
 }
@@ -798,13 +861,17 @@ void TabGround::SelectAddr (HWND hWnd, int idx)
 {
 	char cbuf[256], sitestr[256], addrstr[256];
 
+    /* TODO(jec)
 	int pidx = SendDlgItemMessage (hWnd, IDC_CAM_GRND_REFBODY, CB_GETCURSEL, 0, 0);
 	SendDlgItemMessage (hWnd, IDC_CAM_GRND_REFBODY, CB_GETLBTEXT, pidx, (LPARAM)cbuf);
+    */
 	Planet *planet = g_psys->GetPlanet (cbuf);
 	if (!planet) return;
 
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hWnd, IDC_CAM_GRND_SITE), sitestr, 256);
 	SendDlgItemMessage (hWnd, IDC_CAM_GRND_ADDR, CB_GETLBTEXT, idx, (LPARAM)addrstr);
+    */
 	const GROUNDOBSERVERSPEC *go = planet->GetGroundObserver (sitestr, addrstr);
 	if (go) {
 		EchoGroundpos (hWnd, go->lng, go->lat, go->alt);
@@ -816,7 +883,10 @@ void TabGround::SelectAddr (HWND hWnd, int idx)
 void TabGround::EchoCurrentGroundpos (HWND hWnd)
 {
 	char cbuf[256];
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_CAM_GRND_REFBODY, WM_GETTEXT, 256, (LPARAM)cbuf);
+    */
+
 	Planet *planet = g_psys->GetPlanet (cbuf);
 	if (!planet) return;
 
@@ -826,8 +896,10 @@ void TabGround::EchoCurrentGroundpos (HWND hWnd)
 	bool changed = EchoGroundpos (hWnd, lng, lat, alt);
 
 	if (changed) {
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (hWnd, IDC_CAM_GRND_SITE), "");
 		SetWindowText (GetDlgItem (hWnd, IDC_CAM_GRND_ADDR), "");
+        */
 	}
 }
 
@@ -839,6 +911,7 @@ bool TabGround::EchoGroundpos (HWND hWnd, double lng, double lat, double alt)
 	char cbuf[256], ccbuf[256];
 
 	sprintf (cbuf, "%+0.6f", lng*DEG);
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hWnd, IDC_CAM_GRND_LNG), ccbuf, 256);
 	if (strcmp (cbuf, ccbuf)) {
 		SetWindowText (GetDlgItem (hWnd, IDC_CAM_GRND_LNG), cbuf);
@@ -856,6 +929,7 @@ bool TabGround::EchoGroundpos (HWND hWnd, double lng, double lat, double alt)
 		SetWindowText (GetDlgItem (hWnd, IDC_CAM_GRND_ALT), cbuf);
 		changed = true;
 	}
+    */
 	return changed;
 }
 
@@ -864,21 +938,28 @@ bool TabGround::EchoGroundpos (HWND hWnd, double lng, double lat, double alt)
 void TabGround::ApplyObserver (HWND hWnd)
 {
 	char cbuf[256], site[256], addr[256];
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_CAM_GRND_REFBODY, WM_GETTEXT, 256, (LPARAM)cbuf);
+    */
+
 	Planet *planet = g_psys->GetPlanet (cbuf);
 	if (!planet) return;
 
 	double lng, lat, alt = 1.7;
 	bool ok;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hWnd, IDC_CAM_GRND_LNG), cbuf, 256);
 	ok = (sscanf (cbuf, "%lf", &lng) == 1);
 	GetWindowText (GetDlgItem (hWnd, IDC_CAM_GRND_LAT), cbuf, 256);
 	ok = ok && (sscanf (cbuf, "%lf", &lat) == 1);
 	GetWindowText (GetDlgItem (hWnd, IDC_CAM_GRND_ALT), cbuf, 256);
 	ok = ok && (sscanf (cbuf, "%lf", &alt) == 1);
+    */
 
 	double altlimit;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hWnd, IDC_EDIT1), cbuf, 256);
+    */
 	if (sscanf (cbuf, "%lf", &altlimit))
 		g_camera->SetGroundObserver_TerrainLimit (max(1.0,altlimit));
 
@@ -887,13 +968,16 @@ void TabGround::ApplyObserver (HWND hWnd)
 
 	return;
 
-
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_CAM_GRND_SITE, WM_GETTEXT, 256, (LPARAM)site);
 	SendDlgItemMessage (hWnd, IDC_CAM_GRND_ADDR, WM_GETTEXT, 256, (LPARAM)addr);
+    */
 
 	if (sscanf (site, "%lf%lf%lf", &lng, &lat, &alt) >= 2) {
 		lng *= RAD; lat *= RAD; alt = max (alt, 1.0);
+        /* TODO(jec)
 		SendDlgItemMessage (hWnd, IDC_CAM_GRND_ADDR, WM_SETTEXT, 0, (LPARAM)"");
+        */
 	} else {
 		const GROUNDOBSERVERSPEC *go = planet->GetGroundObserver (site, addr);
 		if (!go) return;
@@ -914,14 +998,18 @@ void TabGround::SetCurrentGroundpos (HWND hWnd)
 	EchoCurrentGroundpos (hWnd);
 	if (g_camera->GetExtMode() == CAMERA_GROUNDOBSERVER) return; // nothing to do
 	ApplyObserver (hWnd);
+    /* TODO(jec)
 	if (SendDlgItemMessage (hWnd, IDC_CAM_GRND_LOCK, BM_GETCHECK, 0, 0) == BST_UNCHECKED) {
 		// force lock to target to initialise camera direction
 		g_camera->SetGroundObserver_TargetLock (true);
 		g_camera->SetGroundObserver_TargetLock (false);
 	}
+    */
 	char cbuf[256];
 	double alt;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hWnd, IDC_EDIT1), cbuf, 256);
+    */
 	if (sscanf (cbuf, "%lf", &alt))
 		g_camera->SetGroundObserver_TerrainLimit (max(1.0,alt));
 }
@@ -938,7 +1026,9 @@ void TabGround::GObserverChanged (const char *str)
 
 void TabGround::LockChanged (bool lock)
 {
+    /* TODO(jec)
 	SendDlgItemMessage (hTab, IDC_CAM_GRND_LOCK, BM_SETCHECK, lock ? BST_CHECKED : BST_UNCHECKED, 0);
+    */
 }
 
 // ======================================================================
@@ -950,15 +1040,18 @@ BOOL TabGround::Init (HWND hWnd)
 	for (i = 0; i < g_psys->nPlanet(); i++) {
 		Planet *planet = g_psys->GetPlanet(i);
 		if (planet->isMoon()) continue;
+        /* TODO(jec)
 		SendDlgItemMessage (hWnd, IDC_CAM_GRND_REFBODY, CB_ADDSTRING, 0, (LPARAM)planet->Name());
 		for (j = 0; j < planet->nSecondary(); j++)
 			SendDlgItemMessage (hWnd, IDC_CAM_GRND_REFBODY, CB_ADDSTRING, 0, (LPARAM)planet->Secondary(j)->Name());
+        */
 	}
 	SelectPlanet (hWnd, 0);
 
 	// restore last ground observer address
 	const Camera::GroundObserverSite *gos = g_camera->GetGroundObserverSite();
 	if (gos->planet[0]) {
+        /* TODO(jec)
 		i = SendDlgItemMessage (hWnd, IDC_CAM_GRND_REFBODY, CB_FINDSTRINGEXACT, -1, (LPARAM)gos->planet);
 		SendDlgItemMessage (hWnd, IDC_CAM_GRND_REFBODY, CB_SETCURSEL, i, 0);
 		SelectPlanet (hWnd, i);
@@ -971,23 +1064,29 @@ BOOL TabGround::Init (HWND hWnd)
 		i = SendDlgItemMessage (hWnd, IDC_CAM_GRND_REFBODY, CB_FINDSTRINGEXACT, -1, (LPARAM)g_camera->ProxyPlanet()->Name());
 		if (i == CB_ERR) i = 0;
 		SendDlgItemMessage (hWnd, IDC_CAM_GRND_REFBODY, CB_SETCURSEL, i, 0);
+        */
 		SelectPlanet (hWnd, i);
 	}
 
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_CAM_GRND_LOCK, BM_SETCHECK, (WPARAM)g_camera->GroundObserver_TargetLock(), 0);
+    */
 
 	char cbuf[256];
 	sprintf (cbuf, "%0.0lf", g_camera->GroundObserver_TerrainLimit());
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hWnd, IDC_EDIT1), cbuf);
+    */
 
 	return TRUE;
 }
 
 // ======================================================================
 
-INT_PTR CALLBACK TabGround::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR TabGround::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	CameraTab::DlgProcInit (hWnd, uMsg, wParam, lParam);
+    /* TODO(jec)
 	TabGround *pTab = (TabGround*)(uMsg == WM_INITDIALOG ? lParam : GetWindowLongPtr (hWnd, DWLP_USER));
 
 	switch (uMsg) {
@@ -1032,6 +1131,7 @@ INT_PTR CALLBACK TabGround::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 		}
 		break;
 	}
+    */
 	return FALSE;
 }
 
@@ -1039,7 +1139,7 @@ INT_PTR CALLBACK TabGround::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 // ======================================================================
 // ======================================================================
 
-TabFov::TabFov (HWND hParentTab): CameraTab (hParentTab, IDD_CAM_PG_FOV, DlgProc)
+TabFov::TabFov (HWND hParentTab): CameraTab (hParentTab, /* TODO(jec) IDD_CAM_PG_FOV*/ 0, DlgProc)
 {
 }
 
@@ -1062,11 +1162,15 @@ void TabFov::FovChanged (double fov)
 void TabFov::RegisterFov (HWND hWnd, double fov)
 {
 	char cbuf[128];
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_CAM_FOV_SLIDER, TBM_SETPOS, TRUE, (LONG)fov);
 	GetWindowText (GetDlgItem (hWnd, IDC_CAM_FOV_INPUT), cbuf, 127);
+    */
 	if (fabs (fov-atof(cbuf)) > 1e-5) {
 		sprintf (cbuf, "%0.2f", fov);
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (hWnd, IDC_CAM_FOV_INPUT), cbuf);
+        */
 	}
 }
 
@@ -1083,6 +1187,7 @@ void TabFov::SetFov (double fov_deg)
 INT_PTR CALLBACK TabFov::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	CameraTab::DlgProcInit (hWnd, uMsg, wParam, lParam);
+    /* TODO(jec)
 	TabFov *pTab = (TabFov*)(uMsg == WM_INITDIALOG ? lParam : GetWindowLongPtr(hWnd,DWLP_USER));
 
 	switch (uMsg) {
@@ -1120,6 +1225,7 @@ INT_PTR CALLBACK TabFov::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		}
 		break;
 	}
+    */
 	return FALSE;
 }
 
@@ -1127,7 +1233,7 @@ INT_PTR CALLBACK TabFov::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 // ======================================================================
 // ======================================================================
 
-TabPreset::TabPreset (HWND hParentTab): CameraTab (hParentTab, IDD_CAM_PG_PRESET, DlgProc)
+TabPreset::TabPreset (HWND hParentTab): CameraTab (hParentTab, /* TODO(jec) IDD_CAM_PG_PRESET*/ 0, DlgProc)
 {
 }
 
@@ -1140,13 +1246,14 @@ char *TabPreset::HelpContext () const
 
 // ======================================================================
 
-INT_PTR CALLBACK TabPreset::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR TabPreset::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	CameraTab::DlgProcInit (hWnd, uMsg, wParam, lParam);
 
 	DWORD i, j;
 	char cbuf[256];
 
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		for (i = 0; i < g_camera->nPreset(); i++) {
@@ -1195,5 +1302,6 @@ INT_PTR CALLBACK TabPreset::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 		}
 		break;
 	}
+    */
 	return FALSE;
 }

@@ -5,7 +5,9 @@
 #include "Panel2D.h"
 #include "Pane.h"
 #include "Vessel.h"
+/* TODO(jec)
 #include <zmouse.h>
+*/
 
 using namespace std;
 
@@ -284,6 +286,7 @@ void Panel2D::Render ()
 bool Panel2D::ProcessMouse_System(UINT event, DWORD state, int x, int y, const char *kstate)
 {
 	// Windows event handler for mouse events
+    /* TODO(jec)
 	switch (event) {
 	case WM_MOUSEWHEEL:
 		if ((KEYMOD_CONTROL(kstate))) {
@@ -294,6 +297,7 @@ bool Panel2D::ProcessMouse_System(UINT event, DWORD state, int x, int y, const c
 		}
 		break;
 	}
+    */
 	return false;
 }
 
@@ -302,6 +306,7 @@ bool Panel2D::ProcessMouse_OnRunning (UINT event, DWORD state, int x, int y, con
 	mstate = 0;
 
 	// Windows event handler for mouse events
+    /* TODO(jec)
 	switch (event) {
 	case WM_LBUTTONDOWN:
 		state = PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED;
@@ -324,6 +329,7 @@ bool Panel2D::ProcessMouse_OnRunning (UINT event, DWORD state, int x, int y, con
 	//	}
 	//	break;
 	}
+    */
 
 	// mouse state event handler (button-down events only)
 	if (state & PANEL_MOUSE_DOWN) {
@@ -360,9 +366,11 @@ void Panel2D::GetMouseState (int &idx, int &state, int &mx, int &my) const
 {
 	if (mstate & PANEL_MOUSE_PRESSED) {
 		POINT pt;
+        /* TODO(jec)
 		GetCursorPos (&pt);
 		if (cwnd) // need to subtract client window offset
 			ScreenToClient (cwnd, &pt);
+        */
 	    double tx, ty;  // transformed coordinates
 	    tx = ((double)pt.x-x0)/panelscale;
 	    ty = ((double)pt.y-y0)/panelscale;

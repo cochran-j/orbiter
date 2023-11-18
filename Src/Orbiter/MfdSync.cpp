@@ -6,6 +6,7 @@
 #include "Celbody.h"
 #include "Psys.h"
 #include "Select.h"
+#include "Util.h"
 #include <stdio.h>
 
 using namespace std;
@@ -375,15 +376,15 @@ bool Instrument_OSync::ReadParams (ifstream &ifs)
 	for (;;) {
 		if (!ifs.getline (cbuf, 256)) return false;
 		pc = trim_string (cbuf);
-		if (!_strnicmp (pc, "END_MFD", 7)) break;
-		if (!_strnicmp (pc, "TARGET", 6)) {
+		if (caseInsensitiveStartsWith(pc, "END_MFD")) break;
+		if (caseInsensitiveStartsWith(pc, "TARGET")) {
 			strcpy (ctgt, trim_string (pc+6));
-		} else if (!_strnicmp (pc, "MODE", 4)) {
+		} else if (caseInsensitiveStartsWith(pc, "MODE")) {
 			strcpy (cmode, trim_string (pc+4));
-		} else if (!_strnicmp (pc, "MANUALREF", 9)) {
+		} else if (caseInsensitiveStartsWith(pc, "MANUALREF")) {
 			sscanf (pc+9, "%lf", &rlng);
 			rlng *= RAD;
-		} else if (!_strnicmp (pc, "LISTLEN", 7)) {
+		} else if (caseInsensitiveStartsWith(pc, "LISTLEN")) {
 			sscanf (pc+7, "%d", &llen);
 		}
 	}
@@ -393,7 +394,7 @@ bool Instrument_OSync::ReadParams (ifstream &ifs)
 	}
 	if (cmode[0]) {
 		for (i = 0; i < 7; i++)
-			if (!_stricmp (cmode, modestr[i])) {
+			if (caseInsensitiveEquals(cmode, modestr[i])) {
 				mode = (Mode)i;
 				break;
 			}

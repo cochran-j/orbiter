@@ -7,6 +7,7 @@
 #include "Psys.h"
 #include "Log.h"
 #include "Select.h"
+#include "Util.h"
 #include <iomanip>
 
 using namespace std;
@@ -22,7 +23,7 @@ static const Body *last_target = 0;
 // =======================================================================
 // class Instrument_OPlaneAlign
 
-struct Instrument_OPlaneAlign::SavePrm Instrument_OPlaneAlign::saveprm = {0,0,0,0.0,0.0,false};
+struct Instrument_OPlaneAlign::SavePrm Instrument_OPlaneAlign::saveprm = {nullptr, nullptr, nullptr, false, 0.0, 0.0};
 
 Instrument_OPlaneAlign::Instrument_OPlaneAlign (Pane *_pane, INT_PTR _id, const Spec &spec, Vessel *_vessel, bool restore)
 : Instrument (_pane, _id, spec, _vessel)
@@ -602,17 +603,17 @@ bool Instrument_OPlaneAlign::ReadParams (ifstream &ifs)
 	for (;;) {
 		if (!ifs.getline (cbuf, 256)) return false;
 		pc = trim_string (cbuf);
-		if (!_strnicmp (pc, "END_MFD", 7)) break;
-		if (!_strnicmp (pc, "TARGET", 6)) {
+		if (caseInsensitiveStartsWith(pc, "END_MFD")) break;
+		if (caseInsensitiveStartsWith(pc, "TARGET")) {
 			strcpy (ctgt, trim_string (pc+6));
 		}
-		else if (!_strnicmp(pc, "REF", 3)) {
+		else if (caseInsensitiveStartsWith(pc, "REF")) {
 			strcpy(cref, trim_string(pc + 3));
-		} else if (!_strnicmp(pc, "MODE", 4)) {
+		} else if (caseInsensitiveStartsWith(pc, "MODE")) {
 			int m;
 			sscanf(pc + 4, "%d", &m);
 			mode = (Mode)m;
-		} else if (!_strnicmp (pc, "TGTELS", 6)) {
+		} else if (caseInsensitiveStartsWith(pc, "TGTELS")) {
 			sscanf (pc+6, "%lf%lf", &i, &theta);
 			customels = true;
 		}

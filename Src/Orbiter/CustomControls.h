@@ -6,6 +6,15 @@
 #ifndef __CUSTOMCONTROLS_H
 #define __CUSTOMCONTROLS_H
 
+/* (jec) compatbility */
+#include <windows.h>
+#include <cstdint>
+
+using HCURSOR = void*;
+using LRESULT = std::int32_t*;
+using WPARAM = UINT_PTR;
+using LPARAM = INT_PTR;
+
 class CustomCtrl {
 public:
 	CustomCtrl ();
@@ -20,7 +29,7 @@ protected:
 	HWND hParent;
 
 private:
-	static LRESULT CALLBACK s_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	static LRESULT s_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 class GenericCtrl : public CustomCtrl {

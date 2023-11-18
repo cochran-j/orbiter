@@ -4,6 +4,8 @@
 #ifndef __UTIL_H
 #define __UTIL_H
 
+#include <string_view>
+
 #include <windows.h>
 #include "Vecmat.h"
 #include "OrbiterAPI.h"
@@ -18,14 +20,12 @@ LONGLONG NameToId (const char *name);
 inline DWORD GetSurfColour (DWORD r, DWORD g, DWORD b)
 {
 	DWORD bpp = g_pOrbiter->ViewBPP();
-	if (bpp >= 24) return (r << 16) + (g << 8) + b;
-	else           return (((r*319)/2559) << 11) + (((g*639)/2559) << 5) + ((b*319)/2559);
-}
+	if (bpp >= 24) return (r << 16) + (g << 8) + b; else           return (((r*319)/2559) << 11) + (((g*639)/2559) << 5) + ((b*319)/2559); }
 
 DWORDLONG Str2Crc (const char *str);
 // converts str into an integer identifier (not guaranteed unique!)
 
-// create the directories 
+// create the directories
 bool MakePath (const char *fname);
 
 // case-insensitive comparison of std::strings
@@ -71,5 +71,10 @@ double toc(); // stop clock and return value
 
 RECT GetClientPos (HWND hWnd, HWND hChild);
 void SetClientPos (HWND hWnd, HWND hChild, RECT &r);
+
+bool caseInsensitiveEquals(const std::string_view& str1,
+                           const std::string_view& str2);
+bool caseInsensitiveStartsWith(const std::string_view& str,
+                               const std::string_view& start);
 
 #endif //!__UTIL_H

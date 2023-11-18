@@ -8,8 +8,8 @@
 
 #include "Orbiter.h"
 #include "Vessel.h"
-#include "Supervessel.h"
-#include "VVessel.h"
+#include "SuperVessel.h"
+#include "Vvessel.h"
 #include "Config.h"
 #include "Pane.h"
 #include "Element.h"
@@ -17,6 +17,7 @@
 #include "Base.h"
 #include "Util.h"
 #include "Log.h"
+
 #include <fstream>
 #include <iomanip>
 #include <stdio.h>
@@ -42,17 +43,17 @@ bool Vessel::ParseScenarioLine (char *line, VESSELSTATUS &vs)
 	DWORD n;
 	double lvl;
 
-	if (!_strnicmp (line, "STATUS", 6)) {
+	if (caseInsensitiveStartsWith(line, "STATUS")) {
 		line = trim_string (line+6);
-		if (!_strnicmp (line, "LANDED", 6)) {
+		if (caseInsensitiveStartsWith(line, "LANDED")) {
 			vs.rbody = (OBJHANDLE)g_psys->GetGravObj (trim_string (line+6));
 			vs.status = 1;
 			vs.vdata[0].z = 0.0f; // default when landed
-		} else if (!_strnicmp (line, "ORBITING", 8)) {
+		} else if (caseInsensitiveStartsWith(line, "ORBITING")) {
 			vs.rbody = (OBJHANDLE)g_psys->GetGravObj (trim_string (line+8));
 			vs.status = 0;
 		}
-	} else if (!_strnicmp (line, "BASE", 4)) {
+	} else if (caseInsensitiveStartsWith(line, "BASE")) {
 		line = trim_string (line+4);
 		if (pd = strtok (line, ":")) {
 			strcpy (cbuf, pd);
@@ -67,18 +68,18 @@ bool Vessel::ParseScenarioLine (char *line, VESSELSTATUS &vs)
 				// place ship in centre of landing pad by default
 			}
 		}
-	} else if (!_strnicmp (line, "POS", 3)) {
+	} else if (caseInsensitiveStartsWith(line, "POS")) {
 		sscanf (line+3, "%lf%lf", &vs.vdata[0].x, &vs.vdata[0].y);
 		vs.vdata[0].x *= RAD;
 		vs.vdata[0].y *= RAD;
-	} else if (!_strnicmp (line, "HEADING", 7)) {
+	} else if (caseInsensitiveStartsWith(line, "HEADING")) {
 		sscanf (line+7, "%lf", &vs.vdata[0].z);
 		vs.vdata[0].z *= RAD;
-	} else if (!_strnicmp (line, "RPOS", 4)) {
+	} else if (caseInsensitiveStartsWith(line, "RPOS")) {
 		sscanf (line+4, "%lf%lf%lf", &vs.rpos.x, &vs.rpos.y, &vs.rpos.z);
-	} else if (!_strnicmp (line, "RVEL", 4)) {
+	} else if (caseInsensitiveStartsWith(line, "RVEL")) {
 		sscanf (line+4, "%lf%lf%lf", &vs.rvel.x, &vs.rvel.y, &vs.rvel.z);
-	} else if (!_strnicmp (line, "ELEMENTS", 8)) {
+	} else if (caseInsensitiveStartsWith(line, "ELEMENTS")) {
 		double a, e, i, theta, omegab, L, elmjd;
 		Vector rpos, rvel;
 		sscanf (line+8, "%lf%lf%lf%lf%lf%lf%lf",  &a, &e, &i, &theta, &omegab, &L, &elmjd);
@@ -90,26 +91,26 @@ bool Vessel::ParseScenarioLine (char *line, VESSELSTATUS &vs)
 			vs.rvel.x = rvel.x, vs.rvel.y = rvel.y, vs.rvel.z = rvel.z;
 			el_valid = true;
 		}
-	} else if (!_strnicmp (line, "AROT", 4)) {
+	} else if (caseInsensitiveStartsWith(line, "AROT")) {
 		sscanf (line+4, "%lf%lf%lf", &vs.arot.x, &vs.arot.y, &vs.arot.z);
 		vs.arot.x *= RAD, vs.arot.y *= RAD, vs.arot.z *= RAD;
-	} else if (!_strnicmp (line, "VROT", 4)) {
+	} else if (caseInsensitiveStartsWith(line, "VROT")) {
 		sscanf (line+4, "%lf%lf%lf", &vs.vrot.x, &vs.vrot.y, &vs.vrot.z);
 		vs.vrot.x *= RAD, vs.vrot.y *= RAD, vs.vrot.z *= RAD;
-	} else if (!_strnicmp (line, "FUEL", 4)) {  // old style propellant interface
+	} else if (caseInsensitiveStartsWith(line, "FUEL")) {  // old style propellant interface
 		sscanf (line+4, "%lf", &vs.fuel);
-	} else if (!_strnicmp (line, "PRPLEVEL", 8)) { // new style propellant interface
+	} else if (caseInsensitiveStartsWith(line, "PRPLEVEL")) { // new style propellant interface
 		for (pd = strtok (line+8, " "); pd; pd = strtok (NULL, " "))
 			if (sscanf (pd, "%d%c%lf", &n, &c, &lvl) == 3)
 				if (n < ntank && tank[n] == def_tank) vs.fuel = lvl;
-	} else if (!_strnicmp (line, "THLEVEL", 7)) {
+	} else if (caseInsensitiveStartsWith(line, "THLEVEL")) {
 		for (pd = strtok (line+7, " "); pd; pd = strtok (NULL, " ")) {
 			if (sscanf (pd, "%d%c%lf", &n, &c, &lvl) == 3 && n < m_thruster.size()) {
 				m_thruster[n]->level = m_thruster[n]->level_permanent = lvl;
 				m_thruster[n]->level_override = 0.0;
 			}
 		}
-	} else if (!_strnicmp (line, "IDS", 3)) {
+	} else if (caseInsensitiveStartsWith(line, "IDS")) {
 		DWORD step, irange, m, i;
 		for (pd = strtok (line+3, " "), n = 0; n < ndock && pd; pd = strtok (NULL, " ")) {
 			if ((m = sscanf (pd, "%d%c%d%c%d", &i, &c, &step, &c, &irange)) >= 3 && i < ndock) {
@@ -117,7 +118,7 @@ bool Vessel::ParseScenarioLine (char *line, VESSELSTATUS &vs)
 				SetDockIDS (dock[i], (float)(step*0.05 + NAV_RADIO_FREQ_MIN), (float)(irange*1e3));
 			}
 		}
-	} else if (!_strnicmp (line, "NAVFREQ", 7)) {
+	} else if (caseInsensitiveStartsWith(line, "NAVFREQ")) {
 		DWORD step;
 		for (pd = strtok (line+7, " "), n = 0; n < nnav && pd; pd = strtok (NULL, " "))
 			if (sscanf (pd, "%d", &step) == 1) {
@@ -138,19 +139,19 @@ bool Vessel::ParseScenarioLine2 (char *line, void *status)
 	double lvl;
 	VESSELSTATUS2 *vs = (VESSELSTATUS2*)status;
 
-	if (!_strnicmp (line, "STATUS", 6)) {
+	if (caseInsensitiveStartsWith(line, "STATUS")) {
 
 		line = trim_string (line+6);
-		if (!_strnicmp (line, "LANDED", 6)) {
+		if (caseInsensitiveStartsWith(line, "LANDED")) {
 			vs->rbody = (OBJHANDLE)g_psys->GetGravObj (trim_string (line+6));
 			vs->surf_hdg = 0.0; // default when landed
 			vs->status = 1;
 			vs->arot.x = 10; // flag for 'not set'
-		} else if (!_strnicmp (line, "ORBITING", 8)) {
+		} else if (caseInsensitiveStartsWith(line, "ORBITING")) {
 			vs->rbody = (OBJHANDLE)g_psys->GetGravObj (trim_string (line+8));
 			vs->status = 0;
 #ifdef UNDEF
-		} else if (!strnicmp (line, "DOCKED", 6)) {
+		} else if (caseInsensitiveStartsWith(line, "DOCKED")) {
 			line = trim_string (line+6);
 			if (pd = strtok (line, ":")) {
 				strcpy (cbuf, pd);
@@ -167,7 +168,7 @@ bool Vessel::ParseScenarioLine2 (char *line, void *status)
 #endif
 		}
 
-	} else if (!_strnicmp (line, "BASE", 4)) {
+	} else if (caseInsensitiveStartsWith(line, "BASE")) {
 
 		line = trim_string (line+4);
 		if (pd = strtok (line, ":")) {
@@ -190,18 +191,18 @@ bool Vessel::ParseScenarioLine2 (char *line, void *status)
 			}
 		}
 
-	} else if (!_strnicmp (line, "POS", 3)) {
+	} else if (caseInsensitiveStartsWith(line, "POS")) {
 
 		sscanf (line+3, "%lf%lf", &vs->surf_lng, &vs->surf_lat);
 		vs->surf_lng *= RAD;
 		vs->surf_lat *= RAD;
 
-	} else if (!_strnicmp (line, "HEADING", 7)) {
+	} else if (caseInsensitiveStartsWith(line, "HEADING")) {
 
 		sscanf (line+7, "%lf", &vs->surf_hdg);
 		vs->surf_hdg *= RAD;
 
-	} else if (!_strnicmp (line, "PRPLEVEL", 8)) { // propellant status
+	} else if (caseInsensitiveStartsWith(line, "PRPLEVEL")) { // propellant status
 
 		if (vs->nfuel) delete []vs->fuel;
 		// pass 1: find out how many propellant definitions there are
@@ -218,7 +219,7 @@ bool Vessel::ParseScenarioLine2 (char *line, void *status)
 				nn++;
 			}
 
-	} else if (!_strnicmp (line, "FUEL", 4)) { // global propellant resource setting
+	} else if (caseInsensitiveStartsWith(line, "FUEL")) { // global propellant resource setting
 
 		if (sscanf (line+4, "%lf", &lvl)) { // old style fuel definition
 			if (vs->nfuel) delete []vs->fuel;
@@ -227,7 +228,7 @@ bool Vessel::ParseScenarioLine2 (char *line, void *status)
 			vs->fuel[0].level = lvl;
 		}
 
-	} else if (!_strnicmp (line, "THLEVEL", 7)) { // read thruster status
+	} else if (caseInsensitiveStartsWith(line, "THLEVEL")) { // read thruster status
 
 		if (vs->nthruster) delete []vs->thruster;
 		// pass 1: find out how many thruster defintions there are
@@ -242,7 +243,7 @@ bool Vessel::ParseScenarioLine2 (char *line, void *status)
 				nn++;
 			}
 
-	} else if (!_strnicmp (line, "ENGINE_MAIN", 11)) { // old style main/retro thruster status
+	} else if (caseInsensitiveStartsWith(line, "ENGINE_MAIN")) { // old style main/retro thruster status
 
 		if (sscanf (line+11, "%lf", &lvl)) {
 			if (lvl > 0) {
@@ -275,7 +276,7 @@ bool Vessel::ParseScenarioLine2 (char *line, void *status)
 				}
 			}
 		}
-	} else if (!_strnicmp (line, "ENGINE_HOVR", 11)) { // old style hover thruster status
+	} else if (caseInsensitiveStartsWith(line, "ENGINE_HOVR")) { // old style hover thruster status
 
 		if (sscanf (line+11, "%lf", &lvl) && lvl > 0) {
 			ThrustGroupSpec& tgs = m_thrusterGroupDef[THGROUP_HOVER];
@@ -293,7 +294,7 @@ bool Vessel::ParseScenarioLine2 (char *line, void *status)
 			}
 		}
 
-	} else if (!_strnicmp (line, "DOCKINFO", 8)) {
+	} else if (caseInsensitiveStartsWith(line, "DOCKINFO")) {
 
 		if (vs->ndockinfo) delete []vs->dockinfo;
 		// pass 1: find number of dock info records
@@ -310,19 +311,19 @@ bool Vessel::ParseScenarioLine2 (char *line, void *status)
 			nn++;
 		}
 
-	} else if (!_strnicmp (line, "RPOS", 4)) {
+	} else if (caseInsensitiveStartsWith(line, "RPOS")) {
 		sscanf (line+4, "%lf%lf%lf", &vs->rpos.x, &vs->rpos.y, &vs->rpos.z);
-	} else if (!_strnicmp (line, "RVEL", 4)) {
+	} else if (caseInsensitiveStartsWith(line, "RVEL")) {
 		sscanf (line+4, "%lf%lf%lf", &vs->rvel.x, &vs->rvel.y, &vs->rvel.z);
-	} else if (!_strnicmp (line, "AROT", 4)) {
+	} else if (caseInsensitiveStartsWith(line, "AROT")) {
 		sscanf (line+4, "%lf%lf%lf", &vs->arot.x, &vs->arot.y, &vs->arot.z);
 		vs->arot.x *= RAD, vs->arot.y *= RAD, vs->arot.z *= RAD;
-	} else if (!_strnicmp (line, "VROT", 4)) {
+	} else if (caseInsensitiveStartsWith(line, "VROT")) {
 		sscanf (line+4, "%lf%lf%lf", &vs->vrot.x, &vs->vrot.y, &vs->vrot.z);
 		vs->vrot.x *= RAD, vs->vrot.y *= RAD, vs->vrot.z *= RAD;
-	} else if (!_strnicmp (line, "ALT", 3)) { // NOTE: 'ALT' and 'VROT' cannot be used together. ALT is used for landed vessels
+	} else if (caseInsensitiveStartsWith(line, "ALT")) { // NOTE: 'ALT' and 'VROT' cannot be used together. ALT is used for landed vessels
 		sscanf (line+3, "%lf", &vs->vrot.x);
-	} else if (!_strnicmp (line, "ELEMENTS", 8)) {
+	} else if (caseInsensitiveStartsWith(line, "ELEMENTS")) {
 		double a, e, i, theta, omegab, L, elmjd;
 		Vector rpos, rvel;
 		sscanf (line+8, "%lf%lf%lf%lf%lf%lf%lf",  &a, &e, &i, &theta, &omegab, &L, &elmjd);
@@ -334,7 +335,7 @@ bool Vessel::ParseScenarioLine2 (char *line, void *status)
 			vs->rvel.x = rvel.x, vs->rvel.y = rvel.y, vs->rvel.z = rvel.z;
 			el_valid = true;
 		}
-	} else if (!_strnicmp (line, "IDS", 3)) {
+	} else if (caseInsensitiveStartsWith(line, "IDS")) {
 		DWORD step, irange, m, i, n = 0;
 		char c;
 		for (pd = strtok (line+3, " "); n < ndock && pd; pd = strtok (NULL, " ")) {
@@ -343,14 +344,14 @@ bool Vessel::ParseScenarioLine2 (char *line, void *status)
 				SetDockIDS (dock[i], (float)(step*0.05 + NAV_RADIO_FREQ_MIN), (float)(irange*1e3));
 			}
 		}
-	} else if (!_strnicmp (line, "NAVFREQ", 7)) {
+	} else if (caseInsensitiveStartsWith(line, "NAVFREQ")) {
 		DWORD step, n = 0;
 		for (pd = strtok (line+7, " "); n < nnav && pd; pd = strtok (NULL, " "))
 			if (sscanf (pd, "%d", &step) == 1) {
 				nav[n].freq = (float)((nav[n].step = step)*0.05 + NAV_RADIO_FREQ_MIN);
 				n++;
 			}
-	} else if (!_strnicmp (line, "XPDR", 4)) {
+	} else if (caseInsensitiveStartsWith(line, "XPDR")) {
 		sscanf (line+4, "%d", &vs->xpdr);
 	} else return ParseScenarioLineDirect (line);
 	return true;
@@ -365,20 +366,20 @@ bool Vessel::ParseScenarioLine2 (char *line, void *status)
 
 bool Vessel::ParseScenarioLineDirect (char *line)
 {
-	if (!_strnicmp (line, "RCSMODE", 7)) {
+	if (caseInsensitiveStartsWith(line, "RCSMODE")) {
 		sscanf (line+7, "%d", &attmode);
 		return true;
-	} else if (!_strnicmp (line, "AFCMODE", 7)) {
+	} else if (caseInsensitiveStartsWith(line, "AFCMODE")) {
 		sscanf (line+7, "%d", &ctrlsurfmode);
 		return true;
-	} else if (!_strnicmp (line, "ATTACHED", 8)) {
+	} else if (caseInsensitiveStartsWith(line, "ATTACHED")) {
 		char cbuf[256];
 		sscanf (line+8, "%d:%d,%s", &attach_status.ci, &attach_status.pi, cbuf);
 		if (attach_status.pname) delete []attach_status.pname;
 		attach_status.pname = new char[strlen(cbuf)+1]; TRACENEW
 		strcpy (attach_status.pname, cbuf);
 		return true;
-	} else if (!_strnicmp (line, "FLIGHTDATA", 10)) {
+	} else if (caseInsensitiveStartsWith(line, "FLIGHTDATA")) {
 		bRequestPlayback = true;
 	}
 	return false;

@@ -8,14 +8,18 @@
 #define STRICT 1
 
 #include "DlgFocus.h"
+/* TODO(jec)
 #include "Resource.h"
+*/
 #include "Orbiter.h"
 #include "Psys.h"
 #include "SuperVessel.h"
 #include "Pane.h"
 #include "Camera.h"
 #include "Util.h"
+/* TODO(jec)
 #include "Uxtheme.h"
+*/
 #include <iomanip>
 
 extern Orbiter *g_pOrbiter;
@@ -28,7 +32,7 @@ extern char DBG_MSG[256];
 // ======================================================================
 
 DlgFocus::DlgFocus (HINSTANCE hInstance, HWND hParent, void *context)
-: DialogWin (hInstance, hParent, IDD_JUMPVESSEL, 0, 0, context)
+: DialogWin (hInstance, hParent, /* TODO(jec) IDD_JUMPVESSEL*/ 0, 0, 0, context)
 {
 	pos = &g_pOrbiter->Cfg()->CfgWindowPos.DlgFocus;
 	irange = g_pOrbiter->Cfg()->CfgUIPrm.SelVesselRange;
@@ -48,10 +52,13 @@ DlgFocus::~DlgFocus ()
 
 BOOL DlgFocus::OnInitDialog (HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	EnableThemeDialogTexture (hWnd, ETDT_ENABLETAB);
+    */
 
 	const int ntab = 4;
 	const char *label[ntab] = {"All", "Nearby", "Location", "Class"};
+    /* TODO(jec)
 	TC_ITEM tie;
 	tie.mask = TCIF_TEXT;
 	tie.iImage = -1;
@@ -59,8 +66,10 @@ BOOL DlgFocus::OnInitDialog (HWND hWnd, WPARAM wParam, LPARAM lParam)
 		tie.pszText = (char*)label[i];
 		SendDlgItemMessage (hWnd, IDC_TAB1, TCM_INSERTITEM, i, (LPARAM)&tie);
 	}
+    */
 	ctab = g_pOrbiter->Cfg()->CfgUIPrm.SelVesselTab;
 
+    /* TODO(jec)
 	GetClientRect (hWnd, &rClient);
 	rTab  = GetClientPos (hWnd, GetDlgItem (hWnd, IDC_TAB1));
 	rEdit = GetClientPos (hWnd, GetDlgItem (hWnd, IDC_EDIT1));
@@ -85,6 +94,8 @@ BOOL DlgFocus::OnInitDialog (HWND hWnd, WPARAM wParam, LPARAM lParam)
 	SendDlgItemMessage (hWnd, IDC_SLIDER1, TBM_SETTICFREQ, 1, 0);
 	SendDlgItemMessage (hWnd, IDC_SLIDER1, TBM_SETPOS, TRUE, (LONG)irange);
 	SetRangeLabel (hWnd, irange);
+
+    */
 	
 	return TRUE;
 }
@@ -96,15 +107,21 @@ BOOL DlgFocus::OnSize (HWND hDlg, WPARAM wParam, int w, int h)
 	RECT r;
 	int i;
 	const int nSizeElm = 9;
+    /* TODO(jec)
 	const int SizeElm[nSizeElm] = {
 		IDC_EDIT1, IDC_TREE1, IDOK, IDC_BUTTON1, IDC_SLIDER1, IDC_STATIC1, IDC_CHECK1, IDCANCEL, IDHELP
 	};
 
 	GetClientRect (hDlg, &r);
+    */
 	int dw = r.right - rClient.right;
 	int dh = r.bottom - rClient.bottom;
-	for (i = 0; i < nSizeElm; i++)
+	for (i = 0; i < nSizeElm; i++) {
+        /* TODO(jec)
 		ShowWindow (GetDlgItem (hDlg, SizeElm[i]), SW_HIDE);
+        */
+    }
+    /* TODO(jec)
 	r = rTab; r.right += dw; r.bottom += dh;
 	SetClientPos (hDlg, GetDlgItem (hDlg, IDC_TAB1), r);
 	r = rEdit; r.right += dw;
@@ -130,6 +147,7 @@ BOOL DlgFocus::OnSize (HWND hDlg, WPARAM wParam, int w, int h)
 		if (ctab == 3 && SizeElm[i] == IDC_CHECK1) continue;
 		ShowWindow (GetDlgItem (hDlg, SizeElm[i]), SW_SHOW);
 	}
+    */
 	return DialogWin::OnSize (hDlg, wParam, w, h);
 }
 
@@ -137,6 +155,7 @@ BOOL DlgFocus::OnSize (HWND hDlg, WPARAM wParam, int w, int h)
 
 BOOL DlgFocus::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 {
+    /* TODO(jec)
 	switch (id) {
 	case IDC_EDIT1:
 		if (code == EN_CHANGE) WatchEdit (hDlg);
@@ -154,6 +173,7 @@ BOOL DlgFocus::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 	case IDOK:
 		return SelectVessel (hDlg);
 	}
+    */
 	return DialogWin::OnCommand (hDlg, id, code, hControl);
 }
 
@@ -161,12 +181,14 @@ BOOL DlgFocus::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 
 BOOL DlgFocus::OnNotify (HWND hDlg, int idCtrl, LPNMHDR pnmh)
 {
+    /* TODO(jec)
 	switch (pnmh->idFrom) {
 	case IDC_TAB1:
 		return OnNotifyTab (hDlg, pnmh);
 	case IDC_TREE1:
 		return OnNotifyTree (hDlg, pnmh);
 	}
+    */
 	return FALSE;
 }
 
@@ -174,7 +196,9 @@ BOOL DlgFocus::OnNotify (HWND hDlg, int idCtrl, LPNMHDR pnmh)
 
 BOOL DlgFocus::OnNotifyTab (HWND hDlg, LPNMHDR pnmh)
 {
+    /* TODO(jec)
 	if (pnmh->code == TCN_SELCHANGE) SwitchTab (hDlg);
+    */
 	return FALSE;
 }
 
@@ -182,6 +206,7 @@ BOOL DlgFocus::OnNotifyTab (HWND hDlg, LPNMHDR pnmh)
 
 BOOL DlgFocus::OnNotifyTree (HWND hDlg, LPNMHDR pnmh)
 {
+    /* TODO(jec)
 	NM_TREEVIEW *pnmtv = (NM_TREEVIEW FAR *)pnmh;
 	if (pnmtv->hdr.code == TVN_SELCHANGED) {
 		HTREEITEM hti = pnmtv->itemNew.hItem;
@@ -203,6 +228,7 @@ BOOL DlgFocus::OnNotifyTree (HWND hDlg, LPNMHDR pnmh)
 			EnableWindow (GetDlgItem (hDlg, IDOK), vessel == g_focusobj ? FALSE : TRUE);
 		}
 	}
+    */
 	return FALSE;
 }
 
@@ -211,12 +237,14 @@ BOOL DlgFocus::OnNotifyTree (HWND hDlg, LPNMHDR pnmh)
 BOOL DlgFocus::OnHScroll (HWND hDlg, WORD request, WORD curpos, HWND hControl)
 {
 	int irange_old = irange;
+    /* TODO(jec)
 	irange = SendDlgItemMessage (hDlg, IDC_SLIDER1, TBM_GETPOS, 0, 0);
 	if (irange != irange_old) {
 		SetRangeLabel (hDlg, irange);
 		RescanTree_Nearby (hDlg);
 		return TRUE;
 	}
+    */
 	return DialogWin::OnHScroll (hDlg, request, curpos, hControl);
 }
 
@@ -232,7 +260,9 @@ void DlgFocus::SetRangeLabel (HWND hDlg, int irange)
 		sprintf (cbuf+7, "%d", e);
 	} else sprintf (cbuf+7, "1E%d", irange-2);
 	strcat (cbuf, " km");
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hDlg, IDC_STATIC1), cbuf);
+    */
 }
 
 // ======================================================================
@@ -240,9 +270,13 @@ void DlgFocus::SetRangeLabel (HWND hDlg, int irange)
 void DlgFocus::WatchEdit (HWND hDlg)
 {
 	char cbuf[256];
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hDlg, IDC_EDIT1), cbuf, 256);
+    */
 	Vessel *vessel = g_psys->GetVessel (cbuf, true);
+    /* TODO(jec)
 	EnableWindow (GetDlgItem (hDlg, IDOK), vessel && vessel != g_focusobj ? TRUE:FALSE);
+    */
 }
 
 // ======================================================================
@@ -250,7 +284,9 @@ void DlgFocus::WatchEdit (HWND hDlg)
 void DlgFocus::WatchAssemblyUnroll (HWND hDlg)
 {
 	bool old_unroll = unroll_assemblies;
+    /* TODO(jec)
 	unroll_assemblies = (SendDlgItemMessage (hDlg, IDC_CHECK1, BM_GETCHECK, 0, 0) == BST_CHECKED);
+    */
 	if (unroll_assemblies != old_unroll) {
 		SwitchTab (hDlg);
 	}
@@ -260,6 +296,7 @@ void DlgFocus::WatchAssemblyUnroll (HWND hDlg)
 
 BOOL DlgFocus::OnUserMessage (HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	EnableWindow (GetDlgItem (hWnd, IDC_BUTTON1), g_pfocusobj ? TRUE:FALSE);	
 
 	switch (wParam) {
@@ -271,6 +308,7 @@ BOOL DlgFocus::OnUserMessage (HWND hDlg, WPARAM wParam, LPARAM lParam)
 		UpdateFocus (hDlg);
 		return TRUE;
 	}
+    */
 	return FALSE;
 }
 
@@ -278,6 +316,7 @@ BOOL DlgFocus::OnUserMessage (HWND hDlg, WPARAM wParam, LPARAM lParam)
 
 void DlgFocus::SwitchTab (HWND hDlg)
 {
+    /* TODO(jec)
 	HWND hTab = GetDlgItem (hDlg, IDC_TAB1);
 	HWND hTree = GetDlgItem (hDlg, IDC_TREE1);
 	ctab = TabCtrl_GetCurSel (hTab);
@@ -307,6 +346,7 @@ void DlgFocus::SwitchTab (HWND hDlg)
 	ShowWindow (GetDlgItem (hDlg, IDC_STATIC1), showrange);
 	ShowWindow (GetDlgItem (hDlg, IDC_SLIDER1), showrange);
 	ShowWindow (GetDlgItem (hDlg, IDC_CHECK1), ctab == 3 ? SW_HIDE : SW_SHOW);
+    */
 }
 
 // ======================================================================
@@ -315,7 +355,9 @@ void DlgFocus::RescanTree_All (HWND hDlg)
 {
 	char cbuf[256]; cbuf[255] = '\0';
 	HTREEITEM hti, hti_focus = NULL;
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_TREE1, TVM_DELETEITEM, 0, 0);
+    */
 	for (DWORD i = 0; i < g_psys->nVessel(); i++) {
 		Vessel *vessel = g_psys->GetVessel(i);
 		if (vessel->GetEnableFocus()) {
@@ -323,7 +365,9 @@ void DlgFocus::RescanTree_All (HWND hDlg)
 			if (hti) hti_focus = hti;
 		}
 	}
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_TREE1, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hti_focus);
+    */
 }
 
 // ======================================================================
@@ -333,7 +377,9 @@ void DlgFocus::RescanTree_Nearby (HWND hDlg)
 	double range = pow(10.0,(double)(irange+1));
 	char cbuf[256]; cbuf[255] = '\0';
 	HTREEITEM hti, hti_focus = NULL;
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_TREE1, TVM_DELETEITEM, 0, 0);
+    */
 	const Vector &campos = g_camera->GPos();
 	for (DWORD i = 0; i < g_psys->nVessel(); i++) {
 		Vessel *vessel = g_psys->GetVessel(i);
@@ -345,7 +391,9 @@ void DlgFocus::RescanTree_Nearby (HWND hDlg)
 			}
 		}
 	}
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_TREE1, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hti_focus);
+    */
 }
 
 // ======================================================================
@@ -353,10 +401,13 @@ void DlgFocus::RescanTree_Nearby (HWND hDlg)
 void DlgFocus::RescanTree_Location (HWND hDlg)
 {
 	HTREEITEM hti, hti_ref, hti_focus = NULL;
+    /* TODO(jec)
 	TV_INSERTSTRUCT tvis;
 	TVITEM tvi;
+    */
 	char cbuf[256]; cbuf[255] = '\0';
 
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_TREE1, TVM_DELETEITEM, 0, 0);
 
 	tvis.hParent = NULL;
@@ -367,12 +418,14 @@ void DlgFocus::RescanTree_Location (HWND hDlg)
 	tvi.mask = TVIF_TEXT;
 	tvi.pszText = cbuf;
 	tvi.cchTextMax = 255;
+    */
 
 	for (DWORD i = 0; i < g_psys->nVessel(); i++) {
 		Vessel *vessel = g_psys->GetVessel(i);
 		if (vessel->GetEnableFocus()) {
 			const CelestialBody *ref = vessel->ElRef();
 			// enter under reference body
+            /* TODO(jec)
 			hti_ref = (HTREEITEM)SendDlgItemMessage (hDlg, IDC_TREE1, TVM_GETNEXTITEM, TVGN_ROOT, 0);
 			while (hti_ref) {
 				tvi.hItem = hti_ref;
@@ -387,9 +440,12 @@ void DlgFocus::RescanTree_Location (HWND hDlg)
 			}
 			hti = AddVesselToTree (hDlg, hti_ref, vessel);
 			if (hti) hti_focus = hti;
+            */
 		}
 	}
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_TREE1, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hti_focus);
+    */
 }
 
 // ======================================================================
@@ -397,10 +453,13 @@ void DlgFocus::RescanTree_Location (HWND hDlg)
 void DlgFocus::RescanTree_Class (HWND hDlg)
 {
 	HTREEITEM hti, hti_ref, hti_focus = NULL;
+    /* TODO(jec)
 	TV_INSERTSTRUCT tvis;
 	TVITEM tvi;
+    */
 	char cbuf[256]; cbuf[255] = '\0';
 
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_TREE1, TVM_DELETEITEM, 0, 0);
 
 	tvis.hParent = NULL;
@@ -411,11 +470,13 @@ void DlgFocus::RescanTree_Class (HWND hDlg)
 	tvi.mask = TVIF_TEXT;
 	tvi.pszText = cbuf;
 	tvi.cchTextMax = 255;
+    */
 
 	for (DWORD i = 0; i < g_psys->nVessel(); i++) {
 		Vessel *vessel = g_psys->GetVessel(i);
 		if (vessel->GetEnableFocus()) {
 			// enter under reference body
+            /* TODO(jec)
 			hti_ref = (HTREEITEM)SendDlgItemMessage (hDlg, IDC_TREE1, TVM_GETNEXTITEM, TVGN_ROOT, 0);
 			while (hti_ref) {
 				tvi.hItem = hti_ref;
@@ -431,9 +492,12 @@ void DlgFocus::RescanTree_Class (HWND hDlg)
 			}
 			hti = AddVesselToTree (hDlg, hti_ref, vessel);
 			if (hti) hti_focus = hti;
+            */
 		}
 	}
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_TREE1, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hti_focus);
+    */
 }
 
 // ======================================================================
@@ -450,6 +514,8 @@ HTREEITEM DlgFocus::AddVesselToTree (HWND hDlg, HTREEITEM hti, Vessel *vessel, b
 		char cbuf[256], assembly_name[256];
 		Vessel *vessel0 = assembly->GetVessel(0);
 		sprintf (assembly_name, "%s [assembly]", vessel0->Name());
+
+        /* TODO(jec)
 		TVITEM tvi;
 		tvi.mask = TVIF_TEXT;
 		tvi.pszText = cbuf;
@@ -472,20 +538,28 @@ HTREEITEM DlgFocus::AddVesselToTree (HWND hDlg, HTREEITEM hti, Vessel *vessel, b
 			hti_assembly = (HTREEITEM)SendDlgItemMessage (hDlg, IDC_TREE1, TVM_INSERTITEM, 0, (LPARAM)&tvis);
 		}
 		hti = hti_assembly;
+        */
 	}
+    /* TODO(jec)
 	TV_INSERTSTRUCT tvis;
 	tvis.hParent = hti;
 	tvis.hInsertAfter = TVI_SORT;
 	tvis.item.mask = TVIF_TEXT | TVIF_CHILDREN;
 	tvis.item.pszText = (char*)vessel->Name();
 	tvis.item.cChildren = 0;
+    */
 	if (!unroll) {
 		for (i = 0; ; i++) {
 			AttachmentSpec *as = vessel->GetAttachmentFromIndex (false, i);
 			if (!as) break;
+            /* TODO(jec)
 			if (as->mate) {tvis.item.cChildren = 1; break; }
+            */
 		}
 	}
+
+    HTREEITEM hti_vessel;
+    /* TODO(jec)
 	HTREEITEM hti_vessel = (HTREEITEM)SendDlgItemMessage (hDlg, IDC_TREE1, TVM_INSERTITEM, 0, (LPARAM)&tvis);
 	if (tvis.item.cChildren) {
 		for (i = 0; ; i++) {
@@ -497,6 +571,7 @@ HTREEITEM DlgFocus::AddVesselToTree (HWND hDlg, HTREEITEM hti, Vessel *vessel, b
 			}
 		}
 	}
+    */
 	return (vessel == g_focusobj ? hti_vessel : hti_focus);
 }
 
@@ -505,6 +580,7 @@ HTREEITEM DlgFocus::AddVesselToTree (HWND hDlg, HTREEITEM hti, Vessel *vessel, b
 BOOL DlgFocus::SelectVessel (HWND hDlg)
 {
 	char cbuf[256];
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hDlg, IDC_EDIT1), cbuf, 256);
 	Vessel *vessel = g_psys->GetVessel (cbuf, true);
 	if (vessel) {
@@ -518,6 +594,7 @@ BOOL DlgFocus::SelectVessel (HWND hDlg)
 		MessageBeep (MB_ICONEXCLAMATION);
 	}
 	WatchEdit (hDlg);
+    */
 	return TRUE;
 }
 
@@ -526,7 +603,9 @@ BOOL DlgFocus::SelectVessel (HWND hDlg)
 void DlgFocus::SelectPreviousVessel (HWND hDlg)
 {
 	if (g_pfocusobj) {
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (hDlg, IDC_EDIT1), g_pfocusobj->Name());
+        */
 		SelectVessel (hDlg);
 	}
 }
@@ -536,6 +615,7 @@ void DlgFocus::SelectPreviousVessel (HWND hDlg)
 void DlgFocus::UpdateFocus (HWND hDlg)
 {
 	char cbuf[256];
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hDlg, IDC_EDIT1), cbuf, 256);
 	if (strcmp (cbuf, g_focusobj->Name())) {
 		SetWindowText (GetDlgItem (hDlg, IDC_EDIT1), g_focusobj->Name());
@@ -543,6 +623,7 @@ void DlgFocus::UpdateFocus (HWND hDlg)
 		if (hti)
 			PostMessage (GetDlgItem (hDlg, IDC_TREE1), TVM_SELECTITEM, TVGN_CARET, (LPARAM)hti);
 	}
+    */
 }
 
 // ======================================================================
@@ -550,17 +631,24 @@ void DlgFocus::UpdateFocus (HWND hDlg)
 HTREEITEM DlgFocus::FindItem (HWND hDlg, const char *str, HTREEITEM hti_first)
 {
 	HTREEITEM hti_match = NULL;
+    /* TODO(jec)
 	TVITEM tvi;
+    */
 
 	char cbuf[256]; cbuf[255] = '\0';
+    /* TODO(jec)
 	tvi.mask = TVIF_TEXT | TVIF_CHILDREN;
 	tvi.pszText = cbuf;
 	tvi.cchTextMax = 255;
+    */
 
 	if (!hti_first)
+        /* TODO(jec)
 		hti_first = (HTREEITEM)SendDlgItemMessage (hDlg, IDC_TREE1, TVM_GETNEXTITEM, TVGN_ROOT, 0);
 	
+        */
 	do {
+        /* TODO(jec)
 		tvi.hItem = hti_first;
 		SendDlgItemMessage (hDlg, IDC_TREE1, TVM_GETITEM, 0, (LPARAM)&tvi);
 		if (tvi.cChildren) {
@@ -570,6 +658,7 @@ HTREEITEM DlgFocus::FindItem (HWND hDlg, const char *str, HTREEITEM hti_first)
 			if (!strcmp (cbuf, str)) return hti_first;
 		}
 		hti_first = (HTREEITEM)SendDlgItemMessage (hDlg, IDC_TREE1, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)hti_first);
+        */
 	} while (hti_first);
 	return NULL;
 }

@@ -4,6 +4,8 @@
 #define STRICT 1
 #define OAPI_IMPLEMENTATION
 
+#include <filesystem>
+
 #include "Orbiter.h"
 #include "Launchpad.h"
 #include "LpadTab.h"
@@ -16,11 +18,26 @@
 #include "Log.h"
 #include "Util.h"
 #include "resource.h"
+/* TODO(jec)
 #include <wincodec.h>
 #include <io.h>
+*/
+
+/* TODO(jec): Compatibility definitions. */
+class IWICBitmapFrameDecode;
+class IWICBitmapDecoder;
+class IWICBitmapEncoder;
+class IWICFormatConverter;
+class IWICBitmapScaler;
+class IWICStream;
+class IWICBitmapFrameEncode;
+class IWICBitmapFrameDecode;
+class IPropertyBag2;
+
 
 using std::min;
 
+extern const char *g_strAppTitle;
 extern Orbiter *g_pOrbiter;
 extern PlanetarySystem *g_psys;
 extern Pane *g_pane;
@@ -54,6 +71,7 @@ GraphicsClient::GraphicsClient (HINSTANCE hInstance): Module (hInstance)
 	splashFont = 0;
 
     // Create WIC factory for formatted image output
+    /* TODO(jec):  No WIC factory
     HRESULT hr = CoCreateInstance (
         CLSID_WICImagingFactory,
         NULL,
@@ -61,15 +79,18 @@ GraphicsClient::GraphicsClient (HINSTANCE hInstance): Module (hInstance)
         IID_PPV_ARGS(&m_pIWICFactory)
     );
 	if (hr != S_OK)
+    */
 		m_pIWICFactory = NULL;
-		
+
 }
 
 // ======================================================================
 
 GraphicsClient::~GraphicsClient ()
 {
+    /* TODO(jec)
 	if (hVid) SetWindowLongPtr (hVid, GWLP_USERDATA, 0);
+    */
 	if (splashFont) clbkReleaseFont (splashFont);
 }
 
@@ -78,16 +99,20 @@ GraphicsClient::~GraphicsClient ()
 bool GraphicsClient::clbkInitialise ()
 {
     // Register a window class for the render window
+    /* TODO(jec)
     WNDCLASS wndClass = {0, ::WndProc, 0, 0, hModule,
 		LoadIcon (g_pOrbiter->GetInstance(), MAKEINTRESOURCE(IDI_MAIN_ICON)),
 		LoadCursor (NULL, IDC_ARROW),
 		(HBRUSH)GetStockObject (WHITE_BRUSH),
 		NULL, strWndClass};
     RegisterClass (&wndClass);
+    */
 
 	if (clbkUseLaunchpadVideoTab() && g_pOrbiter->Launchpad()) {
 		hVid = g_pOrbiter->Launchpad()->GetTab(PG_VID)->TabWnd();
+        /* TODO(jec)
 		SetWindowLongPtr (hVid, GWLP_USERDATA, (LONG_PTR)this);
+        */
 	} else hVid = NULL;
 
 	// set default parameters from config data
@@ -104,7 +129,9 @@ bool GraphicsClient::clbkInitialise ()
 
 #ifndef INLINEGRAPHICS
 	char fname[256];
+    /* TODO(jec)
 	GetModuleFileName(hModule, fname, 256);
+    */
 	((orbiter::DefVideoTab*)g_pOrbiter->Launchpad()->GetTab(PG_VID))->OnGraphicsClientLoaded(this, fname);
 #endif
 
@@ -174,26 +201,35 @@ ScreenAnnotation *GraphicsClient::clbkCreateAnnotation ()
 
 bool GraphicsClient::TexturePath (const char *fname, char *path) const
 {
-	struct _finddata_t fd;
-	intptr_t fh;
-
 	// first try htex directory
-	strcpy (path, g_pOrbiter->Cfg()->CfgDirPrm.HightexDir);
-	strcat (path, fname);
-	if ((fh = _findfirst (path, &fd)) != -1) {
-		_findclose (fh);
-		return true;
-	}
+    auto path_ = std::filesystem::path{g_pOrbiter->Cfg()->CfgDirPrm.HightexDir} / fname;
+    if (std::filesystem::exists(path_)) {
+        strcpy(path, path_.c_str());
+        return true;
+    }
 
 	// try tex directory
-	strcpy (path, g_pOrbiter->Cfg()->CfgDirPrm.TextureDir);
-	strcat (path, fname);
-	if ((fh = _findfirst (path, &fd)) != -1) {
-		_findclose (fh);
-		return true;
-	}
-	return false;
+    path_ = std::filesystem::path{g_pOrbiter->Cfg()->CfgDirPrm.TextureDir} / fname;
+    strcpy(path, path_.c_str());
+    return std::filesystem::exists(path_);
 }
+
+bool GraphicsClient::TexturePath (const std::filesystem::path& fname,
+                                  std::filesystem::path& path_) const {
+
+   	// first try htex directory
+    auto tempPath = std::filesystem::path{g_pOrbiter->Cfg()->CfgDirPrm.HightexDir} / fname;
+    if (std::filesystem::exists(tempPath)) {
+        path_ = tempPath;
+        return true;
+    }
+
+	// try tex directory
+    tempPath = std::filesystem::path{g_pOrbiter->Cfg()->CfgDirPrm.TextureDir} / fname;
+    path_ = tempPath;
+    return std::filesystem::exists(tempPath);
+}
+
 
 // ======================================================================
 
@@ -277,13 +313,20 @@ HWND GraphicsClient::clbkCreateRenderWindow ()
 	HWND hWnd;
 
 	if (VideoData.fullscreen) {
+        /* TODO(jec):  I think this is the key interface to hook main D3D window
+         * to window system.
+         */
+        /* TODO(jec)
 		hWnd = CreateWindow (strWndClass, "", // dummy window
 			WS_POPUP | WS_EX_TOPMOST| WS_VISIBLE,
 			CW_USEDEFAULT, CW_USEDEFAULT, 10, 10, 0, 0, hModule, (LPVOID)this);
+        */
 	} else {
+        /* TODO(jec)
 		hWnd = CreateWindow (strWndClass, "",
 			WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_VISIBLE,
 			CW_USEDEFAULT, CW_USEDEFAULT, VideoData.winw, VideoData.winh, 0, 0, hModule, (LPVOID)this);
+        */
 	}
 	return hWnd;
 }
@@ -338,12 +381,15 @@ void GraphicsClient::ShowDefaultSplash ()
 	//const DWORD bmw = rw, bmh = (rw*10)/16; // source image is 1920x1200, i.e. 16/20 aspect ratio
 	const DWORD bmw = min(rw, (rh*16)/10);
 	const DWORD bmh = (bmw*10)/16;
+    /* TODO(jec)
 	HMODULE hMod = GetModuleHandle(NULL);
 	HRSRC hRsrc = FindResource(hMod,MAKEINTRESOURCE(IDR_IMAGE1), "IMAGE");
 	HGLOBAL hGlob = LoadResource(hMod, hRsrc);
 	BYTE *pBuf = (BYTE*)LockResource(hGlob);
 	DWORD nBuf = SizeofResource(hMod,hRsrc);
 	HBITMAP hbm = ReadImageFromMemory (pBuf, nBuf, bmw, bmh);
+    */
+    HBITMAP hbm = nullptr;
 
 	// copy splash screen to viewport
 	SURFHANDLE surf = GraphicsClient::clbkCreateSurface (hbm);
@@ -383,6 +429,7 @@ HBITMAP ReadImageFromDecoder (IWICImagingFactory *m_pIWICFactory, IWICBitmapDeco
 	IWICBitmapScaler *piScaler = NULL;
 
 	UINT nWidth, nHeight, nFrame, nCount = 0;
+    /* TODO(jec)
 	piDecoder->GetFrameCount(&nCount);
 	nFrame = nCount-1;
 
@@ -405,7 +452,9 @@ HBITMAP ReadImageFromDecoder (IWICImagingFactory *m_pIWICFactory, IWICBitmapDeco
 	UINT nImage = nStride * h;
 	m_pIWICFactory->CreateBitmapScaler(&piScaler);
 	piScaler->Initialize(piConvertedFrame, w, h, WICBitmapInterpolationModeFant);
+    */
 
+    /* TDOO(jec)
 	HDC hdcScreen = GetDC(NULL);
 	BITMAPINFO bminfo;
 	ZeroMemory(&bminfo, sizeof(bminfo));
@@ -424,6 +473,8 @@ HBITMAP ReadImageFromDecoder (IWICImagingFactory *m_pIWICFactory, IWICBitmapDeco
 	piFrame->Release();
 	piConvertedFrame->Release();
 	piScaler->Release();
+    */
+    HBITMAP hDIBBitmap = nullptr;
 
 	return hDIBBitmap;
 }
@@ -435,14 +486,18 @@ HBITMAP GraphicsClient::ReadImageFromMemory (BYTE *pBuf, DWORD nBuf, UINT w, UIN
 	IWICBitmapDecoder *piDecoder = NULL;
 	
 	IWICStream *piStream;
+    /* TODO(jec)
 	m_pIWICFactory->CreateStream(&piStream);
 	piStream->InitializeFromMemory(pBuf,nBuf);
 	m_pIWICFactory->CreateDecoderFromStream (piStream, NULL, WICDecodeMetadataCacheOnDemand, &piDecoder);
 
 	piStream->Release();
+    */
 	if (piDecoder) {
 		HBITMAP hDIBBitmap = ReadImageFromDecoder (m_pIWICFactory, piDecoder, w, h);
+        /* TODO(jec)
 		piDecoder->Release();
+        */
 		return hDIBBitmap;
 	} else {
 		LOGOUT_WARN("Couldn't create decoder for memory image data");
@@ -458,11 +513,15 @@ HBITMAP GraphicsClient::ReadImageFromFile (const char *fname, UINT w, UINT h)
 	mbstowcs (wcbuf, fname, 256);
 
 	IWICBitmapDecoder *piDecoder = NULL;
+    /* TODO(jec)
 	m_pIWICFactory->CreateDecoderFromFilename (wcbuf, NULL, GENERIC_READ, WICDecodeMetadataCacheOnDemand, &piDecoder);
+    */
 
 	if (piDecoder) {
 		HBITMAP hDIBBitmap = ReadImageFromDecoder (m_pIWICFactory, piDecoder, w, h);
+        /* TODO(jec)
 		piDecoder->Release();
+        */
 		return hDIBBitmap;
 	} else {
 		LOGOUT_WARN("Couldn't create decoder for image file: %s (does it exist?)", fname);
@@ -477,12 +536,14 @@ bool GraphicsClient::WriteImageDataToFile (const ImageData &data,
 {
 	const char *extension[4] = {".bmp", ".png", ".jpg", ".tif"};
 
+    /* TODO(jec)
 	const GUID FormatGUID[4] = {
 		GUID_ContainerFormatBmp,
 		GUID_ContainerFormatPng,
 		GUID_ContainerFormatJpeg,
 		GUID_ContainerFormatTiff,
 	};
+    */
 
 	HRESULT hr = S_OK;
 	// Note: hr should be checked after every function returning it.
@@ -512,6 +573,7 @@ bool GraphicsClient::WriteImageDataToFile (const ImageData &data,
 	IWICBitmapFrameEncode *piBitmapFrame = NULL;
 	IPropertyBag2 *pPropertybag = NULL;
 
+    /* TODO(jec)
 	hr = m_pIWICFactory->CreateStream (&piStream);
 	hr = piStream->InitializeFromFilename(wcbuf, GENERIC_WRITE);
 	if ((hr & 0xFF) == ERROR_PATH_NOT_FOUND && MakePath(fname)) {
@@ -521,14 +583,18 @@ bool GraphicsClient::WriteImageDataToFile (const ImageData &data,
 	hr = m_pIWICFactory->CreateEncoder (FormatGUID[fmt], NULL, &piEncoder);
 	hr = piEncoder->Initialize (piStream, WICBitmapEncoderNoCache);
 	hr = piEncoder->CreateNewFrame (&piBitmapFrame, &pPropertybag);
+    */
 
 	// customize output
+    /* TODO(Jec)
 	PROPBAG2 option = { 0 };
 	option.pstrName = (wchar_t*)L"ImageQuality";
 	VARIANT varValue;
 	VariantInit (&varValue);
 	varValue.vt = VT_R4;
 	varValue.fltVal = quality;
+    */
+    /* TODO(jec)
 	hr = pPropertybag->Write(1,&option,&varValue);
 	hr = piBitmapFrame->Initialize (pPropertybag);
 
@@ -547,6 +613,7 @@ bool GraphicsClient::WriteImageDataToFile (const ImageData &data,
 	piBitmapFrame->Release();
 	piEncoder->Release();
 	piStream->Release();
+    */
 	return true;
 }
 
@@ -569,6 +636,7 @@ void GraphicsClient::clbkRender2DPanel (SURFHANDLE *hSurf, MESHHANDLE hMesh, MAT
 
 SURFHANDLE GraphicsClient::clbkCreateSurface (HBITMAP hBmp)
 {
+    /* TODO(jec)
 	BITMAP bm;
 	GetObject (hBmp, sizeof(bm), &bm);
 	SURFHANDLE surf = clbkCreateSurface (bm.bmWidth, bm.bmHeight);
@@ -578,6 +646,9 @@ SURFHANDLE GraphicsClient::clbkCreateSurface (HBITMAP hBmp)
 			surf = NULL;
 		}
 	}
+    */
+    SURFHANDLE surf {};
+
 	return surf;
 }
 
@@ -610,7 +681,9 @@ bool GraphicsClient::clbkCopyBitmap (SURFHANDLE pdds, HBITMAP hbm,
 {
     HDC                     hdcImage;
     HDC                     hdc;
+    /* TODO(jec)
     BITMAP                  bm;
+    */
     //DDSURFACEDESC2          ddsd;
     //HRESULT                 hr;
 	DWORD                   surfW, surfH;
@@ -620,6 +693,7 @@ bool GraphicsClient::clbkCopyBitmap (SURFHANDLE pdds, HBITMAP hbm,
     //
     // Select bitmap into a memoryDC so we can use it.
     //
+    /* TODO(jec)
     hdcImage = CreateCompatibleDC(NULL);
     if (!hdcImage)
         OutputDebugString("createcompatible dc failed\n");
@@ -630,6 +704,7 @@ bool GraphicsClient::clbkCopyBitmap (SURFHANDLE pdds, HBITMAP hbm,
     GetObject(hbm, sizeof(bm), &bm);
     dx = dx == 0 ? bm.bmWidth : dx;     // Use the passed size, unless zero
     dy = dy == 0 ? bm.bmHeight : dy;
+    */
     //
     // Get size of surface.
     //
@@ -639,11 +714,15 @@ bool GraphicsClient::clbkCopyBitmap (SURFHANDLE pdds, HBITMAP hbm,
     //pdds->GetSurfaceDesc(&ddsd);
 
 	if (hdc = clbkGetSurfaceDC (pdds)) {
+        /* TODO(jec)
         StretchBlt(hdc, 0, 0, surfW, surfH, hdcImage, x, y,
                    dx, dy, SRCCOPY);
+        */
 		clbkReleaseSurfaceDC (pdds, hdc);
     }
+    /* TODO(jec)
 	DeleteDC(hdcImage);
+    */
     return true;
 }
 
@@ -652,22 +731,30 @@ bool GraphicsClient::clbkCopyBitmap (SURFHANDLE pdds, HBITMAP hbm,
 HWND GraphicsClient::InitRenderWnd (HWND hWnd)
 {
 	if (!hWnd) { // create a dummy window
+        /* TODO(jec)
 		hWnd = CreateWindow (strWndClass, "",
 			WS_POPUP | WS_VISIBLE,
 			CW_USEDEFAULT, CW_USEDEFAULT, 10, 10, 0, 0, hModule, 0);
+        */
 	}
+    /* TODO(jec)
 	SetWindowLongPtr (hWnd, GWLP_USERDATA, (LONG_PTR)this);
+    */
 	// store class instance with window for access in the message handler
 
 	char title[256], cbuf[128];
-	extern const TCHAR *g_strAppTitle;
+    /* NOTE(jec):  extern definition here technically is in namespace oapi */
 	strcpy (title, g_strAppTitle);
+    /* TODO(jec)
 	GetWindowText (hWnd, cbuf, 128);
+    */
 	if (cbuf[0]) {
 		strcat (title, " ");
 		strcat (title, cbuf);
 	}
+    /* TODO(jec)
 	SetWindowText (hWnd, title);
+    */
 	hRenderWnd = hWnd;
 	return hRenderWnd;
 }
@@ -677,12 +764,15 @@ HWND GraphicsClient::InitRenderWnd (HWND hWnd)
 
 LRESULT GraphicsClient::RenderWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	// graphics-specific stuff to go here
 	default:
 		return g_pOrbiter->MsgProc (hWnd, uMsg, wParam, lParam);
 	}
     return DefWindowProc (hWnd, uMsg, wParam, lParam);
+    */
+    return FALSE;
 }
 
 // ======================================================================
@@ -894,18 +984,24 @@ void ScreenAnnotation::Render ()
 //-----------------------------------------------------------------------
 DLLEXPORT LRESULT CALLBACK WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	GraphicsClient *gc = (GraphicsClient*)GetWindowLongPtr (hWnd, GWLP_USERDATA);
 	if (gc) return gc->RenderWndProc (hWnd, uMsg, wParam, lParam);
 	else return DefWindowProc (hWnd, uMsg, wParam, lParam);
+    */
+    return FALSE;
 }
 
 // ======================================================================
 
 DLLEXPORT INT_PTR CALLBACK LaunchpadVideoWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	GraphicsClient *gc = (GraphicsClient*)GetWindowLongPtr (hWnd, GWLP_USERDATA);
 	if (gc) return gc->LaunchpadVideoWndProc (hWnd, uMsg, wParam, lParam);
 	else return FALSE;
+    */
+    return FALSE;
 }
 
 // ======================================================================

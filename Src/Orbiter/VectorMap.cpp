@@ -8,8 +8,10 @@
 
 #include "VectorMap.h"
 #include "Psys.h"
-#include "MFD.h"
+#include "Mfd.h"
 #include "Util.h"
+
+#include <filesystem>
 
 #define OUTLINE_COAST 1
 #define OUTLINE_CONTOUR 2
@@ -70,8 +72,10 @@ VectorMap::~VectorMap ()
 	CloseHandle (hCommMutex);
 #endif
 
+    /* TODO(jec)
 	if (hBmpDraw) DeleteObject (hBmpDraw);
 	if (hDCmem) DeleteDC (hDCmem);
+    */
 	CloseGDIResources();
 }
 
@@ -130,6 +134,7 @@ void VectorMap::InitGDIResources ()
 	int i;
 
 	fontLabel = NULL;
+    /* TODO(jec)
 	// for default label size, query screen resolution
 	int screenh = GetSystemMetrics(SM_CYSCREEN);
 	labelsize = screenh / 100;
@@ -154,6 +159,7 @@ void VectorMap::InitGDIResources ()
 	nCustomMkr = 0;
 	LOGBRUSH lb = {BS_SOLID, 0x303030, 0};
 	brushDay = CreateBrushIndirect (&lb);
+    */
 }
 
 // =======================================================================
@@ -162,10 +168,14 @@ void VectorMap::SetLabelSize(int size)
 {
 	if (fontLabel) {
 		if (size == labelsize) return; // nothing to do
+        /* TODO(jec)
 		else DeleteObject(fontLabel);
+        */
 	}
 	labelsize = size;
+    /* TODO(jec)
 	fontLabel = CreateFont(-labelsize, 0, 0, 0, 400, 0, 0, 0, 0, 3, 2, 1, 49, "Arial");
+    */
 }
 
 // =======================================================================
@@ -175,8 +185,10 @@ void VectorMap::AllocCustomResources ()
 	DWORD i;
 
 	if (nCustomMkr) {
+        /* TODO(jec)
 		for (i = 0; i < nCustomMkr; i++)
 			DeleteObject (penCustomMkr[i]);
+        */
 		delete []penCustomMkr;
 		penCustomMkr = NULL;
 		delete []colCustomMkr;
@@ -188,7 +200,9 @@ void VectorMap::AllocCustomResources ()
 		colCustomMkr = new COLORREF[nCustomMkr];
 		for (i = 0; i < nCustomMkr; i++) {
 			colCustomMkr[i] = labelcol[mkrset.set[i].list->colour];
+            /* TODO(jec)
 			penCustomMkr[i] = CreatePen (PS_SOLID, 1, colCustomMkr[i]);
+            */
 		}
 	}
 }
@@ -198,6 +212,7 @@ void VectorMap::AllocCustomResources ()
 void VectorMap::CloseGDIResources ()
 {
 	DWORD i;
+    /* TODO(jec)
 	DeleteObject (fontLabel);
 	DeleteObject (penGridline);
 	DeleteObject (penCoast);
@@ -228,6 +243,7 @@ void VectorMap::CloseGDIResources ()
 		colCustomMkr = NULL;
 		nCustomMkr = 0;
 	}
+    */
 }
 
 // =======================================================================
@@ -309,13 +325,15 @@ bool VectorMap::SetCBody (const CelestialBody *body)
 		cbody = body;
 		planet = (cbody->Type() == OBJTP_PLANET ? (const Planet*)cbody : NULL);
 		if (planet) {
-			char path[MAX_PATH], relpath[MAX_PATH];
-			sprintf (relpath, "%s\\data\\coast.vec", cbody->Name());
-			strcpy (path, g_pOrbiter->Cfg()->ConfigPathNoext (relpath));
-			coast.Load (path, OUTLINE_COAST);
-			sprintf (relpath, "%s\\data\\contour.vec", cbody->Name());
-			strcpy (path, g_pOrbiter->Cfg()->ConfigPathNoext (relpath));
-			contour.Load (path, OUTLINE_CONTOUR);
+            std::filesystem::path path, relpath;
+            relpath = std::filesystem::path{cbody->Name()} / "data" / "coast.vec";
+            path = std::filesystem::path{g_pOrbiter->Cfg()->ConfigPathNoext(relpath.c_str())};
+            coast.Load(path.c_str(), OUTLINE_COAST);
+
+            relpath = std::filesystem::path{cbody->Name()} / "data" / "contour.vec";
+            path = std::filesystem::path{g_pOrbiter->Cfg()->ConfigPathNoext(relpath.c_str())};
+            contour.Load(path.c_str(), OUTLINE_CONTOUR);
+
 			gt_this.Reset (cbody, g_focusobj->Els());
 			mkrlist = planet->LabelList (&nmkrlist);
 			mkrset.Connect (mkrlist, nmkrlist);
@@ -346,6 +364,7 @@ void VectorMap::SetCanvas (void *device_context, int w, int h)
 	SetZoom (zoom);
 
 	// Create the drawing bitmap
+    /* TODO(jec)
 	HDC hDCtgt = GetDC (NULL);
 	if (hDCmem) {
 		DeleteDC (hDCmem);                             // delete current memory DC
@@ -361,6 +380,7 @@ void VectorMap::SetCanvas (void *device_context, int w, int h)
 		hBmpDraw = NULL;
 	}
 	ReleaseDC (NULL, hDCtgt);
+    */
 }
 
 // =======================================================================
@@ -695,9 +715,11 @@ void VectorMap::DrawMap_engine ()
 	tic();
 
 	// clear the bitmap
+    /* TODO(jec)
 	HBITMAP pBmp = (HBITMAP)SelectObject (hDCmem, hBmpDraw);
 	BitBlt (hDCmem, 0, 0, cw, ch, NULL, 0, 0, BLACKNESS);
 	HFONT pFont = (HFONT)SelectObject (hDCmem, fontLabel);
+    */
 
 	// terminator line
 	if (planet && dispflag & DISP_TERMINATOR) {
@@ -773,15 +795,19 @@ void VectorMap::DrawMap_engine ()
 	if (selection.type)
 		DrawSelectionMarker (selection);
 
+    /* TODO(jec)
 	SelectObject (hDCmem, pFont);
 	SelectObject (hDCmem, pBmp);
+    */
 }
 
 // =======================================================================
 
 void VectorMap::DrawGridlines ()
 {
+    /* TODO(jec)
 	HPEN ppen = (HPEN)SelectObject (hDCmem, penGridline);
+    */
 	const double step = 30.0/DEG;
 	const double eps = 1e-8;
 	double lat0 = max(latmin,-Pi05);
@@ -794,15 +820,19 @@ void VectorMap::DrawGridlines ()
 	double lat = ceil(lat0/step) * step;
 	while (lat < lat1+eps) {
 		y = mapy(lat);
+        /* TODO(jec)
 		MoveToEx (hDCmem, x0, y, NULL);
 		LineTo (hDCmem, x1, y);
+        */
 		lat += step;
 	}
 	double lng = ceil(lng0/step) * step;
 	while (lng < lng1) {
 		x = mapx(lng);
+        /* TODO(jec)
 		MoveToEx (hDCmem, x, y0, NULL);
 		LineTo (hDCmem, x, y1);
+        */
 		lng += step;
 	}
 }
@@ -815,6 +845,7 @@ void VectorMap::DrawPolySet (const PolyLineSet *pls)
 	int mapw = (int)(cw*PI/dlng);
 	VPoint *v0;
 
+    /* TODO(jec)
 	HGDIOBJ ppen = NULL;
 
 	switch (pls->type) {
@@ -825,13 +856,16 @@ void VectorMap::DrawPolySet (const PolyLineSet *pls)
 		ppen = SelectObject (hDCmem, penContour);
 		break;
 	}
+    */
 
 	for (j = 0; j < pls->npoly; j++) {
 		v0 = pls->vtx + pls->poly[j].vofs;
 		n = (pls->poly[j].close ? pls->poly[j].nvtx : pls->poly[j].nvtx-1);
 		DrawPolyline (0, v0, n);
 	}
+    /* TODO(jec)
 	if (ppen) SelectObject (hDCmem, ppen);
+    */
 }
 	
 // =======================================================================
@@ -863,8 +897,10 @@ void VectorMap::DrawPolyline (int type, VPoint *vp, int n, bool close)
 		y0 = mapy (va->lat);
 		y1 = mapy (vb->lat);
 		if ((y0 < 0 && y1 < 0) || (y0 >= ch && y1 >= ch)) continue;
+        /* TODO(jec)
 		MoveToEx (hDCmem, x0, y0, NULL);
 		LineTo (hDCmem, x1, y1);
+        */
 	}
 }
 
@@ -904,29 +940,39 @@ void VectorMap::DrawGroundtrackLine (int type, VPointGT *vp, int n, int n0, int 
 			double scl = (1.0-va->rad)/(vb->rad-va->rad);
 			x0 += (int)((x1-x0)*scl);
 			y0 += (int)((y1-y0)*scl);
+            /* TODO(jec)
 			Rectangle (hDCmem, x0-2, y0-2, x0+3, y0+3);
 			if (replicate)
 				Rectangle (hDCmem, x0-2-mapw, y0-2, x0+3-mapw, y0+3);
+            */
 		} else if (vb->rad < 1.0) {
 			double scl = (1.0-vb->rad)/(vb->rad-va->rad);
 			x1 += (int)((x1-x0)*scl);
 			y1 += (int)((y1-y0)*scl);
+            /* TODO(jec)
 			Rectangle (hDCmem, x1-2, y1-2, x1+3, y1+3);
 			if (replicate)
 				Rectangle (hDCmem, x1-2-mapw, y1-2, x1+3-mapw, y1+3);
+            */
 		}
 		if (replicate && x0 != x1) {
 			int xm = (cw-mapw)/2;
 			if (x0 > cntx) xm += mapw;
 			int ym = y0 + ((xm-x0)*(y1-y0))/(x1-x0);
+            /* TODO(jec)
 			MoveToEx (hDCmem, x0, y0, NULL);
 			LineTo (hDCmem, xm, ym);
+            */
 			int dx = (x0 > cntx ? -mapw:mapw);
+            /* TODO(jec)
 			MoveToEx (hDCmem, xm+dx, ym, NULL);
 			LineTo (hDCmem, x1+dx, y1);
+            */
 		} else {
+            /* TODO(jec)
 			MoveToEx (hDCmem, x0, y0, NULL);
 			LineTo (hDCmem, x1, y1);
+            */
 		}
 	}
 }
@@ -935,9 +981,11 @@ void VectorMap::DrawGroundtrackLine (int type, VPointGT *vp, int n, int n0, int 
 
 void VectorMap::DrawNavaids ()
 {
+    /* TODO(jec)
 	SetTextColor (hDCmem, col_navaid);
 	HPEN ppen = (HPEN)SelectObject (hDCmem, penNavmkr);
 	SelectObject (hDCmem, GetStockObject (NULL_BRUSH));
+    */
 
 	if (planet && planet->nNav()) {
 		static char cbuf[32];
@@ -953,13 +1001,17 @@ void VectorMap::DrawNavaids ()
 				vor->GetEquPos (lng, lat);
 				if (GetMapPos (lng, lat, x, y)) {
 					if (drawdot) {
+                        /* TODO(jec)
 						SetPixel (hDCmem, x, y, col_navaid);
+                        */
 					} else {
+                        /* TODO(jec)
 						Ellipse (hDCmem, x-2, y-2, x+3, y+3);
 						if (drawlabel) {
 							sprintf (cbuf, "%s %0.2f", vor->GetId(), vor->GetFreq());
 							TextOut (hDCmem, x+3, y, cbuf, strlen(cbuf));
 						}
+                        */
 					}
 				}
 				} break;
@@ -967,7 +1019,9 @@ void VectorMap::DrawNavaids ()
 		}
 	}
 
+    /* TODO(jec)
 	SelectObject (hDCmem, ppen);
+    */
 }
 
 // =======================================================================
@@ -1048,8 +1102,10 @@ void VectorMap::DrawMoons ()
 void VectorMap::DrawBases ()
 {
 	bool drawlabel = (mapx_scale > 700);
+    /* TODO(jec)
 	if (drawlabel) SetTextColor (hDCmem, Instrument::draw[2][0].col);
 	HPEN ppen = (HPEN)SelectObject (hDCmem, penBase);
+    */
 
 	if (planet && g_psys->nBase (planet)) {
 		int x, y;
@@ -1058,14 +1114,18 @@ void VectorMap::DrawBases ()
 			Base *base = g_psys->GetBase (planet, i);
 			base->EquPos (lng, lat);
 			if (GetMapPos (lng, lat, x, y)) {
+                /* TODO(jec)
 				Rectangle (hDCmem, x-3, y-3, x+4, y+4);
 				if (drawlabel)
 					TextOut (hDCmem, x+3, y, base->Name(), strlen(base->Name()));
+                */
 			}
 		}
 	}
 
+    /* TODO(jec)
 	SelectObject (hDCmem, ppen);
+    */
 }
 
 // =======================================================================
@@ -1082,11 +1142,14 @@ void VectorMap::DrawCustomMarkerSet (int idx)
 	bool drawdot = (mapx_scale < 400);
 	bool drawlabel = (mapx_scale > 1400);
 
+    /* TODO(jec)
 	if (drawlabel) SetTextColor (hDCmem, colCustomMkr[idx]);
 	if (!drawdot)  ppen = (HPEN)SelectObject (hDCmem, penCustomMkr[idx]);
+    */
 
 	for (i = 0; i < set->nvtx; i++) {
 		if (GetMapPos (set->vtx[i].lng, set->vtx[i].lat, x, y)) {
+            /* TODO(jec)
 			if (drawdot) {
 				SetPixel (hDCmem, x, y, colCustomMkr[idx]);
 			} else {
@@ -1097,9 +1160,12 @@ void VectorMap::DrawCustomMarkerSet (int idx)
 					TextOutW (hDCmem, x+3, y, wlabel, wcslen(wlabel));
 				}
 			}
+            */
 		}
 	}
+    /* TODO(jec)
 	if (ppen) SelectObject (hDCmem, ppen);
+    */
 }
 
 // =======================================================================
@@ -1110,6 +1176,7 @@ void VectorMap::DrawMarker (double lng, double lat, const char *name, int which)
 	if (!GetMapPos (lng, lat, x, y))
 		return; // position not on map
 
+    /* TDOO(jec)
 	HPEN ppen = (HPEN)SelectObject (hDCmem, penMarker[which]);
 	MoveToEx (hDCmem, x-10, y, NULL);
 	LineTo (hDCmem, x+11, y);
@@ -1118,6 +1185,7 @@ void VectorMap::DrawMarker (double lng, double lat, const char *name, int which)
 	SelectObject (hDCmem, ppen);
 	SetTextColor (hDCmem, Instrument::draw[which][0].col);
 	TextOut (hDCmem, x+3, which==2 ? y:y-labelsize-3, name, min((size_t)64,strlen(name)));
+    */
 }
 
 // =======================================================================
@@ -1128,10 +1196,12 @@ void VectorMap::DrawSelectionMarker (const OBJTYPE obj)
 	int x, y;
 	if (GetObjPos (obj, lng, lat))
 		if (GetMapPos (lng, lat, x, y)) {
+            /* TODO(jec)
 			HPEN ppen = (HPEN)SelectObject (hDCmem, penSelection);
 			Ellipse (hDCmem, x-5, y-5, x+6, y+6);
 			Ellipse (hDCmem, x-8, y-8, x+9, y+9);
 			SelectObject (hDCmem, ppen);
+            */
 		}
 }
 
@@ -1139,10 +1209,12 @@ void VectorMap::DrawSelectionMarker (const OBJTYPE obj)
 
 void VectorMap::DrawTerminatorLine (double sunlng, double sunlat)
 {
+    /* TODO(jec)
 	HPEN ppen = (HPEN)SelectObject (hDCmem, penTerminator);
 	VPoint *p = GreatCircle (sunlng, sunlat);
 	DrawPolyline (0, p, NVTX_CIRCLE);
 	SelectObject (hDCmem, ppen);
+    */
 }
 
 // =======================================================================
@@ -1194,22 +1266,28 @@ void VectorMap::DrawSunnySide (double sunlng, double sunlat, bool terminator)
 	ptt[idx1+1].x = ptt[idx1].x;
 	ptt[idx1+1].y = ybase;
 
+    /* TODO(jec)
 	HPEN ppen = (HPEN)SelectObject (hDCmem, terminator ? penTerminator : GetStockObject (NULL_PEN));
 	SelectObject (hDCmem, brushDay);
 	Polygon (hDCmem, ptt+(idx0-1), idx1-idx0+3);
 	SelectObject (hDCmem, ppen);
 	SelectObject (hDCmem, GetStockObject (NULL_BRUSH));
+    */
 }
 
 // =======================================================================
 
 void VectorMap::DrawOrbitPlane (const Elements *el, int which)
 {
+    /* TODO(jec)
 	HPEN ppen = (HPEN)SelectObject (hDCmem, penOrbitFuture[which]);
+    */
 	static VPoint p[NVTX_CIRCLE];
 	CalcOrbitProj (el, cbody, p);
 	DrawPolyline (OUTLINE_ORBITPLANE, p, NVTX_CIRCLE);
+    /* TODO(jec)
 	SelectObject (hDCmem, ppen);
+    */
 }
 
 // =======================================================================
@@ -1222,47 +1300,63 @@ void VectorMap::DrawGroundtrack (Groundtrack &gt, int which)
 
 void VectorMap::DrawGroundtrack_past (Groundtrack &gt, int which)
 {
+    /* TODO(jec)
 	HPEN ppen = (HPEN)SelectObject (hDCmem, penOrbitPast[which]);
+    */
 #ifdef UNDEF
 	if (gt.vfirst <= gt.vcurr) {
 		DrawGroundtrackLine (OUTLINE_GROUNDTRACK, gt.vtx+gt.vfirst, gt.vcurr-gt.vfirst+1);
 	} else {
 		DrawGroundtrackLine (OUTLINE_GROUNDTRACK, gt.vtx+gt.vfirst, gt.nvtx-gt.vfirst);
 		DrawGroundtrackLine (OUTLINE_GROUNDTRACK, gt.vtx, gt.vcurr+1);
+        /* TODO(jec)
 		MoveToEx (hDCmem, mapx(gt.vtx[gt.nvtx-1].lng), mapy(gt.vtx[gt.nvtx-1].lat), NULL);
 		LineTo (hDCmem, mapx(gt.vtx[0].lng), mapy(gt.vtx[0].lat));
+        */
 	}
 #endif
 	DrawGroundtrackLine (OUTLINE_GROUNDTRACK, gt.vtx, gt.nvtx, gt.vfirst, gt.vcurr);
+    /* TODO(jec)
 	SelectObject (hDCmem, ppen);
+    */
 }
 
 void VectorMap::DrawGroundtrack_future (Groundtrack &gt, int which)
 {
+    /* TODO(jec)
 	HPEN ppen = (HPEN)SelectObject (hDCmem, penOrbitFuture[which]);
+    */
 #ifdef UNDEF
 	if (gt.vcurr <= gt.vlast) {
 		DrawGroundtrackLine (OUTLINE_GROUNDTRACK, gt.vtx+gt.vcurr, gt.vlast-gt.vcurr+1);
 	} else {
 		DrawGroundtrackLine (OUTLINE_GROUNDTRACK, gt.vtx+gt.vcurr, gt.nvtx-gt.vcurr);
 		DrawGroundtrackLine (OUTLINE_GROUNDTRACK, gt.vtx, gt.vlast+1);
+        /* TODO(jec)
 		MoveToEx (hDCmem, mapx(gt.vtx[gt.nvtx-1].lng), mapy(gt.vtx[gt.nvtx-1].lat), NULL);
 		LineTo (hDCmem, mapx(gt.vtx[0].lng), mapy(gt.vtx[0].lat));
+        */
 	}
 #endif
 	DrawGroundtrackLine (OUTLINE_GROUNDTRACK, gt.vtx, gt.nvtx, gt.vcurr, gt.vlast);
+    /* TODO(jec)
 	SelectObject (hDCmem, ppen);
+    */
 }
 
 // =======================================================================
 
 void VectorMap::DrawHorizon (double lng, double lat, double rad, bool focus)
 {
+    /* TODO(jec)
 	HPEN ppen = (HPEN)SelectObject (hDCmem, focus ? penFocusHorizon:penTargetHorizon);
+    */
 	double dst = 1.0/rad;
 	VPoint *vp = SmallCircle (lng, lat, dst);
 	DrawPolyline (OUTLINE_HORIZON, vp, NVTX_CIRCLE);
+    /* TODO(jec)
 	SelectObject (hDCmem, ppen);
+    */
 }
 
 // =======================================================================

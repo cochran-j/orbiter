@@ -16,6 +16,11 @@
 #include <iostream>
 #include <fstream>
 #include <list>
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
+#include "OrbiterAPI.h"
 #include "GraphicsAPI.h"
 
 // dynamic state propagation methods
@@ -315,17 +320,41 @@ int ListIndex      (int listlen, char **list, char *label);
 // returns index of entry 'label' in 'list' of length 'listlen',
 // or -1 if entry does not exist. Comparison is case-insensitive
 
+inline int StrViewComp (const std::string_view& str1,
+                        const std::string_view& str2,
+                        bool ignorecase) {
+
+	if (ignorecase) {
+        return std::equal(str1.begin(), str1.end(),
+                          str2.begin(), str2.end(),
+                          [](const char& c1, const char& c2) {
+                              return std::tolower(static_cast<unsigned char>(c1)) ==
+                                     std::tolower(static_cast<unsigned char>(c2));
+                          });
+    } else {
+        return str1 == str2;
+    }
+}
+
 inline int StrComp (const char *str1, const char *str2, bool ignorecase)
 {
-	if (ignorecase) return _stricmp (str1, str2);
-	else            return strcmp (str1, str2);
+    std::string_view str1v{str1};
+    std::string_view str2v{str2};
+
+    // Inverse logic with strcmp
+    return StrViewComp(str1v, str2v, ignorecase) == 0;
 }
 
 inline int StrNComp (const char *str1, const char *str2, int n, bool ignorecase)
 {
-	if (ignorecase) return _strnicmp (str1, str2, n);
-	else            return strncmp (str1, str2, n);
+    std::string_view str1v(str1, n);
+    std::string_view str2v(str2, n);
+
+    // Inverse logic with strcmp
+    return StrViewComp(str1v, str2v, ignorecase) == 0;
 }
+
+
 
 // =============================================================
 
@@ -460,6 +489,8 @@ private:
 
 // =============================================================
 
+/* DELETE(jec)
+
 class GDIResources {
 public:
 	GDIResources (HWND hWnd, DWORD winW, DWORD winH, const Config &config);
@@ -473,6 +504,7 @@ public:
 	int dlgF2H, dlgF2W;   // line height, character width
 };
 
+
 // =============================================================
 
 // OBSOLETE!
@@ -481,5 +513,7 @@ GDIResources *g_gdires = 0;
 #else
 extern GDIResources *g_gdires;
 #endif
+
+*/
 
 #endif // !__CONFIG_H

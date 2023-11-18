@@ -21,12 +21,17 @@
 #ifndef __VESSEL_H
 #define __VESSEL_H
 
+#include <windows.h> // DWORD_PTR
+
 #include <array>
 #include <fstream>
 
 #include "Vesselbase.h"
 #include "Log.h"
 
+namespace oapi {
+    class Sketchpad;
+}
 class Elements;
 class CelestialBody;
 class Planet;
@@ -39,7 +44,6 @@ class Nav;
 class Nav_IDS;
 class Nav_XPDR;
 class ExhaustStream;
-class oapi::Sketchpad;
 class LightEmitter;
 class Select;
 class InputBox;

@@ -109,20 +109,20 @@ Instrument *Instrument::Create (ifstream &ifs, Pane *_pane,
 	for (;instr == 0;) {
 		if (!ifs.getline (cbuf, 256)) return 0;
 		pc = trim_string (cbuf);
-		if (!_strnicmp (pc, "END_MFD", 7)) return 0;
-		if (!_strnicmp (pc, "TYPE", 4)) {
+		if (caseInsensitiveStartsWith(pc, "END_MFD")) return 0;
+		if (caseInsensitiveStartsWith(pc, "TYPE")) {
 			pc = trim_string (pc+4);
-			if      (!_strnicmp (pc, "Orbit", 5))    instr = Create (MFD_ORBIT, _pane, _id, spec, _vessel);
-			else if (!_strnicmp (pc, "Surface", 7))  instr = Create (MFD_SURFACE, _pane, _id, spec, _vessel);
-			else if (!_strnicmp (pc, "Map", 3))      instr = Create (MFD_MAP, _pane, _id, spec, _vessel);
-			else if (!_strnicmp (pc, "HSI", 3))      instr = Create (MFD_HSI, _pane, _id, spec, _vessel);
-			else if (!_strnicmp (pc, "Launch", 6))   instr = Create (MFD_LANDING, _pane, _id, spec, _vessel);
-			else if (!_strnicmp (pc, "Docking", 7))  instr = Create (MFD_DOCKING, _pane, _id, spec, _vessel);
-			else if (!_strnicmp (pc, "OAlign", 6))   instr = Create (MFD_OPLANEALIGN, _pane, _id, spec, _vessel, false);
-			else if (!_strnicmp (pc, "OSync", 5))    instr = Create (MFD_OSYNC, _pane, _id, spec, _vessel, false);
-			else if (!_strnicmp (pc, "Transfer", 8)) instr = Create (MFD_TRANSFER, _pane, _id, spec, _vessel);
-			else if (!_strnicmp (pc, "COM/NAV", 4))  instr = Create (MFD_COMMS, _pane, _id, spec, _vessel);
-			else if (!_strnicmp (pc, "User", 4))     instr = Create (MFD_USERTYPE, _pane, _id, spec, _vessel);
+			if      (caseInsensitiveStartsWith(pc, "Orbit"))    instr = Create (MFD_ORBIT, _pane, _id, spec, _vessel);
+			else if (caseInsensitiveStartsWith(pc, "Surface"))  instr = Create (MFD_SURFACE, _pane, _id, spec, _vessel);
+			else if (caseInsensitiveStartsWith(pc, "Map"))      instr = Create (MFD_MAP, _pane, _id, spec, _vessel);
+			else if (caseInsensitiveStartsWith(pc, "HSI"))      instr = Create (MFD_HSI, _pane, _id, spec, _vessel);
+			else if (caseInsensitiveStartsWith(pc, "Launch"))   instr = Create (MFD_LANDING, _pane, _id, spec, _vessel);
+			else if (caseInsensitiveStartsWith(pc, "Docking"))  instr = Create (MFD_DOCKING, _pane, _id, spec, _vessel);
+			else if (caseInsensitiveStartsWith(pc, "OAlign"))   instr = Create (MFD_OPLANEALIGN, _pane, _id, spec, _vessel, false);
+			else if (caseInsensitiveStartsWith(pc, "OSync"))    instr = Create (MFD_OSYNC, _pane, _id, spec, _vessel, false);
+			else if (caseInsensitiveStartsWith(pc, "Transfer")) instr = Create (MFD_TRANSFER, _pane, _id, spec, _vessel);
+			else if (caseInsensitiveStartsWith(pc, "COM/NAV"))  instr = Create (MFD_COMMS, _pane, _id, spec, _vessel);
+			else if (caseInsensitiveStartsWith(pc, "User"))     instr = Create (MFD_USERTYPE, _pane, _id, spec, _vessel);
 		}
 	}
 	if (instr) {
@@ -177,7 +177,9 @@ void Instrument::GlobalInit (oapi::GraphicsClient *gc)
 		RGB(128,128,0), RGB(64,64,0), RGB(128,128,128)
 	};
 	for (i = 0; i < MAXPEN; i++) {
+        /* TODO(jec)
 		hdefpen[i] = CreatePen (PS_SOLID, 0, pencol[i]);
+        */
 	}
 }
 
@@ -185,8 +187,11 @@ void Instrument::GlobalExit (oapi::GraphicsClient *gc)
 {
 	int i, j;
 
-	for (i = 0; i < MAXPEN; i++)
+	for (i = 0; i < MAXPEN; i++) {
+        /* TODO(jec)
 		DeleteObject (hdefpen[i]);
+        */
+    }
 	for (i = 0; i < MAXDEFCOL; i++) {
 		for (j = 0; j < 2; j++) {
 			if (gc && draw[i][j].solidpen) gc->clbkReleasePen (draw[i][j].solidpen);
@@ -262,7 +267,7 @@ int Instrument::ModeIdFromKey (DWORD key)
 int Instrument::ModeFromNameOld (char *name, MFDMODESPEC **spec)
 {
 	for (DWORD i = 0; i < nGlobalModes; i++) {
-		if (!_stricmp (GlobalMode[i].spec->name, name)) {
+		if (caseInsensitiveEquals(GlobalMode[i].spec->name, name)) {
 			if (spec) *spec = GlobalMode[i].oldspec;
 			return GlobalMode[i].id;
 		}
@@ -273,7 +278,7 @@ int Instrument::ModeFromNameOld (char *name, MFDMODESPEC **spec)
 int Instrument::ModeFromName (char *name, MFDMODESPECEX **spec)
 {
 	for (DWORD i = 0; i < nGlobalModes; i++) {
-		if (!_stricmp (GlobalMode[i].spec->name, name)) {
+		if (caseInsensitiveEquals(GlobalMode[i].spec->name, name)) {
 			if (spec) *spec = GlobalMode[i].spec;
 			return GlobalMode[i].id;
 		}
@@ -286,7 +291,7 @@ int Instrument::VesselModeFromName (const char *name, MFDMODESPECEX **spec)
 	const MFDMODE *mlist;
 	DWORD nmode = vessel->GetMFDModes (&mlist);
 	for (DWORD i = 0; i < nmode; i++) {
-		if (!_stricmp (mlist[i].spec->name, name)) {
+		if (caseInsensitiveEquals(mlist[i].spec->name, name)) {
 			if (spec) *spec = mlist[i].spec;
 			return mlist[i].id;
 		}
@@ -683,8 +688,8 @@ void Instrument::SetSize (const Spec &spec, bool defer_alloc)
 		if (skp) {
 			skp->SetFont (mfdfont[0]);
 			DWORD charsize = skp->GetCharSize();
-			cw = HIWORD(charsize);
-			ch = LOWORD(charsize);
+			cw = ((charsize & 0xFFFF0000U) >> 16);
+			ch = (charsize & 0x0000FFFFU);
 			gc->clbkReleaseSketchpad (skp);
 		}
 	}
@@ -763,6 +768,7 @@ HDC Instrument::BeginDrawHDC ()
 {
 	HDC hDC;
 	if (gc && (hDC = gc->clbkGetSurfaceDC (surf))) {
+        /* TODO(jec)
 		SetTextColor (hDC, draw[0][0].col);
 		SelectObject (hDC, mfdfont[0]->GetGDIFont());
 		SetBkMode (hDC, TRANSPARENT);
@@ -771,6 +777,7 @@ HDC Instrument::BeginDrawHDC ()
 		if (pane->GetPanelMode() == 1) {
 			Rectangle (hDC, 0, 0, IW, IH);
 		}
+        */
 		return hDC;
 	} else {
 		return 0;
@@ -780,8 +787,10 @@ HDC Instrument::BeginDrawHDC ()
 void Instrument::EndDrawHDC (HDC hDC)
 {
 	if (gc && hDC) {
+        /* TODO(jec)
 		SelectObject (hDC, GetStockObject (NULL_PEN));
 		SelectObject (hDC, GetStockObject (NULL_BRUSH));
+        */
 		gc->clbkReleaseSurfaceDC (surf, hDC);
 	}
 }
@@ -842,7 +851,9 @@ oapi::Font *Instrument::GetDefaultFont (DWORD fontidx)
 HFONT Instrument::SelectDefaultFont (HDC hDC, DWORD i)
 {
 	// obsolete
+    /* TODO(jec)
 	return (i < 4 ? (HFONT)SelectObject (hDC, mfdfont[i]->GetGDIFont()) : 0);
+    */
 }
 
 oapi::Pen *Instrument::GetDefaultPen (DWORD colidx, DWORD intens, DWORD style)
@@ -861,7 +872,9 @@ oapi::Pen *Instrument::GetDefaultPen (DWORD colidx, DWORD intens, DWORD style)
 HPEN Instrument::SelectDefaultPen (HDC hDC, DWORD i)
 {
 	// obsolete
+    /* TODO(jec)
 	return (i < 6 ? (HPEN)SelectObject (hDC, hdefpen[i]) : 0);
+    */
 }
 
 DWORD Instrument::GetDefaultColour (DWORD colidx, DWORD intens) const
@@ -881,8 +894,10 @@ void Instrument::DisplayTitle (oapi::Sketchpad *skp, const char *title) const
 void Instrument::DisplayTitle (HDC hDC, const char *title) const
 {
 	// obsolete
+    /* TODO(jec)
 	SetTextColor (hDC, col_grey1);
 	TextOut (hDC, cw/2, 0, title, strlen(title));
+    */
 }
 
 void Instrument::DisplayModes (int page)

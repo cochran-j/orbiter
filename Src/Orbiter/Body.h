@@ -23,7 +23,7 @@ class Body {
 public:
 	Body ();
 	Body (double _mass, double _size);
-	Body (char *fname);
+	Body (const char *fname);
 	// create a body from a config file
 
 	virtual ~Body () {}

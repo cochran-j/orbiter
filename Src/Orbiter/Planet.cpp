@@ -5,10 +5,15 @@
 
 #define OAPI_IMPLEMENTATION
 
+#include <filesystem>
+#include <string>
+
 #include <fstream>
 #include <stdio.h>
 #include <string.h>
+/* TODO(jec)
 #include <io.h>
+*/
 #include "Orbiter.h"
 #include "Config.h"
 #include "State.h"
@@ -179,7 +184,7 @@ Planet::Planet (double _mass, double _mean_radius)
 	nobserver    = 0;
 	labellist    = 0;
 	nlabellist   = 0;
-	labelpath    = 0;
+	labelpath    = std::filesystem::path{};
 	vislimit     = spotlimit = 2e-5;
 	horizon_excess = 0.002;
 	bb_excess    = 0.0;
@@ -356,10 +361,10 @@ Planet::Planet (char *fname)
 		char cbuf[256], *nm, *ps;
 		double lng, lat;
 		for (;;) {
-			if (!ifs.getline (cbuf, 256) || !_strnicmp (cbuf, "END_SURFBASE", 12)) break;
+			if (!ifs.getline (cbuf, 256) || caseInsensitiveStartsWith(cbuf, "END_SURFBASE")) break;
 			pc = trim_string (cbuf);
 			if (!pc[0]) continue;
-			if (!_strnicmp (pc, "DIR", 3)) { // scan folder
+			if (caseInsensitiveStartsWith(pc, "DIR")) { // scan folder
 				ScanBases (trim_string (pc+3));
 			} else {                        // read single base definition
 				nm = strtok (trim_string(cbuf), ":");
@@ -398,7 +403,7 @@ Planet::Planet (char *fname)
 		char cbuf[256], *site, *addr, *equp;
 		double lng, lat, alt;
 		for (;;) {
-			if (!ifs.getline (cbuf, 256) || !_strnicmp (cbuf, "END_OBSERVER", 12)) break;
+			if (!ifs.getline (cbuf, 256) || caseInsensitiveStartsWith(cbuf, "END_OBSERVER")) break;
 			site = strtok (trim_string(cbuf), ":");
 			addr = strtok (NULL, ":");
 			equp = strtok (NULL, ";");
@@ -412,11 +417,9 @@ Planet::Planet (char *fname)
 	// read user label list
 	labellist = 0;
 	nlabellist = 0;
-	labelpath = 0;
 	if (GetItemString (ifs, "MarkerPath", cbuf)) {
 		if (cbuf[strlen(cbuf)-1] != '\\') strcat (cbuf, "\\");
-		labelpath = new char[strlen(cbuf)+1]; TRACENEW
-		strcpy (labelpath, cbuf);
+        labelpath = cbuf;
 	}
 	//if (label_version <= 1)
 		ScanLabelLists (ifs);
@@ -452,10 +455,6 @@ Planet::~Planet ()
 		labellist = NULL;
 		nlabellist = 0;
 	}
-	if (labelpath) {
-		delete []labelpath;
-		labelpath = NULL;
-	}
 	if (nLabelLegend) {
 		for (i = 0; i < nLabelLegend; i++) {
 			delete []labelLegend[i].name;
@@ -469,38 +468,54 @@ Planet::~Planet ()
 	delete emgr;
 }
 
-intptr_t Planet::FindFirst (int type, _finddata_t *fdata, char *path, char *fname)
+bool Planet::FindFirst (const char* extension,
+                        std::filesystem::directory_iterator& dir_it,
+                        std::string& path,
+                        std::string& fname)
 {
-	intptr_t fh;
-	char cbuf[256];
-
-	switch (type) {
-	case FILETYPE_MARKER:
-		if (labelpath) strcpy (path, labelpath);
-		else           sprintf (path, "%s%s/Marker/", g_pOrbiter->Cfg()->CfgDirPrm.ConfigDir, name.c_str());
-		break;
+    // NOTE(jec):  Conceivably other extension "types" added later.
+    // NOTE(jec):  Original function fell through for anything besides marker.
+    std::filesystem::path thisPath {};
+    if (strcmp(extension, "mkr") == 0) {
+		if (!labelpath.empty()) {
+            thisPath = labelpath;
+        } else {
+            thisPath = std::filesystem::path{g_pOrbiter->Cfg()->CfgDirPrm.ConfigDir} / name.c_str() / "Marker" / "";
+        }
+        path = thisPath.string();
 	}
-	sprintf (cbuf, "%s*.mkr", path);
-	if ((fh = _findfirst (cbuf, fdata)) != -1) {
-		strncpy (fname, fdata->name, strlen(fdata->name)-4);
-		fname[strlen(fdata->name)-4] = '\0';
-	}
-	return fh;
+    dir_it = std::filesystem::directory_iterator{thisPath};
+    while (dir_it != std::filesystem::end(dir_it)) {
+        if (dir_it->path().extension() == extension) {
+            fname = dir_it->path().stem();
+            return true;
+        }
+        ++dir_it;
+    }
+    return false;
 }
 
-intptr_t Planet::FindNext (intptr_t fh, _finddata_t *fdata, char *fname)
+bool Planet::FindNext (const char* extension,
+                       std::filesystem::directory_iterator& dir_it,
+                       std::string& fname)
 {
-	intptr_t fn = _findnext (fh, fdata);
-	if (!fn) {
-		strncpy (fname, fdata->name, strlen(fdata->name)-4);
-		fname[strlen(fdata->name)-4] = '\0';
-	}
-	return fn;
+    while (dir_it != std::filesystem::end(dir_it)) {
+        if (dir_it->path().extension() == extension) {
+            fname = dir_it->path().stem();
+            return true;
+        }
+        ++dir_it;
+    }
+    return false;
 }
 
 void Planet::ScanBases (char *path)
 {
-	char cbuf[256], spath[256], *pc, *cut = 0;
+    // NOTE(jec):  This function modifies the path buffer by stripping syntax
+    // that has been processed.
+	char cbuf[256];
+    char* pc = nullptr;
+    char* cut = nullptr;
 
 	// check for period limiter
 	if ((pc = strstr (path, "PERIOD")) != NULL) {
@@ -516,7 +531,7 @@ void Planet::ScanBases (char *path)
 		if (sscanf (pc+7, "%s", cbuf) == 1) {
 			const char *context = g_pOrbiter->PState()->Context();
 			if (!context) return;
-			if (_stricmp (cbuf, context)) return;
+			if (!caseInsensitiveEquals (cbuf, context)) return;
 		}
 		cut = (cut ? min (cut,pc) : pc);
 	}
@@ -525,25 +540,24 @@ void Planet::ScanBases (char *path)
 		trim_string (path);
 	}
 
-	intptr_t fh;
-	_finddata_t fdata;
-	sprintf (spath, "%s\\*", path);
-	strcpy (cbuf, g_pOrbiter->ConfigPath(spath));
-	if ((fh = _findfirst (cbuf, &fdata)) != -1) {
-		do {
-			sprintf (spath, "%s\\%s", path, fdata.name);
-			spath[strlen(spath)-4] = '\0'; // strip 'cfg' extension
-			ifstream ifs (g_pOrbiter->ConfigPath (spath));
-			if (!ifs) continue;
-			do {
-				if (!ifs.getline (cbuf, 256)) break;
-				pc = trim_string (cbuf);
-			} while (!pc[0]);
-			if (_strnicmp (pc, "BASE-V2.0", 9)) continue;
-			Base *base = new Base (spath, this); TRACENEW
-			if (!AddBase (base))
-				delete base;
-		} while (!_findnext (fh, &fdata));
+    auto spath = std::filesystem::path{g_pOrbiter->ConfigPath(path)};
+    // strip extension for directory_iterator
+    spath.replace_extension({});
+    for (auto& dir_entry : std::filesystem::directory_iterator{spath}) {
+        if (dir_entry.path().extension() != "cfg") {
+            continue;
+        }
+
+        ifstream ifs {dir_entry.path().c_str()};
+        if (!ifs) continue;
+        do {
+            if (!ifs.getline (cbuf, 256)) break;
+            pc = trim_string (cbuf);
+        } while (!pc[0]);
+        if (!caseInsensitiveStartsWith(pc, "BASE-V2.0")) continue;
+        Base *base = new Base (spath.c_str(), this); TRACENEW
+        if (!AddBase (base))
+            delete base;
 	}
 }
 
@@ -568,21 +582,24 @@ bool Planet::AddBase (Base *base)
 void Planet::ScanLabelLists (ifstream &cfg)
 {
 	int i;
-	char cbuf[256], fname[256], lbpath[256];
+	char cbuf[256];
+    std::string fname;
+    std::string lbpath;
 	int nlabellistbuf = 0;
 	nlabellist = 0;
 
-	_finddata_t fdata;
-	intptr_t fh = FindFirst (FILETYPE_MARKER, &fdata, lbpath, fname);
-	if (fh >= 0) {
+    std::filesystem::directory_iterator dir_it {};
+	bool found = FindFirst ("mkr", dir_it, lbpath, fname);
+	if (found) {
 
 		oapi::GraphicsClient::LABELLIST *ll;
 		bool scanheader = (labellist == 0); // only need to parse the headers for the initial scan
 		
 		do {
+            auto full_path = std::filesystem::path{lbpath} / fname;
+            full_path += ".mkr";
 			// open marker file
-			sprintf (cbuf, "%s%s.mkr", lbpath, fname);
-			ifstream ulf (cbuf);
+			ifstream ulf (full_path.c_str());
 
 			// read label header
 			if (scanheader) {
@@ -605,23 +622,23 @@ void Planet::ScanLabelLists (ifstream &cfg)
 				if (FindLine (ulf, "BEGIN_HEADER")) {
 					char item[256], value[256];
 					for (;;) {
-						if (!ulf.getline (cbuf, 256) || !_strnicmp (cbuf, "END_HEADER", 10)) break;
+						if (!ulf.getline (cbuf, 256) || caseInsensitiveStartsWith(cbuf, "END_HEADER")) break;
 						sscanf (cbuf, "%s %s", item, value);
-						if (!_stricmp (item, "InitialState")) {
-							if (!_stricmp (value, "on")) ll->active = true;
-						} else if (!_stricmp (item, "ColourIdx")) {
+						if (caseInsensitiveEquals(item, "InitialState")) {
+							if (caseInsensitiveEquals(value, "on")) ll->active = true;
+						} else if (caseInsensitiveEquals(item, "ColourIdx")) {
 							int col;
 							sscanf (value, "%d", &col);
 							ll->colour = max (0, min (5, col));
-						} else if (!_stricmp (item, "ShapeIdx")) {
+						} else if (caseInsensitiveEquals(item, "ShapeIdx")) {
 							int shape;
 							sscanf (value, "%d", &shape);
 							ll->shape = max (0, min (6, shape));
-						} else if (!_stricmp (item, "Size")) {
+						} else if (caseInsensitiveEquals(item, "Size")) {
 							float size;
 							sscanf (value, "%f", &size);
 							ll->size = max (0.1f, min (2.0f, size));
-						} else if (!_stricmp (item, "DistanceFactor")) {
+						} else if (caseInsensitiveEquals(item, "DistanceFactor")) {
 							float distfac;
 							sscanf (value, "%f", &distfac);
 							ll->distfac = max (1e-5f, min (1e3f, distfac));
@@ -656,18 +673,21 @@ void Planet::ScanLabelLists (ifstream &cfg)
 			}
 			nlabellist++;
 
-		} while (!FindNext (fh, &fdata, fname));
-		_findclose (fh);
+		} while (!FindNext ("mkr", dir_it, fname));
 	}
 }
 
 void Planet::ScanLabelLegend()
 {
-	char path[256];
-	if (labelpath) strncpy (path, labelpath, 256);
-	else           sprintf (path, "%s%s/", g_pOrbiter->Cfg()->CfgDirPrm.ConfigDir, name.c_str());
-	strcat (path, "Label.cfg");
-	std::ifstream ifs(path);
+    std::filesystem::path path_ {};
+	if (!labelpath.empty()) {
+        path_ = labelpath;
+    } else {
+        path_ = std::filesystem::path{g_pOrbiter->Cfg()->CfgDirPrm.ConfigDir} /
+                name;
+    }
+    path_ /= "Label.cfg";
+	std::ifstream ifs(path_.c_str());
 	while (ifs.good()) {
 		char typestr[16], activestr[16], markerstr[16], namebuf[256], *name;
 		int r,g,b;
@@ -939,7 +959,7 @@ void Planet::AddObserverSite (double lng, double lat, double alt, char *site, ch
 const GROUNDOBSERVERSPEC *Planet::GetGroundObserver (char *site, char *addr) const
 {
 	for (int i = 0; i < nobserver; i++) {
-		if (!_stricmp (site, observer[i]->site) && !_stricmp (addr, observer[i]->addr)) {
+		if (caseInsensitiveEquals(site, observer[i]->site) && caseInsensitiveEquals(addr, observer[i]->addr)) {
 			return observer[i];
 		}
 	}

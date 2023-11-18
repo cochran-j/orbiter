@@ -6,8 +6,12 @@
 #include <fstream>
 #include <stdio.h>
 #include <string.h>
+/* TODO(jec)
 #include <io.h>
+*/
 #include <algorithm>
+#include <filesystem>
+#include <string>
 
 #include "Config.h"
 #include "Psys.h"
@@ -16,6 +20,7 @@
 #include "Vessel.h"
 #include "SuperVessel.h"
 #include "Log.h"
+#include "Util.h"
 
 using namespace std;
 
@@ -74,7 +79,7 @@ void PlanetarySystem::InitState (const char *fname)
 		for (;;) {
 			if (!ifs.getline (cbuf, 256)) break;
 			pc = trim_string (cbuf);
-			if (!_stricmp (pc, "END_SHIPS")) break;
+			if (caseInsensitiveEquals(pc, "END_SHIPS")) break;
 			for (pd = pc; *pd != '\0' && *pd != ':'; pd++);
 			if (*pd) *pd++ = '\0';
 			else pd = 0;
@@ -201,11 +206,12 @@ bool PlanetarySystem::Read (char *fname, const Config* config, OutputLoadStatusC
 
 	if (GetItemString (ifs, "MarkerPath", cbuf)) {
 		m_labelPath = cbuf;
-		if (m_labelPath.back() != '\\')
-			m_labelPath.push_back('\\');
+		if (m_labelPath.has_stem()) {
+            m_labelPath.append("");
+        }
 	}
 	else {
-		m_labelPath = std::string(config->CfgDirPrm.ConfigDir) + m_Name + std::string("\\Marker\\");
+		m_labelPath = std::filesystem::path{config->CfgDirPrm.ConfigDir} / m_Name / "Marker" / "";
 	}
 	m_labelList.clear();
 	ScanLabelLists(ifs, true);
@@ -220,45 +226,57 @@ void PlanetarySystem::OutputLoadStatus (const char *bname, OutputLoadStatusCallb
 	outputLoadStatus(cbuf, 0, callbackContext);
 }
 
-intptr_t PlanetarySystem::FindFirst (int type, _finddata_t *fdata, char *fname)
+bool PlanetarySystem::FindFirst (const char* extension,
+                                 std::filesystem::directory_iterator& dir_it,
+                                 std::string& fname)
 {
-	intptr_t fh;
-	char cbuf[256];
-
-	std::string searchPath = m_labelPath + "*.mkr";
-	if ((fh = _findfirst (searchPath.c_str(), fdata)) != -1) {
-		strncpy (fname, fdata->name, strlen(fdata->name)-4);
-		fname[strlen(fdata->name)-4] = '\0';
-	}
-	return fh;
+    dir_it = std::filesystem::directory_iterator{m_labelPath};
+    auto dir_end = std::filesystem::end(dir_it);
+    while (dir_it != dir_end) {
+        if (dir_it->path().extension() == extension) {
+            fname = dir_it->path().stem();
+            ++dir_it;
+            return true;
+        }
+        ++dir_it;
+    }
+    return false;
 }
 
-intptr_t PlanetarySystem::FindNext (intptr_t fh, _finddata_t *fdata, char *fname)
+bool PlanetarySystem::FindNext (const char* extension,
+                                std::filesystem::directory_iterator& dir_it,
+                                std::string& fname)
 {
-	intptr_t fn = _findnext (fh, fdata);
-	if (!fn) {
-		strncpy (fname, fdata->name, strlen(fdata->name)-4);
-		fname[strlen(fdata->name)-4] = '\0';
-	}
-	return fn;
+    auto dir_end = std::filesystem::end(dir_it);
+    while (dir_it != dir_end) {
+        if (dir_it->path().extension() == extension) {
+            fname = dir_it->path().stem();
+            ++dir_it;
+            return true;
+        }
+        ++dir_it;
+    }
+    return false;
 }
 
 void PlanetarySystem::ScanLabelLists (ifstream &cfg, bool bScanHeaders)
 {
 	int i;
-	char cbuf[256], fname[256];
+	char cbuf[256];
+    std::string fname {};
 
-	_finddata_t fdata;
-	intptr_t fh = FindFirst (FILETYPE_MARKER, &fdata, fname);
-	if (fh >= 0) {
+    std::filesystem::directory_iterator dir_it {};
+	bool found = FindFirst ("mkr", dir_it, fname);
+	if (found) {
 
 		oapi::GraphicsClient::LABELLIST *ll;
 		int idx = 0;
 
 		do {
 			// open marker file
-			sprintf (cbuf, "%s%s.mkr", m_labelPath.c_str(), fname);
-			ifstream ulf (cbuf);
+            auto fpath = m_labelPath / fname;
+            fpath.replace_extension("mkr");
+			ifstream ulf (fpath.c_str());
 
 			// read label header
 			if (bScanHeaders) {
@@ -273,29 +291,31 @@ void PlanetarySystem::ScanLabelLists (ifstream &cfg, bool bScanHeaders)
 				if (FindLine (ulf, "BEGIN_HEADER")) {
 					char item[256], value[256];
 					for (;;) {
-						if (!ulf.getline (cbuf, 256) || !_strnicmp (cbuf, "END_HEADER", 10)) break;
+						if (!ulf.getline (cbuf, 256) || caseInsensitiveStartsWith(cbuf, "END_HEADER")) break;
 						sscanf (cbuf, "%s %s", item, value);
-						if (!_stricmp (item, "InitialState")) {
-							if (!_stricmp (value, "on")) list.active = true;
-						} else if (!_stricmp (item, "ColourIdx")) {
+						if (caseInsensitiveEquals(item, "InitialState")) {
+							if (caseInsensitiveEquals(value, "on")) list.active = true;
+						} else if (caseInsensitiveEquals(item, "ColourIdx")) {
 							int col;
 							sscanf (value, "%d", &col);
 							list.colour = max (0, min (5, col));
-						} else if (!_stricmp (item, "ShapeIdx")) {
+						} else if (caseInsensitiveEquals(item, "ShapeIdx")) {
 							int shape;
 							sscanf (value, "%d", &shape);
 							list.shape = max (0, min (6, shape));
-						} else if (!_stricmp (item, "Size")) {
+						} else if (caseInsensitiveEquals(item, "Size")) {
 							float size;
 							sscanf (value, "%f", &size);
 							list.size = max (0.1f, min (2.0f, size));
-						} else if (!_stricmp (item, "DistanceFactor")) {
+						} else if (caseInsensitiveEquals(item, "DistanceFactor")) {
 							float distfac;
 							sscanf (value, "%f", &distfac);
 							list.distfac = max (1e-5f, min (1e3f, distfac));
-						} else if (!_stricmp (item, "Frame")) {
-							if (_stricmp (value, "Ecliptic"))
+						} else if (caseInsensitiveEquals(item, "Frame")) {
+							if (caseInsensitiveEquals(value, "Ecliptic")) {
+                                // TODO(jec) Was this inverted stricmp?
 								list.flag = 1; // flag for celestial position data
+                            }
 						}
 					}
 				}
@@ -340,8 +360,7 @@ void PlanetarySystem::ScanLabelLists (ifstream &cfg, bool bScanHeaders)
 				}
 			}
 
-		} while (!FindNext (fh, &fdata, fname));
-		_findclose (fh);
+		} while (FindNext("mkr", dir_it, fname));
 	}
 }
 

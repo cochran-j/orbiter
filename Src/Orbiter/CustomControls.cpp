@@ -28,22 +28,28 @@ CustomCtrl::CustomCtrl (HWND hCtrl)
 void CustomCtrl::SetHwnd (HWND hCtrl)
 {
 	hWnd = hCtrl;
+    /* TODO(jec)
 	SetWindowLongPtr (hWnd, 0, (LONG_PTR)this);
 
 	hParent = (HWND)GetWindowLongPtr (hCtrl, GWLP_HWNDPARENT);
+    */
 }
 
 // ---------------------------------------------------------------------------
 
 LRESULT CustomCtrl::WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	return DefWindowProc (hWnd, uMsg, wParam, lParam);
+    */
+    return FALSE;
 }
 
 // ---------------------------------------------------------------------------
 
 void CustomCtrl::RegisterClass(HINSTANCE hInstance)
 {
+    /* TODO(jec)
 	WNDCLASSEX wc;
 	ZeroMemory(&wc, sizeof(WNDCLASSEX));
 	wc.cbSize = sizeof(WNDCLASSEX);
@@ -52,15 +58,20 @@ void CustomCtrl::RegisterClass(HINSTANCE hInstance)
 	wc.lpfnWndProc = CustomCtrl::s_WndProc;
 	wc.lpszClassName = "OrbiterDlgCtrl";
 	RegisterClassEx(&wc);
+    */
 }
 
 // ---------------------------------------------------------------------------
 
-LRESULT CALLBACK CustomCtrl::s_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CustomCtrl::s_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	CustomCtrl* pCtrl = (CustomCtrl*)GetWindowLongPtr(hWnd, 0);
 	if (pCtrl) return pCtrl->WndProc(hWnd, uMsg, wParam, lParam);
 	else       return DefWindowProc(hWnd, uMsg, wParam, lParam);
+    return DefWindowProc(hWnd, uMsg, wParam, lParam);
+    */
+    return FALSE;
 }
 
 // ===========================================================================
@@ -83,7 +94,9 @@ SplitterCtrl::SplitterCtrl (): CustomCtrl ()
 	splitterW = 6;
 	widthRatio = 0.5;
 	isPushing = false;
+    /* TODO(jec)
 	m_hCursor = LoadCursor(NULL, IDC_SIZEWE);
+    */
 }
 
 // ---------------------------------------------------------------------------
@@ -104,9 +117,13 @@ void SplitterCtrl::SetHwnd (HWND hCtrl, HWND hPane1, HWND hPane2)
 	hPane[0] = hPane1;
 	hPane[1] = hPane2;
 	RECT r;
+    /* TODO(jec)
 	GetClientRect (hCtrl, &r);
+    */
 	totalW = r.right;
+    /* TODO(jec)
 	GetClientRect (hPane1, &r);
+    */
 	paneW[0] = min ((int)r.right, totalW-splitterW-4);
 	paneW[1] = totalW-splitterW-paneW[0];
 	widthRatio = (double)paneW[0]/(double)(totalW-splitterW);
@@ -121,7 +138,9 @@ void SplitterCtrl::SetStaticPane (PaneId which, int width)
 	if (which != PANE_NONE) {
 		if (!width) { // use current width
 			RECT rect;
+            /* TODO(jec)
 			GetClientRect (hPane[which-1], &rect);
+            */
 			width = rect.right-rect.left;
 		}
 		paneW[which-1] = width;
@@ -145,11 +164,15 @@ int SplitterCtrl::GetPaneWidth (PaneId which)
 void SplitterCtrl::Refresh ()
 {
 	RECT r1, r2;
+    /* TDOO(jec)
 	r1 = r2 = GetClientPos (hParent, hWnd);
+    */
 	r1.right = r1.left+paneW[0];
 	r2.left = r2.right-paneW[1];
+    /* TODO(jec)
 	SetClientPos (hParent, hPane[0], r1);
 	SetClientPos (hParent, hPane[1], r2);
+    */
 }
 
 // ---------------------------------------------------------------------------
@@ -185,7 +208,9 @@ BOOL SplitterCtrl::OnLButtonDown (HWND hWnd, LONG modifier, short x, short y)
 	isPushing = true;
 	mouseX = x;
 	mouseY = y;
+    /* TODO(jec)
 	SetCapture (hWnd);
+    */
 	return 0;
 }
 
@@ -194,7 +219,9 @@ BOOL SplitterCtrl::OnLButtonDown (HWND hWnd, LONG modifier, short x, short y)
 BOOL SplitterCtrl::OnLButtonUp (HWND hWnd, LONG modifier, short x, short y)
 {
 	isPushing = false;
+    /* TODO(jec)
 	ReleaseCapture ();
+    */
 	return 0;
 }
 
@@ -223,6 +250,7 @@ BOOL SplitterCtrl::OnMouseMove (HWND hWnd, short x, short y)
 
 LRESULT SplitterCtrl::WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_SIZE:
 		return OnSize (hWnd, wParam, LOWORD(lParam), HIWORD(lParam));
@@ -236,5 +264,6 @@ LRESULT SplitterCtrl::WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		SetCursor(m_hCursor);
 		return TRUE;
 	}
+    */
 	return CustomCtrl::WndProc (hWnd, uMsg, wParam, lParam);
 }

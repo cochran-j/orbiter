@@ -7,6 +7,7 @@
 #include "Astro.h"
 #include "Planet.h"
 #include "Config.h"
+#include "Util.h"
 #include <stdio.h>
 
 using namespace std;
@@ -360,11 +361,11 @@ bool Instrument_HSI::ReadParams (ifstream &ifs)
 	for (;;) {
 		if (!ifs.getline (cbuf, 256)) return false;
 		pc = trim_string (cbuf);
-		if (!_strnicmp (pc, "END_MFD", 7)) {
+		if (caseInsensitiveStartsWith(pc, "END_MFD")) {
 			break;
-		} else if (!_strnicmp (pc, "NAV", 3)) {
+		} else if (caseInsensitiveStartsWith(pc, "NAV")) {
 			sscanf (pc+3, "%d%d", &hsi[0].nv, &hsi[1].nv);
-		} else if (!_strnicmp (pc, "OBS", 3)) {
+		} else if (caseInsensitiveStartsWith(pc, "OBS")) {
 			sscanf (pc+3, "%lf%lf", &hsi[0].obs, &hsi[1].obs);
 		}
 	}

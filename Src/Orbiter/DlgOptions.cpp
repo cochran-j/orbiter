@@ -7,7 +7,9 @@
 
 #define STRICT 1
 
+/* TODO(jec)
 #include <io.h>
+*/
 #include <array>
 #include "DlgOptions.h"
 #include "Orbiter.h"
@@ -15,9 +17,11 @@
 #include "Psys.h"
 #include "Camera.h"
 #include "DlgCtrl.h"
+/* TODO(jec)
 #include "resource.h"
 #include "Uxtheme.h"
 #include <commctrl.h>
+*/
 
 extern Orbiter* g_pOrbiter;
 extern PlanetarySystem* g_psys;
@@ -27,7 +31,7 @@ extern HELPCONTEXT DefHelpContext;
 // ======================================================================
 
 DlgOptions::DlgOptions(HINSTANCE hInstance, HWND hParent, void* context)
-	: DialogWin(hInstance, hParent, IDD_OPTIONS, 0, 0, context)
+	: DialogWin(hInstance, hParent, /* TODO(jec) IDD_OPTIONS*/0, 0, 0, context)
 	, OptionsPageContainer(OptionsPageContainer::INLINE, g_pOrbiter->Cfg())
 {
 	pos = &g_pOrbiter->Cfg()->CfgWindowPos.DlgOptions;
@@ -50,7 +54,9 @@ void DlgOptions::Update()
 
 BOOL DlgOptions::OnInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	SetWindowHandles(hDlg, GetDlgItem(hDlg, IDC_OPT_SPLIT), GetDlgItem(hDlg, IDC_OPT_PAGELIST), GetDlgItem(hDlg, IDC_OPT_PAGECONTAINER));
+    */
 	SetSize(hDlg);
 	CreatePages();
 	ExpandAll();
@@ -62,6 +68,7 @@ BOOL DlgOptions::OnInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
 
 BOOL DlgOptions::OnCommand(HWND hDlg, WORD ctrlId, WORD notification, HWND hCtrl)
 {
+    /* TODO(jec)
 	switch (ctrlId) {
 	case IDHELP:
 		if (notification == BN_CLICKED) {
@@ -71,6 +78,7 @@ BOOL DlgOptions::OnCommand(HWND hDlg, WORD ctrlId, WORD notification, HWND hCtrl
 		}
 		break;
 	}
+    */
 	return DialogWin::OnCommand(hDlg, ctrlId, notification, hCtrl);
 }
 
@@ -86,17 +94,22 @@ BOOL DlgOptions::OnSize(HWND hDlg, WPARAM wParam, int w, int h)
 
 BOOL DlgOptions::OnVScroll(HWND hDlg, WORD request, WORD curpos, HWND hControl)
 {
+    /* TODO(jec)
 	return VScroll(hDlg, request, curpos, hControl);
+    */
+    return FALSE;
 }
 
 // ----------------------------------------------------------------------
 
 BOOL DlgOptions::OnNotify(HWND hDlg, int idCtrl, LPNMHDR pnmh)
 {
+    /* TODO(jec)
 	if (idCtrl == IDC_OPT_PAGELIST) {
 		OnNotifyPagelist(pnmh);
 		return TRUE;
 	}
+    */
 	return FALSE;
 }
 
@@ -106,6 +119,7 @@ void DlgOptions::SetSize(HWND hDlg)
 {
 	RECT r0;
 
+    /* TODO(jec)
 	//GetClientRect(GetDlgItem(hDlg, IDCANCEL), &r0);
 	GetClientRect(hDlg, &r0);
 	SetWindowPos(GetDlgItem(hDlg, IDC_OPT_SPLIT), HWND_BOTTOM, 9, 10, r0.right - 25, r0.bottom - 52, SWP_NOACTIVATE | SWP_NOOWNERZORDER);
@@ -117,4 +131,5 @@ void DlgOptions::SetSize(HWND hDlg)
 	UpdateWindow(hDlg);
 
 	SetPageSize(hDlg);
+    */
 }

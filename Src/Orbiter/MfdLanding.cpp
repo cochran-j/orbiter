@@ -6,9 +6,11 @@
 #include "Astro.h"
 #include "Config.h"
 #include "Celbody.h"
+#include "Util.h"
 #include <stdio.h>
 
 using namespace std;
+
 
 // =======================================================================
 // class Instrument_Landing
@@ -296,8 +298,8 @@ bool Instrument_Landing::ReadParams (ifstream &ifs)
 	for (;;) {
 		if (!ifs.getline (cbuf, 256)) return false;
 		pc = trim_string (cbuf);
-		if (!_strnicmp (pc, "END_MFD", 7)) break;
-		if (!_strnicmp (pc, "NAV", 3)) {
+		if (caseInsensitiveStartsWith(pc, "END_MFD")) break;
+		if (caseInsensitiveStartsWith(pc, "NAV")) {
 			sscanf (pc+3, "%d", &nv);
 		}
 	}

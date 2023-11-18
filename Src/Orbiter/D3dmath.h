@@ -10,8 +10,16 @@
 #ifndef D3DMATH_H
 #define D3DMATH_H
 
+#include <windows.h>
+
+/* Add CALLBCK for ddraw.h */
+#ifndef CALLBACK
+#define CALLBACK
+#endif
+
 #include <ddraw.h>
 #include <d3d.h>
+#include <cstdint>
 
 // ============================================================================
 // Begin stuff added by MS
@@ -116,14 +124,13 @@ inline BOOL D3DMath_IsZero( FLOAT a, FLOAT fTol = g_EPSILON )
 
 inline VOID VMAT_identity (D3DMATRIX &a)
 {
-	ZeroMemory (&a, sizeof (D3DMATRIX));
+    a = D3DMATRIX{};
 	a._11 = a._22 = a._33 = a._44 = 1.0f;
 }
 
 inline D3DMATRIX VMAT_identity ()
 {
-	D3DMATRIX a;
-	ZeroMemory (&a, sizeof (D3DMATRIX));
+	D3DMATRIX a {};
 	a._11 = a._22 = a._33 = a._44 = 1.0f;
 	return a;
 }
@@ -135,7 +142,7 @@ inline VOID VMAT_copy (D3DMATRIX &a, const D3DMATRIX &b)
 // Set up a as mirror transformation at xz-plane
 inline VOID VMAT_flipy (D3DMATRIX &a)
 {
-	ZeroMemory (&a, sizeof (D3DMATRIX));
+    a = D3DMATRIX{};
 	a._11 = a._33 = a._44 = 1.0f;
 	a._22 = -1.0f;
 }

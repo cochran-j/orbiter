@@ -4,6 +4,11 @@
 #ifndef __SELECT_H
 #define __SELECT_H
 
+/* Add CALLBCK for ddraw.h */
+#ifndef CALLBACK
+#define CALLBACK
+#endif
+
 #define STRICT 1
 #include <windows.h>
 #include <d3d.h>

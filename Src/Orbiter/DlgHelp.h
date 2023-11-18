@@ -10,6 +10,8 @@
 
 #include "DialogWin.h"
 
+// TODO(jec):  Dialog box
+
 // ======================================================================
 
 class DlgHelp: public DialogWin {
@@ -22,12 +24,12 @@ public:
 	static void InitHelp (HWND hWnd, HELPCONTEXT *hcontext = 0);
 	static void SetScenarioHelp (const char *_helpf);
 	static void SetVesselHelp (const char *_helpf);
-	static LRESULT FAR PASCAL ClientProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	static LRESULT ClientProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 protected:
 	void RegisterClientClass (HINSTANCE hInstance);
 	void UnregisterClientClass (HINSTANCE hInstance);
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
 
 private:
 	int hfooter;

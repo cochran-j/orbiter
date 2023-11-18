@@ -20,6 +20,8 @@ class Pane;
 // =======================================================================
 // class MenuInfoBar
 
+class ExtraInfoBar;
+
 class MenuInfoBar {
 	friend class ExtraInfoBar;
 public:

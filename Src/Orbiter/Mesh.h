@@ -10,6 +10,11 @@
 #define __MESH_H
 
 #define OAPI_IMPLEMENTATION
+/* NOTE(jec):  Compatibility definitions with DXVK */
+#ifndef CALLBACK
+#define CALLBACK
+#endif
+
 #include <d3d.h>
 #include <d3dtypes.h>
 #include <iostream>

@@ -4,7 +4,10 @@
 #ifndef __LOG_H
 #define __LOG_H
 
+#define STRICT
+#include <windows.h> // HRESULT
 #include <stdio.h>
+#include <filesystem>
 
 // comment the following line to suppress log file output
 #define GENERATE_LOG
@@ -26,7 +29,9 @@ void LogOut_WarningVA(const char* func, const char* file, int line, const char* 
 void LogOut_Obsolete(const char* func, const char* msg = 0);      // Write obsolete-function warning to log file
 void LogOut_LastError (const char *func, const char *file, int line);             // Write formatted string from GetLastError
 void LogOut_DDErr (HRESULT hr, const char *func, const char *file, int line);     // Write DirectDraw error to log file
+#if CONFIG_DIRECT_INPUT
 void LogOut_DIErr (HRESULT hr, const char *func, const char *file, int line);     // Write DirectInput error to log file
+#endif
 void LogOut_DPErr (HRESULT hr, const char *func, const char *file, int line);     // Write DirectPlay error to log file
 
 // Message formatting components
@@ -53,7 +58,9 @@ void LogOut_Location(const char* func, const char* file, int line);
 	LogOut_Error_End(); \
 }
 #define LOGOUT_DDERR(hr) LogOut_DDErr(hr,__FUNCTION__,__FILE__,__LINE__)
+#if CONFIG_DIRECT_INPUT
 #define LOGOUT_DIERR(hr) LogOut_DIErr(hr,__FUNCTION__,__FILE__,__LINE__)
+#endif
 #define LOGOUT_DPERR(hr) LogOut_DPErr(hr,__FUNCTION__,__FILE__,__LINE__)
 #define LOGOUT_DDERR_ONCE(hr) {static bool bout=true; if(bout) {LogOut_DDErr(hr,__FUNCTION__,__FILE__,__LINE__);bout=false;}}
 #define LOGOUT_OBSOLETE {static bool bout=true; if(bout) {LogOut_Obsolete(__FUNCTION__);bout=false;}}
@@ -104,7 +111,14 @@ void LogOut_Location(const char* func, const char* file, int line);
 #define dCHECK(test,msg,...)
 #endif
 
-#define CHECKCWD(cwd,name) { char c[512]; _getcwd(c,512); if(strcmp(c,cwd)) { _chdir(cwd); sprintf (c,"CWD modified by module %s - Fixing.",name); LOGOUT_WARN(c); } }
+inline void CHECKCWD(const std::filesystem::path& cwd, const char* name) {
+    char c[512];
+    if (cwd == std::filesystem::current_path()) {
+        std::filesystem::current_path(cwd);
+        sprintf(c, "CWD modified by module %s - Fixing.", name);
+        LOGOUT_WARN(c);
+    }
+}
 
 #ifndef __LOG_CPP
 extern char logs[256];

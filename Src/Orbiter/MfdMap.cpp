@@ -7,6 +7,7 @@
 #include "Celbody.h"
 #include "Planet.h"
 #include "Base.h"
+#include "Util.h"
 
 using namespace std;
 
@@ -676,22 +677,22 @@ bool Instrument_Map::ReadParams (std::ifstream &ifs)
 	for (;;) {
 		if (!ifs.getline (cbuf, 256)) return false;
 		pc = trim_string (cbuf);
-		if (!_strnicmp (pc, "END_MFD", 7)) break;
-		if (!_strnicmp (pc, "REF", 3)) {
+		if (caseInsensitiveStartsWith(pc, "END_MFD")) break;
+		if (caseInsensitiveStartsWith(pc, "REF")) {
 			strcpy (cref, trim_string (pc+3));
-		} else if (!_strnicmp (pc, "TARGET", 6)) {
+		} else if (caseInsensitiveStartsWith(pc, "TARGET")) {
 			strcpy (ctgt, trim_string (pc+6));
-		} else if (!_strnicmp (pc, "OTARGET", 7)) { // backward compatibility
+		} else if (caseInsensitiveStartsWith(pc, "OTARGET")) { // backward compatibility
 			strcpy (otgt, trim_string (pc+7));
-		} else if (!_strnicmp (pc, "BTARGET", 7)) { // backward compatibility
+		} else if (caseInsensitiveStartsWith(pc, "BTARGET")) { // backward compatibility
 			strcpy (btgt, trim_string (pc+7));
-		} else if (!_strnicmp (pc, "ZOOM", 4)) {
+		} else if (caseInsensitiveStartsWith(pc, "ZOOM")) {
 			int res = sscanf (trim_string(pc+4), "%d", &zoom);
 			if (res < 1) zoom = 2;
-		} else if (!_strnicmp (pc, "POS", 3)) {
+		} else if (caseInsensitiveStartsWith(pc, "POS")) {
 			int res = sscanf (pc+4, "%lf%lf", &lng, &lat);
 			if (res == 2) track = false;
-		} else if (!_strnicmp (pc, "DISP", 4)) {
+		} else if (caseInsensitiveStartsWith(pc, "DISP")) {
 			sscanf (trim_string(pc+4), "%d", &dflag);
 		}
 	}
@@ -778,11 +779,11 @@ bool Instrument_Map::ClbkSubmn_Target (Select *menu, int item, char *str, void *
 bool Instrument_Map::ClbkEnter_Target (Select *menu, int item, char *str, void *data)
 {
 	Instrument_Map *map = (Instrument_Map*)data;
-	if (!_stricmp (str, "By name ...")) {
+	if (caseInsensitiveEquals(str, "By name ...")) {
 		g_input->Open ("Enter target:", 0, 20, Instrument_Map::ClbkName_Target,
 			map);
 		return true;
-	} else if (!_stricmp (str, "[none]")) {
+	} else if (caseInsensitiveEquals(str, "[none]")) {
 		map->UnselectTarget ();
 		return true;
 	} else

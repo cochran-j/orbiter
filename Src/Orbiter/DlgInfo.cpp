@@ -12,7 +12,9 @@
 #include <windows.h>
 #include "DlgInfo.h"
 #include "Dialogs.h"
+/* TODO(jec)
 #include "Resource.h"
+*/
 #include "DlgMgr.h" // to be removed
 #include "Orbiter.h"
 #include "Vessel.h"
@@ -20,9 +22,12 @@
 #include "Psys.h"
 #include "Celbody.h"
 #include <windows.h>
+/* TODO(jec)
 #include <commctrl.h>
 #include <Richedit.h>
+*/
 #include "Element.h"
+#include "Util.h"
 
 extern Orbiter *g_pOrbiter;
 extern Vessel *g_focusobj;
@@ -37,7 +42,7 @@ const char *na = "N/A";
 // ======================================================================
 
 DlgInfo::DlgInfo (HINSTANCE hInstance, HWND hParent, void *context)
-: DialogWin (hInstance, hParent, IDD_OBJINFO, 0, 0, context)
+: DialogWin (hInstance, hParent, /* TODO(jec) IDD_OBJINFO*/0, 0, 0, context)
 {
 	upd_t = 0.0;
 	upd_dt = 1.0;
@@ -46,8 +51,10 @@ DlgInfo::DlgInfo (HINSTANCE hInstance, HWND hParent, void *context)
 	pos = &g_pOrbiter->Cfg()->CfgWindowPos.DlgInfo;
 
 	// note: shared icon resources should probably be loaded globally by orbiter
+    /* TODO(jec)
 	hIcon_dd = LoadIcon (hInstance, MAKEINTRESOURCE(IDI_DDOWN));
 	hIcon_du = LoadIcon (hInstance, MAKEINTRESOURCE(IDI_DUP));
+    */
 }
 
 // ======================================================================
@@ -56,18 +63,22 @@ void DlgInfo::Init (HWND hDlg)
 {
 	RECT r;
 	POINT pt;
+    /* TODO(jec)
 	PARAFORMAT2 pfmt;
 	pfmt.cbSize = sizeof(PARAFORMAT2);
 	pfmt.dwMask = PFM_TABSTOPS;
 	pfmt.cTabCount = 1;
 	pfmt.rgxTabs[0] = 200;
+    */
 	int objtp = 0;
 
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_INFO_TYPE, CB_ADDSTRING, 0, (LPARAM)"Focus vessel");
 	SendDlgItemMessage (hDlg, IDC_INFO_TYPE, CB_ADDSTRING, 0, (LPARAM)"Camera target");
 	SendDlgItemMessage (hDlg, IDC_INFO_TYPE, CB_ADDSTRING, 0, (LPARAM)"Vessel");
 	SendDlgItemMessage (hDlg, IDC_INFO_TYPE, CB_ADDSTRING, 0, (LPARAM)"Base");
 	SendDlgItemMessage (hDlg, IDC_INFO_TYPE, CB_ADDSTRING, 0, (LPARAM)"Celestial body");
+    */
 	if (body) {
 		switch (body->Type()) {
 		case OBJTP_VESSEL: objtp = 2; break;
@@ -76,6 +87,7 @@ void DlgInfo::Init (HWND hDlg)
 		case OBJTP_STAR: objtp = 4; break;
 		}
 	}
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_INFO_TYPE, CB_SETCURSEL, objtp, 0);
 
 	SendDlgItemMessage (hDlg, IDC_INFO_DDN, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon_dd);
@@ -83,16 +95,21 @@ void DlgInfo::Init (HWND hDlg)
 
 	int res = SendDlgItemMessage (hDlg, IDC_INFOBOX, EM_SETPARAFORMAT, 0, (LPARAM)&pfmt);
 	GetClientRect (hDlg, &r);
+    */
 	client_w = r.right;
 	client_h = r.bottom;
+    /* TODO(jec)
 	GetWindowRect (GetDlgItem (hDlg, IDC_INFOLIST), &r);
-	list_w = r.right-r.left;
+    */
+    list_w = r.right-r.left;
 	list_h = r.bottom-r.top;
 	pt.x = r.left;
 	pt.y = r.top;
+    /* TODO(jec)
 	ScreenToClient (hDlg, &pt);
+    */
 	list_top = pt.y;
-	pl.OnInitDialog (hDlg, IDC_INFOLIST);
+	pl.OnInitDialog (hDlg, /* TODO(jec) IDC_INFOLIST*/0);
 	pl.SetColWidth (0, 180);
 
 	Body *b = body;
@@ -102,9 +119,11 @@ void DlgInfo::Init (HWND hDlg)
 	SetBody (hDlg, b);
 	BuildObjectList (hDlg, b);
 	if (objtp) {
+        /* TODO(jec)
 		int idx = SendDlgItemMessage (hDlg, IDC_INFO_NAME, CB_FINDSTRINGEXACT, 0, (LPARAM)body->Name());
 		if (idx != CB_ERR)
 			SendDlgItemMessage (hDlg, IDC_INFO_NAME, CB_SETCURSEL, idx, 0);
+        */
 	}
 }
 
@@ -124,6 +143,7 @@ void DlgInfo::BuildObjectList (HWND hDlg, Body *b)
 	char cbuf[256];
 	int j;
 	DWORD k;
+    /* TODO(jec)
 	int idx = SendDlgItemMessage (hDlg, IDC_INFO_TYPE, CB_GETCURSEL, 0, 0);
 	SendDlgItemMessage (hDlg, IDC_INFO_NAME, CB_RESETCONTENT, 0, 0);
 
@@ -158,6 +178,7 @@ void DlgInfo::BuildObjectList (HWND hDlg, Body *b)
 		return;
 	}
 	SendDlgItemMessage (hDlg, IDC_INFO_NAME, CB_SETCURSEL, 0, 0);
+    */
 	//Info_ShowData (hDlg);
 }
 
@@ -168,7 +189,9 @@ int DlgInfo::Size (DWORD width, DWORD height)
 	int i, id;
 	RECT r;
 	POINT pt;
+    /* TODO(jec)
 	GetClientRect (hWnd, &r);
+    */
 	int dw = r.right-client_w;
 	int dh = r.bottom-client_h;
 	list_w += dw;
@@ -178,6 +201,7 @@ int DlgInfo::Size (DWORD width, DWORD height)
 	pl.Move (0, list_top, list_w, list_h);
 
 	const int nbtl = 2;
+    /* TODO(jec)
 	const int btlid[nbtl] = {IDC_INFO_DDN, IDC_INFO_DUP};
 	for (i = 0; i < nbtl; i++) {
 		id = btlid[i];
@@ -187,18 +211,27 @@ int DlgInfo::Size (DWORD width, DWORD height)
 		ScreenToClient (hWnd, &pt);
 		MoveWindow (GetDlgItem (hWnd, id), pt.x, pt.y+dh, r.right-r.left, r.bottom-r.top, TRUE);
 	}
+    */
 	const int nbtr = 3;
+    /* TODO(jec)
 	const int btrid[nbtr] = {IDC_INFO_MAP, IDCANCEL, IDHELP};
 	for (i = 0; i < nbtr; i++) ShowWindow (GetDlgItem (hWnd, btrid[i]), SW_HIDE);
+    */
 	for (i = 0; i < nbtr; i++) {
+        /* TODO(jec)
 		id = btrid[i];
 		GetWindowRect (GetDlgItem (hWnd, id), &r);
+        */
 		pt.x = r.left;
 		pt.y = r.top;
+        /* TODO(jec)
 		ScreenToClient (hWnd, &pt);
 		MoveWindow (GetDlgItem (hWnd, id), pt.x+dw, pt.y+dh, r.right-r.left, r.bottom-r.top, TRUE);
+        */
 	}
+    /* TODO(jec)
 	for (i = 0; i < nbtr; i++) ShowWindow (GetDlgItem (hWnd, btrid[i]), SW_SHOW);
+    */
 	return 0;
 }
 
@@ -254,8 +287,11 @@ void DlgInfo::SelectionChanged (HWND hDlg)
 	char cbuf[256];
 	int i, j;
 
+    int tp = 0;
+    /* TODO(jec)
 	int tp = SendDlgItemMessage (hDlg, IDC_INFO_TYPE, CB_GETCURSEL, 0, 0);
 	GetWindowText (GetDlgItem (hDlg, IDC_INFO_NAME), cbuf, 256);
+    */
 
 	if (tp == 1) { // camera target
 		Body *b = g_psys->GetObj (cbuf);
@@ -288,7 +324,7 @@ void DlgInfo::SelectionChanged (HWND hDlg)
 			if (obj->Type() != OBJTP_PLANET) continue;
 			Planet *planet = (Planet*)obj;
 			for (j = 0; j < g_psys->nBase(planet); j++) {
-				if (!_stricmp (g_psys->GetBase (planet,j)->Name(), cbuf)) {
+				if (caseInsensitiveEquals(g_psys->GetBase (planet,j)->Name(), cbuf)) {
 					SetBody (hDlg, g_psys->GetBase (planet,j));
 					break;
 				}
@@ -296,7 +332,7 @@ void DlgInfo::SelectionChanged (HWND hDlg)
 		}
 		break;
 	case 4: { // celestial bodies
-		CelestialBody *cbody = CBodySelectComboBox::OnSelectionChanged (hDlg, IDC_INFO_NAME);
+		CelestialBody *cbody = CBodySelectComboBox::OnSelectionChanged (hDlg, /* TODO(jec) IDC_INFO_NAME*/0);
 		if (cbody) SetBody (hDlg, cbody);
 		} break;
 	}
@@ -1055,6 +1091,7 @@ BOOL DlgInfo::OnSize (HWND hDlg, WPARAM wParam, int w, int h)
 
 BOOL DlgInfo::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 {
+    /* TODO(jec)
 	switch (id) {
 	case IDHELP:
 		DefHelpContext.topic = (char*)"/objinfo.htm";
@@ -1083,5 +1120,6 @@ BOOL DlgInfo::OnCommand (HWND hDlg, WORD id, WORD code, HWND hControl)
 		}
 		break;
 	}
+    */
 	return DialogWin::OnCommand (hDlg, id, code, hControl);
 }

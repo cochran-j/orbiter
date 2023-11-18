@@ -51,7 +51,9 @@ void orbiter::OptionsTab::SetConfig(Config* cfg)
 
 BOOL orbiter::OptionsTab::OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	SetWindowHandles(hWnd, GetDlgItem(hWnd, IDC_OPT_SPLIT), GetDlgItem(hWnd, IDC_OPT_PAGELIST), GetDlgItem(hWnd, IDC_OPT_PAGECONTAINER));
+    */
 	CreatePages();
 	ExpandAll();
 	return TRUE;
@@ -61,8 +63,10 @@ BOOL orbiter::OptionsTab::OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 BOOL orbiter::OptionsTab::OnSize(int w, int h)
 {
+    /* TODO(jec)
 	SetWindowPos(GetDlgItem(hTab, IDC_OPT_SPLIT), HWND_BOTTOM, 0, 0, w, h,
 		SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER);
+    */
 
 	return FALSE;
 }
@@ -71,9 +75,11 @@ BOOL orbiter::OptionsTab::OnSize(int w, int h)
 
 BOOL orbiter::OptionsTab::OnNotify(HWND hDlg, int idCtrl, LPNMHDR pnmh)
 {
+    /* TODO(jec)
 	if (idCtrl == IDC_OPT_PAGELIST) {
 		OnNotifyPagelist(pnmh);
 		return TRUE;
 	}
+    */
 	return FALSE;
 }

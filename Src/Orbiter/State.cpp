@@ -13,11 +13,13 @@
 #include <iomanip>
 #include <string>
 #include <stdio.h>
+
 #include "Orbiter.h"
 #include "Config.h"
 #include "State.h"
 #include "Vessel.h"
 #include "Astro.h"
+#include "Util.h"
 
 using namespace std;
 
@@ -70,24 +72,24 @@ bool State::Read (const char *fname)
 		for (;;) {
 			if (!ifs.getline (cbuf, 256)) break;
 			pc = trim_string (cbuf);
-			if (!_stricmp (pc, "END_ENVIRONMENT")) break;
-			if (!_strnicmp (pc, "Date", 4)) {
+			if (caseInsensitiveEquals(pc, "END_ENVIRONMENT")) break;
+			if (caseInsensitiveStartsWith(pc, "Date")) {
 				pc = trim_string (pc+4);
-				if (!_strnicmp (pc, "MJD", 3) && sscanf (pc+3, "%lf", &t) == 1)
+				if (caseInsensitiveStartsWith(pc, "MJD") && sscanf (pc+3, "%lf", &t) == 1)
 					mjd = mjd0 = t;
-				else if (!_strnicmp (pc, "JD", 2) && sscanf (pc+2, "%lf", &t) == 1)
+				else if (caseInsensitiveStartsWith(pc, "JD") && sscanf (pc+2, "%lf", &t) == 1)
 					mjd = mjd0 = t-2400000.5;
-				else if (!_strnicmp (pc, "JE", 2) && sscanf (pc+2, "%lf", &t) == 1)
+				else if (caseInsensitiveStartsWith(pc, "JE") && sscanf (pc+2, "%lf", &t) == 1)
 					mjd = mjd0 = Jepoch2MJD (t);
-			} else if (!_strnicmp (pc, "System", 6)) {
+			} else if (caseInsensitiveStartsWith(pc, "System")) {
 				strcpy (solsys, trim_string (pc+6));
-			} else if (!_strnicmp (pc, "Context", 7)) {
+			} else if (caseInsensitiveStartsWith(pc, "Context")) {
 				strcpy (context, trim_string (pc+7));
-			} else if (!_strnicmp (pc, "Script", 6)) {
+			} else if (caseInsensitiveStartsWith(pc, "Script")) {
 				strcpy (script, trim_string (pc+6));
-			} else if (!_strnicmp (pc, "Help", 4)) {
+			} else if (caseInsensitiveStartsWith(pc, "Help")) {
 				strncpy (scnhelp, trim_string (pc+4), 127);
-			} else if (!_strnicmp (pc, "Playback", 8)) {
+			} else if (caseInsensitiveStartsWith(pc, "Playback")) {
 				strncpy (playback, trim_string (pc+8), 127);
 			}
 		}
@@ -96,8 +98,8 @@ bool State::Read (const char *fname)
 		for (;;) {
 			if (!ifs.getline (cbuf, 256)) break;
 			pc = trim_string (cbuf);
-			if (!_stricmp (pc, "END_FOCUS")) break;
-			if (!_strnicmp (pc, "Ship", 4)) {
+			if (caseInsensitiveEquals(pc, "END_FOCUS")) break;
+			if (caseInsensitiveStartsWith(pc, "Ship")) {
 				strcpy (focus, trim_string (pc+4));
 			}
 		}

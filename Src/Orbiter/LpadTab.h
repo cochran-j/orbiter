@@ -8,6 +8,10 @@
 #include "Config.h"
 #include "Launchpad.h"
 
+/* TODO(jec):  Compat definitions */
+using LPNMHDR = void*;
+constexpr UINT WM_NOTIFY = 0x0234; // Not the correct number
+
 // Property page indices
 #define PG_SCN  0
 #define PG_OPT  1
@@ -83,7 +87,7 @@ namespace orbiter {
 	protected:
 		HWND CreateTab(int resid);
 
-		static INT_PTR CALLBACK TabProcHook(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		static INT_PTR TabProcHook(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 		const LaunchpadDialog* pLp;
 		Config* pCfg;

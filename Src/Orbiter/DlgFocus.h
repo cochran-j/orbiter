@@ -9,7 +9,12 @@
 #define __DLGFOCUS_H
 
 #include "DialogWin.h"
+/* (jec) compatibility
 #include "CommCtrl.h"
+*/
+using LPNMHDR = void*;
+using HTREEITEM = void*;
+
 
 class DlgFocus: public DialogWin {
 public:

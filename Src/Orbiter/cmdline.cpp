@@ -3,11 +3,15 @@
 
 #include <iostream>
 #include <set>
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "cmdline.h"
 #include "Orbiter.h"
 #include "Launchpad.h"
 
-CommandLine::CommandLine(const PSTR cmdLine)
+CommandLine::CommandLine(const char* cmdLine)
 {
 	m_cmdLine = (std::string(cmdLine ? cmdLine : ""));
 	ParseCmdLine(cmdLine);
@@ -28,9 +32,9 @@ bool CommandLine::GetOption(UINT id, const std::string** value) const
 	return false;
 }
 
-void CommandLine::ParseCmdLine(const PSTR cmdLine)
+void CommandLine::ParseCmdLine(const char* cmdLine)
 {
-	PSTR pc = cmdLine;
+	const char* pc = cmdLine;
 	bool groupKey = false;
 
 	while (*pc) {
@@ -42,7 +46,7 @@ void CommandLine::ParseCmdLine(const PSTR cmdLine)
 	}
 }
 
-bool CommandLine::ParseNextOption(PSTR& cmdLine, bool& groupKey, Option& option)
+bool CommandLine::ParseNextOption(const char*& cmdLine, bool& groupKey, Option& option)
 {
 	bool isLongKey;
 	bool isQuotedVal;
@@ -62,7 +66,7 @@ bool CommandLine::ParseNextOption(PSTR& cmdLine, bool& groupKey, Option& option)
 			return false; // parse error: key indicator not found
 		else
 			cmdLine++;
-		if (isLongKey = (*cmdLine == '-'))
+		if ((isLongKey = (*cmdLine == '-')))
 			cmdLine++;
 	}
 	else {
@@ -70,11 +74,11 @@ bool CommandLine::ParseNextOption(PSTR& cmdLine, bool& groupKey, Option& option)
 	}
 	const char* termKeyChar = (isLongKey ? " \t=" : " \t"); // '=' as key-value separator only allowed for long keys
 	std::set<char> termK(termKeyChar, termKeyChar + strlen(termKeyChar) + 1); // include '\0' in set
-	PSTR endKey = cmdLine;
+	const char* endKey = cmdLine;
 	while (termK.find(*endKey) == termK.end())
 		endKey++;
 	size_t keyLen = endKey - cmdLine;
-	if (groupKey = (!isLongKey && keyLen > 1)) // concatenated short keys
+	if ((groupKey = (!isLongKey && keyLen > 1))) // concatenated short keys
 		keyLen = 1;
 	option.strKey = std::string(cmdLine, keyLen);
 	if (groupKey) {
@@ -100,11 +104,11 @@ bool CommandLine::ParseNextOption(PSTR& cmdLine, bool& groupKey, Option& option)
 	}
 	else if (isLongKey)
 		return false;     // for long keys, '=' is mandatory before values
-	if (isQuotedVal = (*cmdLine == '\"'))
+	if ((isQuotedVal = (*cmdLine == '\"')))
 		cmdLine++; // skip starting quotes
 	const char* termValChar = (isQuotedParam || isQuotedVal ? "\"" : " \t"); // for quoted values, only accept quotes as terminator
 	std::set<char> termV(termValChar, termValChar + strlen(termValChar) + 1); // include '\0' in set
-	PSTR endVal = cmdLine;
+	const char* endVal = cmdLine;
 	while (termV.find(*endVal) == termV.end())
 		endVal++;
 	size_t valLen = endVal - cmdLine;
@@ -116,6 +120,17 @@ bool CommandLine::ParseNextOption(PSTR& cmdLine, bool& groupKey, Option& option)
 	return true;
 }
 
+bool caseInsensitiveEquiv(const std::string_view& strv1,
+                          const std::string_view& strv2) {
+
+    return std::equal(strv1.begin(), strv1.end(),
+                      strv2.begin(), strv2.end(),
+                      [](char c1, char c2) {
+                          return std::tolower(static_cast<unsigned char>(c1)) ==
+                                 std::tolower(static_cast<unsigned char>(c2));
+                      });
+}
+
 void CommandLine::MapKeys()
 {
 	std::vector<Key>& keys = KeyList();
@@ -124,7 +139,7 @@ void CommandLine::MapKeys()
 		bool found = false;
 		for (auto it_key = keys.begin(); it_key < keys.end(); it_key++) {
 			if (isLong) {
-				if (!stricmp(it_key->longName, it->strKey.c_str()))
+				if (caseInsensitiveEquiv(it_key->longName, it->strKey.c_str()))
 					found = true;
 			}
 			else {
@@ -151,7 +166,7 @@ void CommandLine::ApplyOptions()
 
 
 
-orbiter::CommandLine::CommandLine(Orbiter* pOrbiter, const PSTR cmdLine)
+orbiter::CommandLine::CommandLine(Orbiter* pOrbiter, const char* cmdLine)
 	: ::CommandLine(cmdLine)
 	, m_pOrbiter(pOrbiter)
 {
@@ -236,9 +251,14 @@ void orbiter::CommandLine::ApplyOption(const Key* key, const std::string& value)
 void orbiter::CommandLine::PrintHelpAndExit() const
 {
 	// Get console output
+    // TODO(jec):  Better cross-platform support..  This obtains a console if
+    // orbiter.exe was started on the Windows subsystem on WinMain--you may not
+    // have a console at startup.
+#ifdef _WIN32
 	if (AttachConsole(ATTACH_PARENT_PROCESS) || AllocConsole()) {
 		freopen("CONOUT$", "w", stdout);
 	}
+#endif
 
 	std::cout << "\nOrbiter Space Flight Simulator" << std::endl;
 	std::cout << "orbiter.exe [options]\n\n";
@@ -259,7 +279,7 @@ void orbiter::CommandLine::PrintHelpAndExit() const
 	exit(0);
 }
 
-orbiter::CommandLine& orbiter::CommandLine::InstanceImpl(Orbiter* pOrbiter, const PSTR cmdLine)
+orbiter::CommandLine& orbiter::CommandLine::InstanceImpl(Orbiter* pOrbiter, const char* cmdLine)
 {
 	static orbiter::CommandLine instance{ pOrbiter, cmdLine };
 	return instance;
