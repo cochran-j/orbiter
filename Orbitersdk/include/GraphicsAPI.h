@@ -14,6 +14,7 @@
 #include "Orbitersdk.h"
 #include <stdio.h>
 #include <windows.h>
+#include <filesystem>
 
 #ifndef _WIN32
 typedef void *HDC;
@@ -931,6 +932,24 @@ public:
 	 */
 	bool TexturePath (const char *fname, char *path) const;
 
+    /**
+     * \brief Return full path for a texture file.
+     *
+     * Returns the fully qualified path for texture file 'fname' in
+     * 'path', relative to the orbiter root diretory.
+     * The search method conforms to the standard orbiter convention (first
+     * search under Textures2, then under Textures directory)
+     * Example: for fname="mypath\\tex1.dds", this may return
+     * ".\Textures2\mypath\tex1.dds" or ".\Textures\mypath\tex1.dds"
+     * Return value is false if no file is found in either directory
+     * \param fname texture file name (with path relative to an Orbiter
+     *  texture directory)
+     * \param path string into which the full path is copied
+     * \return true if file was found, false otherwise.
+     */
+    bool TexturePath (const std::filesystem::path& fname,
+                      std::filesystem::path& path_) const;
+
 	/**
 	* \brief Return full path for a v2016-style planetary texture directory
 	* \param planetname Planet name
@@ -1480,7 +1499,7 @@ public:
 	 *   is loaded in the core, the callback is invoked.
 	 */
 	virtual bool clbkFilterElevation(OBJHANDLE hPlanet, int ilat, int ilng, int lvl, double elev_res, INT16* elev) { return false; }
-	// @}
+	// @
 
 protected:
 	/** \brief Launchpad video tab indicator

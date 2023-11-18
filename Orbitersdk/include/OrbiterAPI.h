@@ -28,15 +28,23 @@
 #include <float.h>
 #include <math.h>
 #include <vector>
+#include <cstdint>
 
 extern "C" {
 #include "Lua/lua.h"
 }
 
 // Assumes MS VC++ compiler. Modify these statements for other compilers
+// TODO(jec):  Better interop / best practice on which macros to pick up.
+#ifdef _MSC_VER
 #define DLLEXPORT __declspec(dllexport)
 #define DLLIMPORT __declspec(dllimport)
 #define DLLCLBK extern "C" __declspec(dllexport)
+#else
+#define DLLEXPORT
+#define DLLIMPORT
+#define DLLCLBK extern "C"
+#endif
 
 #ifdef OAPI_IMPLEMENTATION
 #define OAPIFUNC DLLEXPORT
@@ -47,10 +55,28 @@ extern "C" {
 #pragma warning(disable: 4201)
 
 // Message loop return type - maintain backward compatibility for 32-bit
-#ifdef _WIN64
+#if _WIN64 || (__GNUC__ && __x86_64__) /* TODO(jec):  Better macro checks */
 #define OAPI_MSGTYPE LRESULT
 #else
 #define OAPI_MSGTYPE int
+#endif
+
+// Compatibility definition for DLGPROC
+// TODO:  Cross-platform capability?
+#ifndef _WIN32
+typedef UINT_PTR WPARAM;
+typedef LONG_PTR LPARAM;
+typedef INT_PTR (*DLGPROC)(HWND, UINT, WPARAM, LPARAM);
+typedef void* HBITMAP;
+typedef void* HFONT;
+typedef void* HPEN;
+typedef void* HBRUSH;
+
+// GraphicsAPI.h
+typedef DWORD* DWORD_PTR;
+typedef std::int32_t* LRESULT;
+typedef std::int16_t INT16;
+typedef std::uint64_t DWORDLONG;
 #endif
 
 // ======================================================================
@@ -1511,14 +1537,16 @@ typedef struct {
 typedef struct {
 	char *name;
 	DWORD key;
-	OAPI_MSGTYPE (*msgproc)(UINT,UINT,WPARAM,LPARAM);
+	/* TODO(jec):  API Break */
+	OAPI_MSGTYPE (*msgproc)(UINT,UINT,UINT_PTR,LONG_PTR);
 } MFDMODESPEC;
 
 typedef struct {
 	char *name;
 	DWORD key;
 	void *context;
-	OAPI_MSGTYPE (*msgproc)(UINT,UINT,WPARAM,LPARAM);
+	/* TODO(jec):  API Break */
+	OAPI_MSGTYPE (*msgproc)(UINT,UINT,UINT_PTR,LONG_PTR);
 } MFDMODESPECEX;
 
 typedef struct {
@@ -5679,7 +5707,7 @@ OAPIFUNC void oapiColourFill (SURFHANDLE tgt, DWORD fillcolor, int tgtx = 0, int
 	*   char *name;    // points to the name of the new mode
 	*   DWORD key;     // mode selection key
 	*   void *context; // mode-specific context pointer
-	*   int (*msgproc)(UINT,UINT,WPARAM,LPARAM);   // address of MFD message parser
+	*   int (*msgproc)(UINT,UINT,UINT_PTR,LONG_PTR);   // address of MFD message parser
 	* } MFDMODESPEC; \endcode
 	* \note See orbitersdk\\samples\\CustomMFD for a sample MFD mode implementation.
 	* \sa oapiUnregisterMFDMode, VESSEL4::RegisterMFDMode
@@ -5991,6 +6019,10 @@ OAPIFUNC HWND       oapiOpenDialog (HINSTANCE hDLLInst, int resourceId, DLGPROC 
 	* \sa oapiFindDialog, oapiCloseDialog, oapiGetDialogContext
 	*/
 OAPIFUNC HWND       oapiOpenDialogEx (HINSTANCE hDLLInst, int resourceId, DLGPROC msgProc, DWORD flag = 0, void *context = 0);
+
+
+
+OAPIFUNC HWND       oapiOpenChildWindow (HINSTANCE hDLLInst, void *context = 0);
 
 	/**
 	* \brief Returns the window handle of an open dialog box, or NULL if the specified dialog box is not open.
@@ -6336,7 +6368,7 @@ OAPIFUNC bool oapiReadItem_vec (FILEHANDLE f, char *item, VECTOR3 &vec);
 	*  Use the oapiWriteLine function.
 	* \sa oapiReadItem_string
 	*/
-OAPIFUNC void oapiWriteItem_string (FILEHANDLE f, char *item, char *string);
+OAPIFUNC void oapiWriteItem_string (FILEHANDLE f, const char *item, const char *string);
 
 	/**
 	* \brief Write a tag and its value to a configuration file.

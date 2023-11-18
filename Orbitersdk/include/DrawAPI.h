@@ -23,8 +23,22 @@
 #include <assert.h>
 #include <xmmintrin.h>
 
+#include <cstring> // memcpy
+
 #ifdef D3D9CLIENT_EXPORTS
-#include "d3dx9.h"
+/* TODO(jec): Compat definitions...d3dx9.h is not well-supported by DXVK. */
+//#include <windows.h> // DECLARE_INTERFACE_
+#define LF_FACESIZE 32
+struct TEXTMETRICA;
+struct TEXTMETRICW;
+#define STDAPI
+#define DECLARE_INTERFACE_IID_(type, base, iid) DECLARE_INTERFACE_(type, base)
+using LPGUID = void*;
+struct IStream;
+struct GLYPHMETRICSFLOAT;
+using DOUBLE = double;
+
+#include <d3dx9.h>
 #endif
 
 /// \brief Poly object handle
@@ -217,6 +231,7 @@ namespace oapi {
 			y = float(v.y);
 			z = float(v.z);
 		}
+
 		FVECTOR3(const D3DXCOLOR& v)
 		{
 			x = float(v.r);
@@ -355,7 +370,7 @@ namespace oapi {
 	* \brief 32-bit floating point 4D vector type.
 	* \note This structure is compatible with the D3DXVECTOR4 type.
 	*/
-	typedef union __declspec(align(16)) FVECTOR4
+	typedef union alignas(16) FVECTOR4
 	{
 		DWORD dword_abgr() const
 		{
@@ -604,7 +619,7 @@ namespace oapi {
 	* \brief Float-valued 4x4 matrix.
 	* \note This structure is compatible with the D3DXMATRIX.
 	*/
-	typedef union __declspec(align(16)) FMATRIX4
+	typedef union alignas(16) FMATRIX4
 	{
 		FMATRIX4() {
 			m11 = m12 = m13, m14 = m21 = m22 = m23 = m24 = m31 = m32 = m33 = m34 = m41 = m42 = m43 = m44 = 0;
@@ -628,11 +643,15 @@ namespace oapi {
 #ifdef D3D9CLIENT_EXPORTS
 		FMATRIX4(const D3DXMATRIX& m)
 		{
-			memcpy_s(data, sizeof(FMATRIX4), &m, sizeof(m));
+            static_assert(sizeof(m) == sizeof(FMATRIX4),
+                          "data not sized correctly.");
+            std::memcpy(data, &m, sizeof(m));
 		}
 		FMATRIX4(const LPD3DXMATRIX m)
 		{
-			memcpy_s(data, sizeof(FMATRIX4), m, sizeof(FMATRIX4));
+            static_assert(sizeof(D3DXMATRIX) == sizeof(FMATRIX4),
+                          "data not sized correctly.");
+            std::memcpy(data, m, sizeof(FMATRIX4));
 		}
 		inline operator LPD3DXMATRIX()
 		{

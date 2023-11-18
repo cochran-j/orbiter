@@ -10,8 +10,10 @@
 void oapiRegisterCustomControls (HINSTANCE hInst);
 void oapiUnregisterCustomControls (HINSTANCE hInst);
 
-LRESULT FAR PASCAL MsgProc_Gauge (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-LRESULT FAR PASCAL MsgProc_Switch (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+/* DLG
+INT_PTR MsgProc_Gauge (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR MsgProc_Switch (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+*/
 
 struct GAUGEPARAM {
 	int rangemin, rangemax;
@@ -33,6 +35,9 @@ struct SWITCHPARAM {
 void oapiSetSwitchParams (HWND hCtrl, SWITCHPARAM *sp, bool redraw);
 int oapiSetSwitchState (HWND hCtrl, int state, bool redraw);
 int oapiGetSwitchState (HWND hCtrl);
+
+class PropertyGroup;
+class PropertyList;
 
 // ==================================================================================
 // ==================================================================================
@@ -110,7 +115,9 @@ public:
 
 	PropertyItem *AppendItem (PropertyGroup *g);
 
+    /* DLG
 	static HBITMAP hBmpArrows;
+    */
 
 protected:
 	void SetListHeight (int h, bool force = false);
@@ -119,10 +126,12 @@ protected:
 private:
 	HWND hDlg;          // window handle for dialog box
 	HWND hItem;         // window handle for list control
+    /* DLG
 	HFONT hFontTitle;   // group title font
 	HFONT hFontItem;    // item font
 	HPEN hPenLine;      // pen for cell borders
 	HBRUSH hBrushTitle; // brush for title backgrounds
+    */
 	int dlgid;          // dialog id for list control
 	int winw, winh;     // width and height of list window
 	int listh;          // logical height of list
