@@ -1306,7 +1306,7 @@ const Mesh *MeshManager::LoadMesh (const char *fname, bool *firstload)
 	ifs >> *mesh;
 	if (!mesh->nGroup()) { // load error
 		if (!fname[0]) LOGOUT_ERR ("Mesh file name not provided");
-		else LOGOUT_ERR ("Mesh not found: %s", g_pOrbiter->MeshPath (fname));
+		else LOGOUT_ERR ("Mesh not found: %s", g_pOrbiter->MeshPath (fname).c_str());
 		//g_pOrbiter->TerminateOnError ();
 		delete mesh;
 		return 0;
@@ -1340,7 +1340,7 @@ bool LoadMesh (const char *meshname, Mesh &mesh)
 		mesh.SetName(meshname);
 		return true;
 	} else {
-		LOGOUT_ERR ("Mesh not found: %s", g_pOrbiter->MeshPath (meshname));
+		LOGOUT_ERR ("Mesh not found: %s", g_pOrbiter->MeshPath (meshname).c_str());
 		//g_pOrbiter->TerminateOnError ();
 		return false;
 	}

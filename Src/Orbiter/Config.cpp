@@ -14,6 +14,10 @@
 #include <iomanip>
 #include <string.h>
 #include <stdio.h>
+#include <filesystem>
+#include <string>
+#include <string_view>
+
 #include "Config.h"
 #include "Astro.h"
 #include "Log.h"
@@ -33,12 +37,12 @@ static int g_buflen = 1024;
 const bool bEchoAll_default = false;          // only echo non-default parameters
 
 CFG_DIRPRM CfgDirPrm_default = {
-	".\\Config\\",		// ConfigDir
-	".\\Meshes\\",		// MeshDir
-	".\\Textures\\",	// TextureDir
-	".\\Textures2\\",	// HightexDir
-	".\\Textures\\",	// PlanetTexDir
-	".\\Scenarios\\"	// ScnDir
+	"Config",		// ConfigDir
+	"Meshes",		// MeshDir
+	"Textures",	    // TextureDir
+	"Textures2",	// HightexDir
+	"Textures",	    // PlanetTexDir
+	"Scenarios"	    // ScnDir
 };
 
 CFG_PHYSICSPRM CfgPhysicsPrm_default = {
@@ -474,43 +478,33 @@ bool Config::Load(const char *fname)
 
 	GetBool ("EchoAllParams", bEchoAll);
 
+    std::string str {};
+
 	// configuration directory
-	if (GetString (ifs, "ConfigDir", CfgDirPrm.ConfigDir))
-		if (CfgDirPrm.ConfigDir[strlen(CfgDirPrm.ConfigDir)-1] != '\\')
-			strcat (CfgDirPrm.ConfigDir, "\\");
-	strcpy (cfgpath, CfgDirPrm.ConfigDir); cfglen = strlen (cfgpath);
+	if (GetString (ifs, "ConfigDir", str))
+        CfgDirPrm.ConfigDir = str;
 
 	// mesh directory
-	if (GetString (ifs, "MeshDir", CfgDirPrm.MeshDir))
-		if (CfgDirPrm.MeshDir[strlen(CfgDirPrm.MeshDir)-1] != '\\')
-			strcat (CfgDirPrm.MeshDir, "\\");
-	strcpy (mshpath, CfgDirPrm.MeshDir);   mshlen = strlen (mshpath);
+	if (GetString (ifs, "MeshDir", str))
+        CfgDirPrm.MeshDir = str;
 
 	// texture directory
-	if (GetString (ifs, "TextureDir", CfgDirPrm.TextureDir))
-		if (CfgDirPrm.TextureDir[strlen(CfgDirPrm.TextureDir)-1] != '\\')
-			strcat (CfgDirPrm.TextureDir, "\\");
-	strcpy (texpath, CfgDirPrm.TextureDir);  texlen = strlen (texpath);
+	if (GetString (ifs, "TextureDir", str))
+        CfgDirPrm.TextureDir = str;
 
 	// highres texture directory
-	if (GetString (ifs, "HightexDir", CfgDirPrm.HightexDir)) {
-		if (CfgDirPrm.HightexDir[strlen(CfgDirPrm.HightexDir)-1] != '\\')
-			strcat (CfgDirPrm.HightexDir, "\\");
-		strcpy (htxpath, CfgDirPrm.HightexDir);  htxlen = strlen (htxpath);
+	if (GetString (ifs, "HightexDir", str)) {
+        CfgDirPrm.HightexDir = str;
 	}
 
 	// planetary texture directory
-	if (GetString(ifs, "PlanetTexDir", CfgDirPrm.PlanetTexDir)) {
-		if (CfgDirPrm.PlanetTexDir[strlen(CfgDirPrm.PlanetTexDir) - 1] != '\\')
-			strcat(CfgDirPrm.PlanetTexDir, "\\");
-		strcpy(ptxpath, CfgDirPrm.PlanetTexDir); ptxlen = strlen(ptxpath);
+	if (GetString(ifs, "PlanetTexDir", str)) {
+        CfgDirPrm.PlanetTexDir = str;
 	}
 
 	// scenario directory
-	if (GetString (ifs, "ScenarioDir", CfgDirPrm.ScnDir))
-		if (CfgDirPrm.ScnDir[strlen(CfgDirPrm.ScnDir)-1] != '\\')
-			strcat (CfgDirPrm.ScnDir, "\\");
-	strcpy (scnpath, CfgDirPrm.ScnDir); scnlen = strlen (scnpath);
+	if (GetString (ifs, "ScenarioDir", str))
+        CfgDirPrm.ScnDir = str;
 
 	// Device information
 	GetInt  (ifs, "DeviceIndex", CfgDevPrm.Device_idx);
@@ -805,19 +799,7 @@ Config::~Config()
 
 void Config::SetDefaults ()
 {
-	strcpy(CfgDirPrm.ConfigDir, CfgDirPrm_default.ConfigDir);
-	strcpy(CfgDirPrm.MeshDir, CfgDirPrm_default.MeshDir);
-	strcpy(CfgDirPrm.TextureDir, CfgDirPrm_default.TextureDir);
-	strcpy(CfgDirPrm.HightexDir, CfgDirPrm_default.HightexDir);
-	strcpy(CfgDirPrm.PlanetTexDir, CfgDirPrm_default.PlanetTexDir);
-	strcpy(CfgDirPrm.ScnDir, CfgDirPrm_default.ScnDir);
-
-	strcpy(cfgpath, CfgDirPrm.ConfigDir);    cfglen = strlen(cfgpath);
-	strcpy(mshpath, CfgDirPrm.MeshDir);      mshlen = strlen(mshpath);
-	strcpy(texpath, CfgDirPrm.TextureDir);   texlen = strlen(texpath);
-	strcpy(htxpath, CfgDirPrm.HightexDir);   htxlen = strlen(htxpath);
-	strcpy(ptxpath, CfgDirPrm.PlanetTexDir); ptxlen = strlen(ptxpath);
-	strcpy(scnpath, CfgDirPrm.ScnDir);       scnlen = strlen(scnpath);
+    CfgDirPrm = CfgDirPrm_default;
 
 	if (Root) delete []Root;
 	Root = 0;
@@ -958,24 +940,25 @@ BOOL Config::Write (const char *fname) const
 		ofs << "LPadRect = " << rLaunchpad.left << ' ' << rLaunchpad.top
 			<< ' ' << rLaunchpad.right << ' ' << rLaunchpad.bottom << '\n';
 
-	if (strcmp (CfgDirPrm.ConfigDir, CfgDirPrm_default.ConfigDir) || 
-		strcmp (CfgDirPrm.MeshDir, CfgDirPrm_default.MeshDir) ||
-		strcmp (CfgDirPrm.TextureDir, CfgDirPrm_default.TextureDir) ||
-		strcmp (CfgDirPrm.HightexDir, CfgDirPrm_default.HightexDir) ||
-		strcmp (CfgDirPrm.PlanetTexDir, CfgDirPrm_default.PlanetTexDir) ||
-		strcmp (CfgDirPrm.ScnDir, CfgDirPrm_default.ScnDir) || bEchoAll) {
+    if ((CfgDirPrm.ConfigDir != CfgDirPrm_default.ConfigDir) ||
+        (CfgDirPrm.MeshDir != CfgDirPrm_default.MeshDir) ||
+        (CfgDirPrm.TextureDir != CfgDirPrm_default.TextureDir) ||
+        (CfgDirPrm.HightexDir != CfgDirPrm_default.HightexDir) ||
+        (CfgDirPrm.PlanetTexDir != CfgDirPrm_default.PlanetTexDir) ||
+        (CfgDirPrm.ScnDir != CfgDirPrm_default.ScnDir) || bEchoAll) {
+
 		ofs << "\n; === Subdirectory locations\n";
-		if (strcmp (CfgDirPrm.ConfigDir, CfgDirPrm_default.ConfigDir) || bEchoAll)
+		if ((CfgDirPrm.ConfigDir != CfgDirPrm_default.ConfigDir) || bEchoAll)
 			ofs << "ConfigDir = " << CfgDirPrm.ConfigDir << '\n';
-		if (strcmp (CfgDirPrm.MeshDir, CfgDirPrm_default.MeshDir) || bEchoAll)
+		if ((CfgDirPrm.MeshDir != CfgDirPrm_default.MeshDir) || bEchoAll)
 			ofs << "MeshDir = " << CfgDirPrm.MeshDir << '\n';
-		if (strcmp (CfgDirPrm.TextureDir, CfgDirPrm_default.TextureDir) || bEchoAll)
+		if ((CfgDirPrm.TextureDir != CfgDirPrm_default.TextureDir) || bEchoAll)
 			ofs << "TextureDir = " << CfgDirPrm.TextureDir << endl;
-		if (strcmp (CfgDirPrm.HightexDir, CfgDirPrm_default.HightexDir) || bEchoAll)
+		if ((CfgDirPrm.HightexDir != CfgDirPrm_default.HightexDir) || bEchoAll)
 			ofs << "HightexDir = " << CfgDirPrm.HightexDir << endl;
-		if (strcmp(CfgDirPrm.PlanetTexDir, CfgDirPrm_default.PlanetTexDir) || bEchoAll)
+		if ((CfgDirPrm.PlanetTexDir != CfgDirPrm_default.PlanetTexDir) || bEchoAll)
 			ofs << "PlanetTexDir = " << CfgDirPrm.PlanetTexDir << endl;
-		if (strcmp (CfgDirPrm.ScnDir, CfgDirPrm_default.ScnDir) || bEchoAll)
+		if ((CfgDirPrm.ScnDir != CfgDirPrm_default.ScnDir) || bEchoAll)
 			ofs << "ScenarioDir = " << CfgDirPrm.ScnDir << endl;
 	}
 
@@ -1366,67 +1349,79 @@ BOOL Config::Write (const char *fname) const
 	return TRUE;
 }
 
-char *Config::ConfigPath (const char *name) const
+std::filesystem::path Config::ConfigPath (const char *name) const
 {
-	strcpy (cfgpath+cfglen, name);
-	return strcat (cfgpath, ".cfg");
+    auto ret = CfgDirPrm.ConfigDir / name;
+    ret += ".cfg";
+    return ret;
 }
 
-char *Config::ConfigPathNoext (const char *name)
+std::filesystem::path Config::ConfigPathNoext (const char *name)
 {
-	strcpy (cfgpath+cfglen, name);
-	return cfgpath;
+    auto ret = CfgDirPrm.ConfigDir / name;
+	return ret;
 }
 
-char *Config::MeshPath (const char *name)
+std::filesystem::path Config::MeshPath (const char *name)
 {
-	strcpy (mshpath+mshlen, name);
-	return strcat (mshpath, ".msh");
+    auto ret = CfgDirPrm.MeshDir / name;
+    ret += ".msh";
+    return ret;
 }
 
-char *Config::TexPath (const char *name, const char *ext)
+std::filesystem::path Config::TexPath (const char *name, const char *ext)
 {
-	strcpy (texpath+texlen, name);
-	return strcat (texpath, ext ? ext : ".dds");
+    auto ret = CfgDirPrm.TextureDir / name;
+    ret += ext;
+    return ret;
 }
 
-char *Config::HTexPath (const char *name, const char *ext)
+std::filesystem::path Config::HTexPath (const char *name, const char *ext)
 {
-	if (!htxlen) return 0;
-	strcpy (htxpath+htxlen, name);
-	return strcat (htxpath, ext ? ext : ".dds");
+    if (CfgDirPrm.HightexDir.empty()) {
+        return {};
+    }
+
+    auto ret = CfgDirPrm.HightexDir / name;
+    ret += ext;
+    return ret;
 }
 
-char* Config::PTexPath(const char* name, const char* ext)
+std::filesystem::path Config::PTexPath(const char* name, const char* ext)
 {
-	if (!ptxlen) return 0;
-	strcpy(ptxpath + ptxlen, name);
-	if (ext) strcat(ptxpath, ext);
-	return ptxpath;
+    if (CfgDirPrm.PlanetTexDir.empty()) {
+        return {};
+    }
+
+    auto ret = CfgDirPrm.PlanetTexDir / name;
+    ret += ext;
+    return ret;
 }
 
-const char *Config::ScnPath (const char *name)
+std::filesystem::path Config::ScnPath (const char *name)
 {
-	if (name[1] == ':') { // assume full absolute path
-		return name;
-	} else {
-		strcpy (scnpath+scnlen, name);
-		return strcat (scnpath, ".scn");
-	}
+    std::filesystem::path namePath {name};
+    if (namePath.is_absolute()) { // Don't decorate absolute paths
+        return namePath;
+    } else {
+        auto retPath = CfgDirPrm.ScnDir / namePath;
+        retPath += ".scn";
+        return retPath;
+    }
 }
 
-void Config::TexPath (char *cbuf, const char *name, const char *ext)
+void Config::TexPath (std::filesystem::path& cbuf, const char *name, const char *ext)
 {
-	strncpy (cbuf, texpath, texlen);
-	if (ext) sprintf (cbuf+texlen, "%s.%s", name, ext);
-	else     strcpy (cbuf+texlen, name);
+    cbuf = CfgDirPrm.TextureDir / name;
+    cbuf += ".";
+    cbuf += ext;
 }
 
-void Config::PTexPath(char* cbuf, const char* name, const char* ext)
+void Config::PTexPath(filesystem::path& cbuf, const char* name, const char* ext)
 {
-	strncpy(cbuf, ptxpath, ptxlen);
-	if (ext) sprintf(cbuf + ptxlen, "%s.%s", name, ext);
-	else     strcpy(cbuf + ptxlen, name);
+    cbuf = CfgDirPrm.PlanetTexDir / name;
+    cbuf += ".";
+    cbuf += ext;
 }
 
 bool Config::IsActiveModule(const std::string& name)
@@ -1473,6 +1468,41 @@ bool Config::GetString (istream &is, const char *category, char *val)
 	return true;
 }
 
+bool Config::GetString (istream &is,
+                        const std::string_view& category,
+                        std::string& val) {
+
+    std::string cbuf;
+    cbuf.resize(512);
+
+    is.clear();
+    is.seekg (0, ios::beg);
+    while (is.getline(cbuf.data(), cbuf.size()) &&
+           (cbuf.compare(0, category.size(), category) != 0))
+        ;
+
+    if (!is.good()) {
+        is.clear();
+        return false;
+    }
+
+    // cut comments
+    auto firstSemicolon = cbuf.find(';');
+    if (firstSemicolon != std::string::npos) {
+        cbuf = cbuf.substr(0, firstSemicolon);
+    }
+
+    // find value
+    auto equalsPos = cbuf.find('=');
+    if (equalsPos == std::string::npos) {
+        return false;
+    }
+
+    auto whitespacePos = cbuf.find_first_of(" \t", equalsPos);
+    val = cbuf.substr(equalsPos, whitespacePos);
+    return true;
+}
+
 bool Config::GetReal (istream &is, const char *category, double &val)
 {
 	if (!GetString (is, category, g_cbuf)) return false;
@@ -1510,6 +1540,15 @@ bool Config::GetVector (istream &is, const char *category, Vector &val)
 
 bool Config::GetString (const char *category, char *val)
 {
+	if (!Root) return false;
+	ifstream ifs (Root);
+	if (!ifs) return false;
+	return GetString (ifs, category, val);
+}
+
+bool Config::GetString (const std::string_view& category,
+                        std::string& val) {
+
 	if (!Root) return false;
 	ifstream ifs (Root);
 	if (!ifs) return false;

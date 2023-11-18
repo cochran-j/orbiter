@@ -191,13 +191,13 @@ public:
 	bool DeleteAnnotation (oapi::ScreenAnnotation *sn);
 
 	// File locations - THESE FUNCTIONS ARE NOT THREADSAFE!
-	inline char *ConfigPath (const char *name) { return pConfig->ConfigPath (name); }
-	inline char *MeshPath   (const char *name) { return pConfig->MeshPath (name); }
-	inline char *TexPath    (const char *name, const char *ext = 0)
+	inline std::filesystem::path ConfigPath (const char *name) { return pConfig->ConfigPath (name); }
+	inline std::filesystem::path MeshPath   (const char *name) { return pConfig->MeshPath (name); }
+	inline std::filesystem::path TexPath    (const char *name, const char *ext = 0)
 		{ return pConfig->TexPath (name, ext); }
-	inline char *HTexPath   (const char *name, const char *ext = 0)
+	inline std::filesystem::path HTexPath   (const char *name, const char *ext = 0)
 		{ return pConfig->HTexPath (name, ext); }
-	inline const char *ScnPath    (const char *name) { return pConfig->ScnPath (name); }
+	inline std::filesystem::path ScnPath    (const char *name) { return pConfig->ScnPath (name); }
 
 	FILE *OpenTextureFile (const char *name, const char *ext);
 	// return texture file handle. Searches in hightex and standard directories
@@ -382,8 +382,6 @@ private:
 	DWORD           viewW, viewH;  // render viewport dimensions
 	DWORD			viewBPP;       // render colour depth (bits per pixel)
 
-	char            cfgpath[256];
-	int             cfglen;
 	char            simkstate[256];// accumulated simulated key state
 
     std::chrono::steady_clock::time_point ms_prev;       // used for time step calculation

@@ -50,12 +50,12 @@ Body::Body (double _mass, double _size)
 Body::Body(const char* fname)
 	: Body()
 {
-	char *cpath = g_pOrbiter->ConfigPath (fname);
+	auto cpath = g_pOrbiter->ConfigPath (fname);
 
 	//g_pOrbiter->OutputLoadStatus (fname, 0);
-	g_pOrbiter->OutputLoadStatus (cpath, 1);
+	g_pOrbiter->OutputLoadStatus (cpath.c_str(), 1);
 
-	ifstream ifs (cpath);
+	ifstream ifs (cpath.c_str());
 	if (!ifs) return;
 	
 	filename = cpath;

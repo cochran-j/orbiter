@@ -19,6 +19,8 @@
 #include <cctype>
 #include <algorithm>
 #include <string_view>
+#include <string>
+#include <filesystem>
 
 #include "OrbiterAPI.h"
 #include "GraphicsAPI.h"
@@ -54,12 +56,12 @@ typedef struct {
 } NetParam;
 
 struct CFG_DIRPRM {
-	char   ConfigDir[256];		// location of config files
-	char   MeshDir[256];		// location of mesh files
-	char   TextureDir[256];		// location of texture files
-	char   HightexDir[256];		// location of highres planet textures
-	char   PlanetTexDir[256];   // location for planetary textures (version-2 textures)
-	char   ScnDir[256];			// location of scenario files
+    std::filesystem::path   ConfigDir;		// location of config files
+    std::filesystem::path   MeshDir;		// location of mesh files
+    std::filesystem::path   TextureDir;		// location of texture files
+    std::filesystem::path   HightexDir;		// location of highres planet textures
+    std::filesystem::path   PlanetTexDir;   // location for planetary textures (version-2 textures)
+    std::filesystem::path   ScnDir;			// location of scenario files
 };
 
 struct CFG_PHYSICSPRM {
@@ -380,26 +382,26 @@ public:
 	// write config parameters to file "fname"
 	// returns FALSE if write fails
 
-	char *ConfigPath (const char *name) const;
+	std::filesystem::path ConfigPath (const char *name) const;
 	// Return full path for config file name (adds ".cfg" to name)
-	char *ConfigPathNoext (const char *name);
+    std::filesystem::path ConfigPathNoext (const char *name);
 	// Return full path for config file name (no file extension added)
-	char *MeshPath   (const char *name);
+    std::filesystem::path MeshPath   (const char *name);
 	// Return full path for mesh file name
-	char *TexPath    (const char *name, const char *ext = 0);
+    std::filesystem::path TexPath    (const char *name, const char *ext = 0);
 	// Return full path for texture file name. default extension is ".dds" - NOT THREADSAFE
-	char *HTexPath   (const char *name, const char *ext = 0);
+    std::filesystem::path HTexPath   (const char *name, const char *ext = 0);
 	// Return full path for texture file name in hightex dir.
 	// Default extension is ".dds"
 	// If hightex dir is not defined, function returns NULL
-	char* PTexPath(const char* name, const char* ext = 0);
+    std::filesystem::path PTexPath(const char* name, const char* ext = 0);
 	// Return full path for planetary texture file name
-	const char *ScnPath    (const char *name);
+    std::filesystem::path ScnPath    (const char *name);
 	// Return full path for scenario file name
 
-	void TexPath (char *cbuf, const char *name, const char *ext=0);
+	void TexPath (std::filesystem::path& cbuf, const char *name, const char *ext=0);
 	// fill cbuf with the complete path for file name.ext in the texture directory
-	void PTexPath(char* cbuf, const char* name, const char* ext = 0);
+	void PTexPath(std::filesystem::path& cbuf, const char* name, const char* ext = 0);
 	// fill cbuf with the complete path for file name.ext in the planetary texture directory
 
 	bool bEchoAll;          // echo all configuration parameters (or only non-default ones)?
@@ -461,6 +463,7 @@ public:
 
 	// Read items from master config
 	bool GetString (const char *category, char *val);
+    bool GetString (const std::string_view& category, std::string& val);
 	bool GetReal (const char *category, double &val);
 	bool GetInt (const char *category, int &val);
 	bool GetSize (const char* category, size_t& val);
@@ -469,19 +472,15 @@ public:
 
 private:
 	bool GetString (std::istream &is, const char *category, char *val);
+    bool GetString (std::istream &is,
+                    const std::string_view& category,
+                    std::string& val);
 	bool GetReal (std::istream &is, const char *category, double &val);
 	bool GetInt (std::istream &is, const char *category, int &val);
 	bool GetSize (std::istream& is, const char* category, size_t& val);
 	bool GetBool (std::istream &is, const char *category, bool &val);
 	bool GetVector (std::istream &is, const char *category, Vector &val);
 
-	mutable char cfgpath[256];  // buffer for creating full path names
-	char mshpath[256];
-	char texpath[256];
-	char htxpath[256];
-	char ptxpath[256];
-	char scnpath[256];
-	int cfglen, mshlen, texlen, htxlen, ptxlen, scnlen; // string length
 	bool found_config_file;
 
 	std::list<std::string> m_activeModules; ///< list of active modules

@@ -474,7 +474,7 @@ SURFHANDLE Instrument_MapOld::LoadBitmap (const char *cbuf, int *w, int *h)
 	if (!gc) return NULL;
 
 	// Load bitmap
-	char *path = g_pOrbiter->TexPath (cbuf, ".bmp");
+	auto path = g_pOrbiter->TexPath (cbuf, ".bmp");
     HBITMAP hbm = nullptr;
     /* TODO(jec)
 	HBITMAP hbm = (HBITMAP)LoadImage (GetModuleHandle(NULL), path, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);

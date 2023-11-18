@@ -450,7 +450,6 @@ Orbiter::Orbiter ()
 	bRoughType      = false;
 	bStartVideoTab  = false;
 	//lstatus.bkgDC   = 0;
-	cfglen          = 0;
 	ncustomcmd      = 0;
 	D3DMathSetup();
 	script          = NULL;
@@ -495,7 +494,6 @@ HRESULT Orbiter::Create (HINSTANCE hInstance)
 	// parameter manager - parses from master config file
 	hInst = hInstance;
 	pConfig->Load(MasterConfigFile);
-	strcpy (cfgpath, pConfig->CfgDirPrm.ConfigDir);   cfglen = strlen (cfgpath);
 
 	if (FAILED (hr = pDI->Create (hInstance))) return hr;
 
@@ -798,7 +796,7 @@ VOID Orbiter::Launch (const char *scenario)
 	pConfig->Write (); // save current settings
 	m_pLaunchpad->WriteExtraParams ();
 
-	if (!have_state && !pState->Read (ScnPath (scenario))) {
+	if (!have_state && !pState->Read (ScnPath (scenario).c_str())) {
 		LOGOUT_ERR ("Scenario not found: %s", scenario);
 		TerminateOnError();
 	}
@@ -881,7 +879,7 @@ HWND Orbiter::CreateRenderWindow (Config *pCfg, const char *scenario)
 		td.SetFixedStep(Cfg()->CfgDebugPrm.FixedStep);
 
 	if (!InitializeWorld (pState->Solsys())) {
-		LOGOUT_ERR_FILENOTFOUND_MSG(g_pOrbiter->ConfigPath (pState->Solsys()), "while initialising solar system %s", pState->Solsys());
+		LOGOUT_ERR_FILENOTFOUND_MSG(g_pOrbiter->ConfigPath (pState->Solsys()).c_str(), "while initialising solar system %s", pState->Solsys());
 		TerminateOnError();
 		return 0;
 	}
@@ -889,7 +887,7 @@ HWND Orbiter::CreateRenderWindow (Config *pCfg, const char *scenario)
 	ms_prev = std::chrono::steady_clock::now() -
               std::chrono::milliseconds{1}; // make sure SimDT > 0 for first frame
 
-	g_psys->InitState (ScnPath (scenario));
+	g_psys->InitState (ScnPath (scenario).c_str());
 
 	g_focusobj = 0;
 	Vessel *vfocus = g_psys->GetVessel (pState->Focus());
@@ -980,7 +978,7 @@ HWND Orbiter::CreateRenderWindow (Config *pCfg, const char *scenario)
 	}
 
 	if (g_pane) {
-		g_pane->InitState (ScnPath (scenario));
+		g_pane->InitState (ScnPath (scenario).c_str());
 		LOGOUT ("Finished initialising panels");
 	}
 
@@ -1979,14 +1977,14 @@ void Orbiter::ReleaseGDIResources ()
 FILE *Orbiter::OpenTextureFile (const char *name, const char *ext)
 {
 	FILE *ftex = 0;
-	char *pch = HTexPath (name, ext); // first try high-resolution directory
-	if (pch && (ftex = fopen (pch, "rb"))) {
-		LOGOUT_FINE("Texture load: %s", pch);
+	auto pch = HTexPath (name, ext); // first try high-resolution directory
+	if (!pch.empty() && (ftex = fopen (pch.c_str(), "rb"))) {
+		LOGOUT_FINE("Texture load: %s", pch.c_str());
 		return ftex;
 	}
 	pch = TexPath (name, ext);        // try standard texture directory
-	LOGOUT_FINE("Texture load: %s", pch);
-	return fopen (pch, "rb");
+	LOGOUT_FINE("Texture load: %s", pch.c_str());
+	return fopen (pch.c_str(), "rb");
 }
 
 SURFHANDLE Orbiter::RegisterExhaustTexture (char *name)

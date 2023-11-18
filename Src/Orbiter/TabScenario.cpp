@@ -688,7 +688,7 @@ int orbiter::ScenarioTab::SaveCurScenarioAs (const char *name, char *desc, bool 
 {
 	string cbuf;
 	bool skip = false;
-	const char *path = pLp->App()->ScnPath (name);
+	const char *path = pLp->App()->ScnPath (name).c_str();
 	if (!replace) { // check if exists
 		ifstream ifs (path, ios::in);
 		if (ifs) return 2;
@@ -770,10 +770,7 @@ INT_PTR CALLBACK orbiter::ScenarioTab::SaveProc (HWND hWnd, UINT uMsg, WPARAM wP
 //-----------------------------------------------------------------------------
 void orbiter::ScenarioTab::ClearQSFolder()
 {
-	char filespec[256];
-	strcpy (filespec, pLp->App()->ScnPath ("Quicksave\\*"));
-    // At this point it's "<some_path>/Quicksave/*.scn"
-    std::filesystem::path quicksavePath {filespec};
+    auto quicksavePath = pLp->App()->ScnPath ("Quicksave");
     quicksavePath.remove_filename();
     for (auto& dir_entry : std::filesystem::directory_iterator{quicksavePath}) {
         if (dir_entry.path().extension() == "scn") {
