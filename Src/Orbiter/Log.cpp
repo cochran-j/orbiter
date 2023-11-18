@@ -68,13 +68,19 @@ void LogOutVA(const char *format, va_list ap)
 	FILE *f = fopen(logname, "a+t");
 	fprintf(f, "%010.3f: ",
             std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - t0));
+
+    va_list ap2;
+    va_copy(ap2, ap);
 	vfprintf(f, format, ap);
+
 	fputc('\n', f);
 	fclose(f);
 	if (logOut) {
-		vsnprintf(logs, 255, format, ap);
+		vsnprintf(logs, 255, format, ap2);
 		(*logOut)(logs);
 	}
+
+    va_end(ap2);
 }
 
 void LogOutFine (const char *msg, ...)
