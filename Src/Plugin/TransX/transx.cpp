@@ -24,7 +24,7 @@
 #include <cstdio>
 #include <cmath>
 #include <string>
-#include "orbitersdk.h"
+#include "Orbitersdk.h"
 
 #include "mfd.h"
 #include "graph.h"
@@ -108,10 +108,12 @@ int TransxMFD::getheight()
 OAPI_MSGTYPE TransxMFD::MsgProc (UINT msg, UINT mfd, WPARAM wparam, LPARAM lparam)
 // Standard message parser for messages passed from Orbiter
 {
+    /* TODO(jec)
 	switch (msg) {
 	case OAPI_MSG_MFD_OPENED:
 		return (OAPI_MSGTYPE) new TransxMFD (LOWORD(wparam), HIWORD(wparam), (VESSEL*)lparam, mfd);
 	}
+    */
 	return 0;
 }
 

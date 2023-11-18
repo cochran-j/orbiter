@@ -8,10 +8,12 @@ add_library(Rcontrol SHARED
 
 target_include_directories(Rcontrol
 	PUBLIC ${ORBITER_SOURCE_SDK_INCLUDE_DIR}
+    PUBLIC ${WIN32_INCLUDE_DIR}
 )
 
 target_link_libraries(Rcontrol
-	${ORBITER_LIB}
+    # TODO(jec)
+    # ${ORBITER_LIB}
 	${ORBITER_SDK_LIB}
 	${ORBITER_DLGCTRL_LIB}
 )

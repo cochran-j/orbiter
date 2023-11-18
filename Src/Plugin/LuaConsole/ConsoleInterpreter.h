@@ -10,6 +10,8 @@
 // ==============================================================
 // class ConsoleInterpreter
 
+class LuaConsole;
+
 class ConsoleInterpreter: public Interpreter {
 	friend class LuaConsole;
 public:

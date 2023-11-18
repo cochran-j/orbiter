@@ -190,7 +190,7 @@ NPRESULT __stdcall NP_StopDataTransmission()
 //////////////////////////////////////////////////////////////////////////////
 // NPClientInit() -- Loads the DLL and retrieves pointers to all exports
 //
-NPRESULT NPClient_Init( LPTSTR pszDLLPath )
+NPRESULT NPClient_Init( char* pszDLLPath )
 {
 	NPRESULT result = NP_OK;
     TCHAR szFullPath[MAX_PATH * 2];

@@ -10,12 +10,14 @@
 // ==============================================================
 
 #include "TabDlg.h"
+/* TODO(jec)
 #include "CommCtrl.h"
 #include "Uxtheme.h"
+*/
 #include "OrbiterAPI.h"
 
-INT_PTR CALLBACK DlgProcHook (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK TabProcHook (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR DlgProcHook (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR TabProcHook (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 // ==============================================================
 // class TabbedDialog: Dialog containing a single tab control
@@ -67,11 +69,13 @@ int TabbedDialog::AddTab (TabPage *tab, const char *label)
 
 	char cbuf[256];
 	strncpy (cbuf, label, 256);
+    /* TODO(jec)
 	TC_ITEM tie;
 	tie.mask = TCIF_TEXT;
 	tie.iImage = -1;
 	tie.pszText = cbuf;
 	SendDlgItemMessage (hDlg, tabId, TCM_INSERTITEM, nTab, (LPARAM)&tie);
+    */
 	TabPage **tmp = new TabPage*[nTab+1];
 	if (nTab) {
 		memcpy (tmp, pTab, nTab*sizeof(TabPage*));
@@ -87,10 +91,12 @@ int TabbedDialog::AddTab (TabPage *tab, const char *label)
 
 void TabbedDialog::SwitchTab ()
 {
+    /* TODO(jec)
 	int pg, cpg = TabCtrl_GetCurSel (GetDlgItem (hDlg, tabId));
 	for (pg = 0; pg < nTab; pg++)
 		if (pg != cpg) pTab[pg]->Show (false);
 	pTab[cpg]->Show (true);
+    */
 }
 
 // --------------------------------------------------------------
@@ -133,6 +139,7 @@ int TabbedDialog::Closed ()
 
 INT_PTR TabbedDialog::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		return OnInitDialog (wParam);
@@ -150,13 +157,15 @@ INT_PTR TabbedDialog::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		}
 		break;
 	}
+    */
 	return oapiDefDialogProc (hWnd, uMsg, wParam, lParam);
 }
 
 // --------------------------------------------------------------
 
-static INT_PTR CALLBACK DlgProcHook (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR DlgProcHook (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	if (uMsg == WM_INITDIALOG) {
 		SetWindowLongPtr (hWnd, GWLP_USERDATA, (LONG_PTR)lParam);
 		// store class pointer with window
@@ -166,6 +175,8 @@ static INT_PTR CALLBACK DlgProcHook (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 	TabbedDialog *dlg = (TabbedDialog*)GetWindowLongPtr (hWnd, GWLP_USERDATA);
 	if (dlg) return dlg->DlgProc (hWnd, uMsg, wParam, lParam);
 	else     return oapiDefDialogProc (hWnd, uMsg, wParam, lParam);
+    */
+    oapiDefDialogProc (hWnd, uMsg, wParam, lParam);
 }
 
 
@@ -185,14 +196,18 @@ TabPage::TabPage (TabbedDialog *frame, int _pageId)
 
 void TabPage::Open ()
 {
+    /* TODO(jec)
 	hTab = CreateDialogParam (dlg->hInst, MAKEINTRESOURCE(pageId), dlg->hDlg, TabProcHook, (LPARAM)this);
+    */
 }
 
 // --------------------------------------------------------------
 
 void TabPage::Show (bool show)
 {
+    /* TODO(jec)
 	ShowWindow (hTab, show ? SW_SHOW : SW_HIDE);
+    */
 	active = show;
 }
 
@@ -207,19 +222,22 @@ int TabPage::OnInitTab (WPARAM wParam)
 
 INT_PTR TabPage::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		return OnInitTab (wParam);
 	case WM_COMMAND:
 		return OnCommand (wParam, lParam);
 	}
+    */
 	return FALSE;
 }
 
 // --------------------------------------------------------------
 
-static INT_PTR CALLBACK TabProcHook (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR TabProcHook (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	if (uMsg == WM_INITDIALOG) {
 		EnableThemeDialogTexture (hWnd, ETDT_ENABLETAB);
 		SetWindowLongPtr (hWnd, GWLP_USERDATA, lParam);
@@ -228,4 +246,6 @@ static INT_PTR CALLBACK TabProcHook (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 	TabPage *pTab = (TabPage*)GetWindowLongPtr (hWnd, GWLP_USERDATA);
 	if (pTab) return pTab->DlgProc (hWnd, uMsg, wParam, lParam);
 	else      return FALSE;
+    */
+    return FALSE;
 }

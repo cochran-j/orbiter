@@ -12,8 +12,13 @@
 
 #define STRICT
 #define ORBITER_MODULE
+
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
 #include "windows.h"
-#include "orbitersdk.h"
+#include "Orbitersdk.h"
 #include "ScriptMFD.h"
 
 #undef DLLEXPORT
@@ -21,6 +26,19 @@
 #include "Interpreter.h"
 
 using namespace std;
+
+
+static bool caseInsensitiveEquals(const std::string_view& str1,
+                                  const std::string_view& str2) {
+
+    return std::equal(str1.begin(), str1.end(),
+                      str2.begin(), str2.end(),
+                      [](char c1, char c2) {
+                          return std::tolower(static_cast<unsigned char>(c1)) ==
+                                 std::tolower(static_cast<unsigned char>(c2));
+                      });
+}
+
 
 // ==============================================================
 // Global variables
@@ -86,7 +104,7 @@ DLLCLBK void InitModule (HINSTANCE hDLL)
 					sscanf (key, "%d", &modespec[nmode].key);
 				modespec[nmode].persist = 0;
 				if (oapiReadItem_string (hFile, (char*)"Persist", persist))
-					if (!_stricmp(persist, "vessel"))
+					if (caseInsensitiveEquals(persist, "vessel"))
 						modespec[nmode].persist = 1;
 				nmode++;
 		}

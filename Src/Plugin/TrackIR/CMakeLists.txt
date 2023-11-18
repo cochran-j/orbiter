@@ -11,6 +11,7 @@ add_library(TrackIR SHARED
 target_include_directories(TrackIR
 	PUBLIC ${ORBITER_SOURCE_SDK_INCLUDE_DIR}
 	PUBLIC ${MODULE_COMMON_DIR}
+    PUBLIC ${WIN32_INCLUDE_DIR}
 )
 
 target_link_libraries(TrackIR

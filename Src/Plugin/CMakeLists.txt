@@ -15,5 +15,7 @@ add_subdirectory(Meshdebug)
 add_subdirectory(Rcontrol)
 add_subdirectory(ScnEditor)
 add_subdirectory(ScriptMFD)
-add_subdirectory(TrackIR)
+if(WIN32)  # TrackIR library only on Windows...research alternatives
+    add_subdirectory(TrackIR)
+endif()
 add_subdirectory(TransX)

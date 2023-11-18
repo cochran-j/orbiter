@@ -1,7 +1,7 @@
 #ifndef __TRACKIRCONFIG_H
 #define __TRACKIRCONFIG_H
 
-#include "orbitersdk.h"
+#include "Orbitersdk.h"
 #include "TrackIR.h"
 
 static const char *cfgfile = "TrackIR.cfg";
@@ -20,11 +20,11 @@ public:
 	void Apply (HWND hDlg);
 
 private:
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
-	static INT_PTR CALLBACK TabProc_mode (HWND, UINT, WPARAM, LPARAM);
-	static INT_PTR CALLBACK TabProc_cfg  (HWND, UINT, WPARAM, LPARAM);
-	static INT_PTR CALLBACK TabProc_trk  (HWND, UINT, WPARAM, LPARAM);
-	static INT_PTR CALLBACK TabProc_diag (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR TabProc_mode (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR TabProc_cfg  (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR TabProc_trk  (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR TabProc_diag (HWND, UINT, WPARAM, LPARAM);
 
 	static TrackIRconfig *tirc;
 	TrackIR *trackir;

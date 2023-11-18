@@ -11,10 +11,12 @@ target_include_directories(LuaMFD
 	PUBLIC ${ORBITER_SOURCE_SDK_INCLUDE_DIR}
 	PUBLIC ${MODULE_COMMON_DIR}
 	PUBLIC ${ORBITER_SOURCE_ROOT_DIR}/Src/Module/LuaScript/LuaInterpreter
+    PUBLIC ${WIN32_INCLUDE_DIR}
 )
 
 target_link_libraries(LuaMFD
-	${ORBITER_LIB}
+    # TODO(jec)
+    # ${ORBITER_LIB}
 	${ORBITER_SDK_LIB}
 	lua
 	${LUAINTERPRETER_LIB}

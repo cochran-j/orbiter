@@ -44,12 +44,16 @@ void ConsoleConfig::InitDialog (HWND hDlg)
 {
 	char cbuf[256];
 	sprintf (cbuf, "%d", fontsize);
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hDlg, IDC_FONTSIZE), cbuf);
+    */
 }
 
 void ConsoleConfig::CloseDialog (HWND hDlg)
 {
+    /* TODO(jec)
 	EndDialog (hDlg, 0);
+    */
 }
 
 void ConsoleConfig::SetDefault ()
@@ -62,7 +66,9 @@ bool ConsoleConfig::ReadConfig ()
 	int d;
 	FILEHANDLE hFile = oapiOpenFile (cfgfile, FILE_IN, CONFIG);
 	if (!hFile) {
+        /* TODO(jec)
 		MessageBeep (-1);
+        */
 		return false;
 	}
 	if (oapiReadItem_int (hFile, (char*)"FSIZE", d)) fontsize = (DWORD)d;
@@ -74,12 +80,15 @@ void ConsoleConfig::Apply (HWND hDlg)
 {
 	char cbuf[256];
 	DWORD d;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hDlg, IDC_FONTSIZE), cbuf, 256);
+    */
 	if (sscanf (cbuf, "%d", &d) == 1) fontsize = d;
 }
 
-INT_PTR CALLBACK ConsoleConfig::DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR ConsoleConfig::DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		cc->InitDialog (hDlg);
@@ -95,5 +104,6 @@ INT_PTR CALLBACK ConsoleConfig::DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LP
 		}
 		break;
 	}
+    */
 	return 0;
 }

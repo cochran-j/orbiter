@@ -7,6 +7,8 @@
 //#include "Orbitersdk.h"
 #include "LuaConsole.h"
 
+class LuaConsole;
+
 class ConsoleConfig: public LaunchpadItem {
 	friend class LuaConsole;
 
@@ -26,7 +28,7 @@ protected:
 	DWORD fontsize;
 
 private:
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
 
 	static ConsoleConfig *cc;
 	static const char *cfgfile;

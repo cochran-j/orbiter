@@ -15,7 +15,7 @@
 #define __FDGRAPH_H
 
 #include <stdio.h>
-#include "Dialog\Graph.h"
+#include "Dialog/Graph.h"
 
 class VESSEL;
 

@@ -13,7 +13,7 @@
 #define ORBITER_MODULE
 #include <windows.h>
 #include <list>
-#include "orbitersdk.h"
+#include "Orbitersdk.h"
 #include "FDGraph.h"
 #include "resource.h"
 
@@ -51,16 +51,16 @@ namespace oapi {
 		void clbkDeleteVessel(OBJHANDLE hVessel);
 
 		/// \brief Entry point for dialog message procedure
-		static INT_PTR CALLBACK hookDlgMsgProc(HWND hDlg, UINT uInt, WPARAM wParam, LPARAM lParam);
+		static INT_PTR hookDlgMsgProc(HWND hDlg, UINT uInt, WPARAM wParam, LPARAM lParam);
 
 		/// \brief Dialog message procedure
 		INT_PTR DlgMsgProc(HWND hDlg, UINT uInt, WPARAM wParam, LPARAM lParam);
 
 		/// \brief Entry point for graph message procedure
-		static LONG_PTR FAR PASCAL hookGraphMsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		static LONG_PTR hookGraphMsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 		/// \brief Graph message procedure
-		LONG_PTR FAR PASCAL GraphMsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		LONG_PTR GraphMsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	protected:
 		/// \brief Protected constructor
@@ -98,7 +98,7 @@ namespace oapi {
 		/// \brief Refresh the currently displayed data graphs
 		/// \param hWnd Graph window handle
 		/// \return 0
-		LONG_PTR FAR PASCAL PaintGraph(HWND hWnd);
+		LONG_PTR PaintGraph(HWND hWnd);
 
 		/// \brief Initialise or finalise the data log file
 		/// \param start If true, initialise file, otherwise finalise file
@@ -131,7 +131,9 @@ namespace oapi {
 DLLCLBK void InitModule(HINSTANCE hDLL)
 {
 	// Create and register the module
+    /* TODO(jec)
 	oapiRegisterModule(oapi::FlightData::GetInstance(hDLL));
+    */
 }
 
 /// \brief Module exit point 
@@ -175,6 +177,7 @@ oapi::FlightData::FlightData(HINSTANCE hDLL)
 	, m_hDlg(NULL)
 {
 	// Register the window class for the data graph
+    /* TODO(jec)
 	WNDCLASS wndClass;
 	wndClass.style = CS_HREDRAW | CS_VREDRAW;
 	wndClass.lpfnWndProc = hookGraphMsgProc;
@@ -187,6 +190,7 @@ oapi::FlightData::FlightData(HINSTANCE hDLL)
 	wndClass.lpszMenuName = NULL;
 	wndClass.lpszClassName = "GraphWindow";
 	RegisterClass(&wndClass);
+    */
 
 	Graph::InitGDI();
 
@@ -208,7 +212,9 @@ oapi::FlightData::FlightData(HINSTANCE hDLL)
 oapi::FlightData::~FlightData()
 {
 	// Unregister the window class for the graph
+    /* TODO(jec)
 	UnregisterClass("GraphWindow", GetModule());
+    */
 
 	Graph::FreeGDI();
 
@@ -240,7 +246,9 @@ void oapi::FlightData::clbkPreStep(double simt, double simdt, double mjd)
 			fclose(f);
 		}
 		m_sysT = syst;
+        /* TODO(jec)
 		InvalidateRect(GetDlgItem(m_hDlg, IDC_GRAPH), NULL, TRUE);
+        */
 	}
 }
 
@@ -277,6 +285,7 @@ INT_PTR oapi::FlightData::InitDialog(HWND hDlg)
 	const std::vector<std::string> ratestr = { "0.01", "0.1", "1", "10" };
 
 	// Populate the data type list from the known graph types
+    /* TODO(jec)
 	SendDlgItemMessage(hDlg, IDC_DATALIST, LB_ADDSTRING, 0, (LPARAM)FDGraph_Altitude::Title().c_str());
 	SendDlgItemMessage(hDlg, IDC_DATALIST, LB_ADDSTRING, 0, (LPARAM)FDGraph_Airspeed::Title().c_str());
 	SendDlgItemMessage(hDlg, IDC_DATALIST, LB_ADDSTRING, 0, (LPARAM)FDGraph_VSpeed::Title().c_str());
@@ -292,6 +301,7 @@ INT_PTR oapi::FlightData::InitDialog(HWND hDlg)
 	for (int i = 0; i < ratestr.size(); i++)
 		SendDlgItemMessage(hDlg, IDC_RATE, CB_ADDSTRING, 0, (LPARAM)ratestr[i].c_str());
 	SendDlgItemMessage(hDlg, IDC_RATE, CB_SETCURSEL, 2, 0);
+    */
 
 	m_pVessel = oapiGetFocusInterface();
 	ResetVesselList(hDlg);
@@ -320,16 +330,22 @@ INT_PTR oapi::FlightData::DestroyDialog()
 
 void oapi::FlightData::ResetVesselList(HWND hDlg)
 {
+    /* TODO(jec)
 	SendDlgItemMessage(hDlg, IDC_VESSELLIST, CB_RESETCONTENT, 0, 0);
+    */
 	DWORD i, n = oapiGetVesselCount();
 	if (!n) return; // this should not happen
 	char name[256];
 	for (i = 0; i < n; i++) {
 		oapiGetObjectName(oapiGetVesselByIndex(i), name, 256);
+        /* TODO(jec)
 		SendDlgItemMessage(hDlg, IDC_VESSELLIST, CB_ADDSTRING, 0, (LPARAM)name);
+        */
 	}
+    /* TODO(jec)
 	i = SendDlgItemMessage(hDlg, IDC_VESSELLIST, CB_FINDSTRINGEXACT, -1, (LPARAM)m_pVessel->GetName());
 	SendDlgItemMessage(hDlg, IDC_VESSELLIST, CB_SETCURSEL, (i != CB_ERR ? i : 0), 0);
+    */
 }
 
 // --------------------------------------------------------------
@@ -344,10 +360,14 @@ void oapi::FlightData::ResetData()
 
 void oapi::FlightData::PickVesselFromList(HWND hDlg)
 {
+    /* TODO(jec)
 	int item = SendDlgItemMessage(hDlg, IDC_VESSELLIST, CB_GETCURSEL, 0, 0);
 	if (item == CB_ERR) return;
+    */
 	char cbuf[256];
+    /* TODO(jec)
 	SendDlgItemMessage(hDlg, IDC_VESSELLIST, CB_GETLBTEXT, item, (LPARAM)cbuf);
+    */
 	OBJHANDLE hv = oapiGetVesselByName(cbuf);
 	if (hv) {
 		if (m_bRecording && m_bLogging) WriteLogHeader(false);
@@ -368,12 +388,15 @@ void oapi::FlightData::AddGraph(HWND hDlg, int which)
 	size_t ng = m_graph.size();
 	char cbuf[256];
 
+    /* TODO(jec)
 	if (SendDlgItemMessage(hDlg, IDC_DATALIST, LB_GETTEXT, which, (LPARAM)cbuf) == LB_ERR)
 		return;
+    */
 	for (auto it = m_graph.begin(); it != m_graph.end(); it++)
 		if ((*it)->Title() == cbuf) return; // data graph already present
 
 	// stretch dialog window to accomodate the new graph
+    /* TODO(jec)
 	HWND hCanvas = GetDlgItem(hDlg, IDC_GRAPH);
 	GetWindowRect(hDlg, &rw);
 	GetWindowRect(hCanvas, &rc);
@@ -381,6 +404,7 @@ void oapi::FlightData::AddGraph(HWND hDlg, int which)
 
 	SetWindowPos(hDlg, 0, 0, 0, rw.right - rw.left, rw.bottom - rw.top + dh, SWP_NOMOVE | SWP_NOREPOSITION | SWP_NOZORDER);
 	SetWindowPos(hCanvas, 0, 0, 0, rc.right - rc.left, rc.bottom - rc.top + dh, SWP_NOMOVE | SWP_NOREPOSITION | SWP_NOZORDER);
+    */
 
 	// add new graph to the list
 	m_graph.push_back(FlightDataGraph::CreateGraph(cbuf));
@@ -396,12 +420,15 @@ void oapi::FlightData::DelGraph(HWND hDlg, int which)
 	size_t ng = m_graph.size();
 	char cbuf[256];
 
+    /* TODO(jec)
 	if (SendDlgItemMessage(hDlg, IDC_DATALIST, LB_GETTEXT, which, (LPARAM)cbuf) == LB_ERR)
 		return;
+    */
 	for (auto it = m_graph.begin(); it != m_graph.end(); it++)
 		if ((*it)->Title() == cbuf) {
 
 			// shrink dialog window
+            /* TODO(jec)
 			HWND hCanvas = GetDlgItem(hDlg, IDC_GRAPH);
 			GetWindowRect(hDlg, &rw);
 			GetWindowRect(hCanvas, &rc);
@@ -409,6 +436,7 @@ void oapi::FlightData::DelGraph(HWND hDlg, int which)
 
 			SetWindowPos(hDlg, 0, 0, 0, rw.right - rw.left, rw.bottom - rw.top - dh, SWP_NOMOVE | SWP_NOREPOSITION | SWP_NOZORDER);
 			SetWindowPos(hCanvas, 0, 0, 0, rc.right - rc.left, rc.bottom - rc.top - dh, SWP_NOMOVE | SWP_NOREPOSITION | SWP_NOZORDER);
+            */
 
 			// remove graph from the list
 			delete (*it);
@@ -420,11 +448,12 @@ void oapi::FlightData::DelGraph(HWND hDlg, int which)
 
 // --------------------------------------------------------------
 
-LONG_PTR FAR PASCAL oapi::FlightData::PaintGraph(HWND hWnd)
+LONG_PTR oapi::FlightData::PaintGraph(HWND hWnd)
 {
 	size_t ng = m_graph.size();
 	if (ng) {
 		RECT r;
+        /* TODO(jec)
 		PAINTSTRUCT ps;
 		HDC hDC;
 		DWORD i;
@@ -439,6 +468,7 @@ LONG_PTR FAR PASCAL oapi::FlightData::PaintGraph(HWND hWnd)
 			gtop += gh;
 		}
 		EndPaint(hWnd, &ps);
+        */
 	}
 
 	return 0;
@@ -494,13 +524,15 @@ void oapi::FlightData::hookOpenDlg(void* context)
 
 void oapi::FlightData::clbkOpenDlg(void* context)
 {
+    /* TODO(jec)
 	HWND hDlg = oapiOpenDialog(GetModule(), IDD_FLIGHTDATA, hookDlgMsgProc);
 	if (hDlg) m_hDlg = hDlg; // otherwise open already
+    */
 }
 
 // --------------------------------------------------------------
 
-INT_PTR CALLBACK oapi::FlightData::hookDlgMsgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR oapi::FlightData::hookDlgMsgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return self->DlgMsgProc(hDlg, uMsg, wParam, lParam);
 }
@@ -510,6 +542,7 @@ INT_PTR CALLBACK oapi::FlightData::hookDlgMsgProc(HWND hDlg, UINT uMsg, WPARAM w
 
 INT_PTR oapi::FlightData::DlgMsgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		return InitDialog(hDlg);
@@ -563,12 +596,13 @@ INT_PTR oapi::FlightData::DlgMsgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
 		}
 		break;
 	}
+    */
 	return oapiDefDialogProc(hDlg, uMsg, wParam, lParam);
 }
 
 // --------------------------------------------------------------
 
-LONG_PTR FAR PASCAL oapi::FlightData::hookGraphMsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LONG_PTR oapi::FlightData::hookGraphMsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return self->GraphMsgProc(hWnd, uMsg, wParam, lParam);
 }
@@ -576,11 +610,14 @@ LONG_PTR FAR PASCAL oapi::FlightData::hookGraphMsgProc(HWND hWnd, UINT uMsg, WPA
 // --------------------------------------------------------------
 // Graph canvas message handler
 
-LONG_PTR FAR PASCAL oapi::FlightData::GraphMsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LONG_PTR oapi::FlightData::GraphMsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_PAINT:
 		return PaintGraph(hWnd);
 	}
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+    */
+    return FALSE;
 }

@@ -23,9 +23,11 @@
 #include <windows.h>
 #include <cstdio>
 #include <cmath>
-#include "orbitersdk.h"
+#include "Orbitersdk.h"
 #include "shiplist.h"
 #include <list>
+#include <filesystem>
+#include <fstream>
 
 static int mode;
 
@@ -41,9 +43,11 @@ DLLCLBK void InitModule (HINSTANCE hDLL)
 	spec.name    = name;
 	spec.msgproc = TransxMFD::MsgProc;
 	spec.context = NULL;
+
 	//Code contributed by Dave Robotham
+    auto cfgFilePath = std::filesystem::path{"Config"} / "transx.cfg";
 	ifstream kstream;
-	kstream.open("config\\transx.cfg",NULL);	// this could be any file really.
+	kstream.open(cfgFilePath.c_str());	// this could be any file really.
 	if( kstream )
 	{
 		try

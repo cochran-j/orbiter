@@ -7,6 +7,7 @@
 
 #include "NPClient.h"
 #include "NPClientWraps.h"
+#include "DllCompat.h"
 
 using std::min;
 using std::max;
@@ -20,7 +21,7 @@ GPARAMS gParams;
 // ==============================================================
 // Local prototypes
 
-bool GetDllLocation (LPTSTR pszPath);
+bool GetDllLocation (char* pszPath);
 
 // ==============================================================
 // class TrackIR
@@ -211,10 +212,11 @@ bool TrackIR::clbkPoll (CamData *data)
 // ==============================================================
 // Auxiliary functions
 
-bool GetDllLocation (LPTSTR pszPath)
+bool GetDllLocation (char* pszPath)
 {
 	if (pszPath == NULL) return false;
 
+    /* TODO(jec):  Searches registry for NPClient.dll
 	//find path to NPClient.dll
 	HKEY pKey = NULL;
 	//open the registry key 
@@ -243,6 +245,7 @@ bool GetDllLocation (LPTSTR pszPath)
 		}
 	}
 	::RegCloseKey(pKey);
+    */
     strcpy(pszPath, "Error");
 	return false;
 }

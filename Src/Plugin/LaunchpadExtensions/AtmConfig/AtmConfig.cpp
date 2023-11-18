@@ -4,15 +4,36 @@
 #define STRICT 1
 #define ORBITER_MODULE
 
-#include "orbitersdk.h"
+#include <filesystem>
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+
+#include "Orbitersdk.h"
 #include "resource.h"
+/* TODO(jec)
 #include <io.h>
+*/
+#include "DllCompat.h"
 
 using namespace std;
 
+static bool caseInsensitiveEquals(const std::string_view& str1,
+                                  const std::string_view& str2) {
+
+    return std::equal(str1.begin(), str1.end(),
+                      str2.begin(), str2.end(),
+                      [](char c1, char c2) {
+                           return std::tolower(static_cast<unsigned char>(c1)) ==
+                                  std::tolower(static_cast<unsigned char>(c2));
+                      });
+}
+
+
 class AtmConfig;
 
-const char *CelbodyDir = "Modules\\Celbody";
+const std::filesystem::path CelbodyDir =
+    std::filesystem::path{"Modules"} / "Celbody";
 const char *ModuleItem = "MODULE_ATM";
 
 struct {
@@ -33,7 +54,7 @@ public:
 	void UpdateData (HWND hWnd);
 	void Apply (HWND hWnd);
 	void OpenHelp (HWND hWnd);
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
 
 protected:
 	// scan the 'Modules\Celbody' folder for directories, and
@@ -99,7 +120,7 @@ void AtmConfig::Read (const char *celbody)
 		char name[256];
 		oapiReadItem_string (hFile, (char*)ModuleItem, name);
 		for (module_curr = module_first; module_curr; module_curr = module_curr->next)
-			if (!_stricmp (module_curr->module_name, name)) break;
+			if (caseInsensitiveEquals(module_curr->module_name, name)) break;
 		oapiCloseFile (hFile, FILE_IN);
 	}
 }
@@ -132,17 +153,21 @@ void AtmConfig::InitDialog (HWND hWnd)
 void AtmConfig::ListCelbodies (HWND hWnd)
 {
 	ScanCelbodies (hWnd);
+    /* TODO(jec)
 	if (!SendDlgItemMessage (hWnd, IDC_COMBO2, CB_GETCOUNT, 0, 0)) return;
 	int idx = SendDlgItemMessage (hWnd, IDC_COMBO2, CB_FINDSTRINGEXACT, -1, (LPARAM)"Earth");
 	if (idx == CB_ERR) idx = 0;
 	SendDlgItemMessage (hWnd, IDC_COMBO2, CB_SETCURSEL, idx, 0);
+    */
 	CelbodyChanged (hWnd);
 }
 
 void AtmConfig::ListModules (HWND hWnd)
 {
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_COMBO1, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessage (hWnd, IDC_COMBO1, CB_ADDSTRING, 0, (LPARAM)"[None]");
+    */
 
 	if (!celbody[0]) return; // nothing to do
 
@@ -151,7 +176,9 @@ void AtmConfig::ListModules (HWND hWnd)
 
 	MODULESPEC *ms = module_first;
 	while (ms) {
+        /* TODO(jec)
 		SendDlgItemMessage (hWnd, IDC_COMBO1, CB_ADDSTRING, 0, (LPARAM)ms->model_name);
+        */
 		ms = ms->next;
 	}
 	int idx = 0;
@@ -160,29 +187,37 @@ void AtmConfig::ListModules (HWND hWnd)
 		for (idx = 0; ms && ms != module_curr; ms = ms->next, idx++);
 		idx++;
 	}
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_COMBO1, CB_SETCURSEL, idx, 0);
+    */
 	ModelChanged (hWnd);
 }
 
 void AtmConfig::UpdateData (HWND hWnd)
 {
+    /* TODO(jec)
 	int i, model = (int)SendDlgItemMessage (hWnd, IDC_COMBO1, CB_GETCURSEL, 0, 0);
+
 	if (!model) {
 		module_curr = 0;
 	} else {
 		for (module_curr = module_first, i = 1; module_curr && i < model; module_curr = module_curr->next, i++);
 	}
+    */
 }
 
 void AtmConfig::CelbodyChanged (HWND hWnd)
 {
+    /* TODO(jec)
 	int idx = SendDlgItemMessage (hWnd, IDC_COMBO2, CB_GETCURSEL, 0, 0);
 	SendDlgItemMessage (hWnd, IDC_COMBO2, CB_GETLBTEXT, idx, (LPARAM)celbody);
+    */
 	ListModules (hWnd);
 }
 
 void AtmConfig::ModelChanged (HWND hWnd)
 {
+    /* TODO(jec)
 	int i, model = (int)SendDlgItemMessage (hWnd, IDC_COMBO1, CB_GETCURSEL, 0, 0);
 	if (!model) {
 		SetWindowText (GetDlgItem (hWnd, IDC_EDIT1), "Atmosphere effects disabled.");
@@ -192,6 +227,7 @@ void AtmConfig::ModelChanged (HWND hWnd)
 			ms = ms->next;
 		if (ms) SetWindowText (GetDlgItem (hWnd, IDC_EDIT1), ms->model_desc);
 	}
+    */
 }
 
 void AtmConfig::Apply (HWND hWnd)
@@ -212,71 +248,63 @@ void AtmConfig::OpenHelp (HWND hWnd)
 
 void AtmConfig::ScanCelbodies (HWND hWnd)
 {
+    /* TODO(jec)
 	SendDlgItemMessage (hWnd, IDC_COMBO2, CB_RESETCONTENT, 0, 0);
+    */
 
 	char filespec[256];
-	sprintf (filespec, "%s\\*.*", CelbodyDir);
-	_finddata_t info, subinfo;
-	intptr_t id = _findfirst (filespec, &info);
-	if (id >= 0) {
-		intptr_t res;
-		do {
-			if (info.attrib & _A_SUBDIR) {
-				sprintf (filespec, "%s\\%s\\atmosphere", CelbodyDir, info.name);
-				intptr_t id2 = _findfirst (filespec, &subinfo);
-				if (id2 >= 0 && (subinfo.attrib & _A_SUBDIR)) {
-					SendDlgItemMessage (hWnd, IDC_COMBO2, CB_ADDSTRING, 0, (LPARAM)info.name);
-				}
-				_findclose (id2);
-			}
-			res = _findnext (id, &info);
-		} while (!res);
-	}
-	_findclose (id);
+    for (auto& dir_entry : std::filesystem::directory_iterator{CelbodyDir}) {
+        if (dir_entry.is_directory()) {
+            auto atmDir = dir_entry.path() / "Atmosphere";
+
+            if (std::filesystem::exists(atmDir) &&
+                std::filesystem::is_directory(atmDir)) {
+
+                /* TODO(jec)
+                SendDlgItemMessage(hWnd, IDC_COMBO2, CB_ADDSTRING, 0, (LPARAM)atmDir.c_str());
+                */
+            }
+        }
+    }
 }
 
 void AtmConfig::ScanModules (const char *celbody)
 {
 	ClearModules ();
 
-	char filespec[256];
-	sprintf (filespec, "%s\\%s\\Atmosphere\\*.dll", CelbodyDir, celbody);
-	_finddata_t info;
-	intptr_t id = _findfirst (filespec, &info);
-	if (id >= 0) {
-		int res;
-		MODULESPEC *module_last = 0;
-		do {
-			info.name[strlen(info.name)-4] = '\0'; // cut off '.dll' extension
-			char path[256];
-			sprintf (path, "%s\\%s\\Atmosphere\\%s", CelbodyDir, celbody, info.name);
-			char *model_name = 0;
-			MODULESPEC *ms = new MODULESPEC;
-			if (module_last) module_last->next = ms;
-			else             module_first = ms;
-			module_last = ms;
-			strncpy (ms->module_name, info.name, 255);
-			strncpy (ms->model_name, info.name, 255);
-			ms->model_desc[0] = '\0';
-			ms->next = 0;
+    auto AtmosphereDir = CelbodyDir / celbody / "Atmosphere";
+    MODULESPEC *module_last = nullptr;
+    for (auto& dir_entry : std::filesystem::directory_iterator{AtmosphereDir}) {
+        if (dir_entry.path().extension() == DLL::DLLExt) {
+            auto modPath = dir_entry.path();
+            modPath.replace_extension(""); // cut of '.dll' or '.so' extension
+
+            char* model_name = nullptr;
+            MODULESPEC *ms = new MODULESPEC;
+            if (module_last) module_last->next = ms;
+            else             module_first = ms;
+            module_last = ms;
+            strncpy (ms->module_name, modPath.filename().c_str(), 255);
+            strncpy (ms->model_name, modPath.filename().c_str(), 255);
+            ms->model_desc[0] = '\0';
+            ms->next = 0;
 
 			// get info from the module
-			HINSTANCE hModule = LoadLibrary (path);
-			if (hModule) {
+			HINSTANCE hModule = LoadLibrary (modPath.c_str());
+   			if (hModule) {
 				char *(*name_func)() = (char*(*)())GetProcAddress (hModule, "ModelName");
 				if (name_func) strncpy (ms->model_name, name_func(), 255);
 				char *(*desc_func)() = (char*(*)())GetProcAddress (hModule, "ModelDesc");
 				if (desc_func) strncpy (ms->model_desc, desc_func(), 511);
-				FreeLibrary (hModule);
+                FreeLibrary (hModule);
 			}
-			res = _findnext (id, &info);
-		} while (!res);
-	}
-	_findclose (id);
+        }
+    }
 }
 
-INT_PTR CALLBACK AtmConfig::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR AtmConfig::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		SetWindowLongPtr (hWnd, DWLP_USER, (LONG_PTR)lParam); // store class instance for later reference
@@ -305,6 +333,7 @@ INT_PTR CALLBACK AtmConfig::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 		}
 		break;
 	}
+    */
 	return 0;
 }
 

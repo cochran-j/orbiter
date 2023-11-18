@@ -11,13 +11,20 @@
 // derived from ScnEditorTab.
 // ==============================================================
 
-#include "orbitersdk.h"
+#include <filesystem>
+
+#include "Orbitersdk.h"
 #include "resource.h"
 #include "Editor.h"
 #include "DlgCtrl.h"
+/* TODO(jec)
 #include <commctrl.h>
+*/
 #include <stdio.h>
+/* TODO(jec)
 #include <io.h>
+*/
+#include "DllCompat.h"
 
 using std::min;
 using std::max;
@@ -32,7 +39,7 @@ extern HBITMAP g_hPause;
 void OpenDialog (void *context);
 void Crt2Pol (VECTOR3 &pos, VECTOR3 &vel);
 void Pol2Crt (VECTOR3 &pos, VECTOR3 &vel);
-INT_PTR CALLBACK EditorProc (HWND, UINT, WPARAM, LPARAM);
+INT_PTR EditorProc (HWND, UINT, WPARAM, LPARAM);
 
 static double lengthscale[4] = {1.0, 1e-3, 1.0/AU, 1.0};
 static double anglescale[2] = {DEG, 1.0};
@@ -54,11 +61,13 @@ ScnEditor::ScnEditor (HINSTANCE hDLL)
 	hEdLib = NULL;
 	hDlg   = NULL;
 
+    /* TODO(jec)
 	imglist = ImageList_Create (16, 16, ILC_COLOR8, 4, 0);
 	treeicon_idx[0] = ImageList_Add (imglist, LoadBitmap (hInst, MAKEINTRESOURCE (IDB_TREEICON_FOLDER1)), 0);
 	treeicon_idx[1] = ImageList_Add (imglist, LoadBitmap (hInst, MAKEINTRESOURCE (IDB_TREEICON_FOLDER2)), 0);
 	treeicon_idx[2] = ImageList_Add (imglist, LoadBitmap (hInst, MAKEINTRESOURCE (IDB_TREEICON_FILE1)), 0);
 	treeicon_idx[3] = ImageList_Add (imglist, LoadBitmap (hInst, MAKEINTRESOURCE (IDB_TREEICON_FILE2)), 0);
+    */
 
 	dwCmd = oapiRegisterCustomCmd (
 		(char*)"Scenario Editor",
@@ -70,7 +79,9 @@ ScnEditor::~ScnEditor ()
 {
 	CloseDialog();
 	oapiUnregisterCustomCmd (dwCmd);
+    /* TODO(jec)
 	ImageList_Destroy (imglist);
+    */
 }
 
 void ScnEditor::OpenDialog ()
@@ -102,38 +113,54 @@ void ScnEditor::ScanCBodyList (HWND hDlg, int hList, OBJHANDLE hSelect)
 {
 	// populate a list of celestial bodies
 	char cbuf[256];
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, hList, CB_RESETCONTENT, 0, 0);
+    */
 	for (DWORD n = 0; n < oapiGetGbodyCount(); n++) {
 		oapiGetObjectName (oapiGetGbodyByIndex (n), cbuf, 256);
+        /* TODO(jec)
 		SendDlgItemMessage (hDlg, hList, CB_ADDSTRING, 0, (LPARAM)cbuf);
+        */
 	}
 	// select the requested body
 	oapiGetObjectName (hSelect, cbuf, 256);
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, hList, CB_SELECTSTRING, -1, (LPARAM)cbuf);
+    */
 }
 
 void ScnEditor::ScanPadList (HWND hDlg, int hList, OBJHANDLE hBase)
 {
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, hList, CB_RESETCONTENT, 0, 0);
+    */
 	if (hBase) {
 		DWORD n, npad = oapiGetBasePadCount (hBase);
 		char cbuf[16];
 		for (n = 1; n <= npad; n++) {
 			sprintf (cbuf, "%d", n);
+            /* TODO(jec)
 			SendDlgItemMessage (hDlg, hList, CB_ADDSTRING, 0, (LPARAM)cbuf);
+            */
 		}
+        /* TODO(jec)
 		SendDlgItemMessage (hDlg, hList, CB_SETCURSEL, 0, 0);
+        */
 	}
 }
 
 void ScnEditor::SelectBase (HWND hDlg, int hList, OBJHANDLE hRef, OBJHANDLE hBase)
 {
 	char cbuf[256];
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hDlg, hList), cbuf, 256);
+    */
 	OBJHANDLE hOldBase = oapiGetBaseByName (hRef, cbuf);
 	if (hBase) {
 		oapiGetObjectName (hBase, cbuf, 256);
+        /* TODO(jec)
 		SendDlgItemMessage (hDlg, hList, CB_SELECTSTRING, -1, (LPARAM)cbuf);
+        */
 	}
 	if (hOldBase != hBase) ScanPadList (hDlg, IDC_PAD, hBase);
 }
@@ -143,29 +170,39 @@ void ScnEditor::SetBasePosition (HWND hDlg)
 	char cbuf[256];
 	DWORD pad;
 	double lng, lat;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hDlg, IDC_REF), cbuf, 256);
+    */
 	OBJHANDLE hRef = oapiGetGbodyByName (cbuf);
 	if (!hRef) return;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hDlg, IDC_BASE), cbuf, 256);
+    */
 	OBJHANDLE hBase = oapiGetBaseByName (hRef, cbuf);
 	if (!hBase) return;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hDlg, IDC_PAD), cbuf, 256);
+    */
 	if (sscanf (cbuf, "%d", &pad) && pad >= 1 && pad <= oapiGetBasePadCount (hBase))
 		oapiGetBasePadEquPos (hBase, pad-1, &lng, &lat);
 	else
 		oapiGetBaseEquPos (hBase, &lng, &lat);
+    /* TODO(jec)
 	sprintf (cbuf, "%lf", lng * DEG);
 	SetWindowText (GetDlgItem (hDlg, IDC_EDIT1), cbuf);
 	sprintf (cbuf, "%lf", lat * DEG);
 	SetWindowText (GetDlgItem (hDlg, IDC_EDIT2), cbuf);
+    */
 }
 
 bool ScnEditor::SaveScenario (HWND hDlg)
 {
 	char fname[256], title[256], text[4096], desc[4096];
+    /* TODO(jec)
 	GetWindowText(GetDlgItem(hDlg, IDC_EDIT1), fname, 256);
 	GetWindowText(GetDlgItem(hDlg, IDC_EDIT3), title, 256);
 	GetWindowText(GetDlgItem(hDlg, IDC_EDIT2), text, 4096);
+    */
 
 	if (strlen(title)) {
 		sprintf(desc, "<h1>%s</h1>\n", title);
@@ -248,6 +285,7 @@ void ScnEditor::ShowTab (DWORD t)
 
 INT_PTR ScnEditor::MsgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		InitDialog (hDlg);
@@ -266,6 +304,7 @@ INT_PTR ScnEditor::MsgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	}
+    */
 	return oapiDefDialogProc (hDlg, uMsg, wParam, lParam);
 }
 
@@ -372,7 +411,7 @@ void Pol2Crt (VECTOR3 &pos, VECTOR3 &vel)
 	vel.data[2] = dzdt;
 }
 
-INT_PTR CALLBACK EditorProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR EditorProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return g_editor->MsgProc (hDlg, uMsg, wParam, lParam);
 }
@@ -395,8 +434,10 @@ ScnEditorTab::~ScnEditorTab ()
 
 HWND ScnEditorTab::CreateTab (HINSTANCE hInst, WORD ResId,  DLGPROC TabProc)
 {
+    /* TODO(jec)
 	hTab = CreateDialogParam (hInst, MAKEINTRESOURCE(ResId), ed->DlgHandle(), TabProc, (LPARAM)this);
 	SetWindowLongPtr (hTab, DWLP_USER, (LONG_PTR)this);
+    */
 	return hTab;
 }
 
@@ -408,27 +449,35 @@ HWND ScnEditorTab::CreateTab (WORD ResId, DLGPROC TabProc)
 void ScnEditorTab::DestroyTab ()
 {
 	if (hTab) {
+        /* TODO(jec)
 		DestroyWindow (hTab);
+        */
 		hTab = 0;
 	}
 }
 
 void ScnEditorTab::SwitchTab (int newtab)
 {
+    /* TODO(jec)
 	ShowWindow (hTab, SW_HIDE);
+    */
 	ed->ShowTab (newtab);
 }
 
 void ScnEditorTab::Show ()
 {
+    /* TODO(jec)
 	ShowWindow (hTab, SW_SHOW);
+    */
 	g_hc.topic = HelpTopic();
 	InitTab ();
 }
 
 void ScnEditorTab::Hide ()
 {
+    /* TODO(jec)
 	ShowWindow (hTab, SW_HIDE);
+    */
 }
 
 char *ScnEditorTab::HelpTopic ()
@@ -450,6 +499,7 @@ void ScnEditorTab::OpenHelp ()
 
 INT_PTR ScnEditorTab::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
@@ -459,13 +509,17 @@ INT_PTR ScnEditorTab::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 		}
 		break;
 	}
+    */
 	return FALSE;
 }
 
 ScnEditorTab *ScnEditorTab::TabPointer (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	if (uMsg == WM_INITDIALOG) return (ScnEditorTab*)lParam;
 	else return (ScnEditorTab*)GetWindowLongPtr (hDlg, DWLP_USER);
+    */
+    return nullptr;
 }
 
 void ScnEditorTab::ScanVesselList (int ResId, bool detail, OBJHANDLE hExclude)
@@ -473,6 +527,7 @@ void ScnEditorTab::ScanVesselList (int ResId, bool detail, OBJHANDLE hExclude)
 	char cbuf[256], *cp;
 
 	// populate vessel list
+    /* TODO(jec)
 	SendDlgItemMessage (hTab, ResId, LB_RESETCONTENT, 0, 0);
 	for (DWORD i = 0; i < oapiGetVesselCount(); i++) {
 		OBJHANDLE hR, hV = oapiGetVesselByIndex (i);
@@ -491,13 +546,16 @@ void ScnEditorTab::ScanVesselList (int ResId, bool detail, OBJHANDLE hExclude)
 		}
 		SendDlgItemMessage (hTab, ResId, LB_ADDSTRING, 0, (LPARAM)cbuf);
 	}
+    */
 }
 
 OBJHANDLE ScnEditorTab::GetVesselFromList (int ResId)
 {
 	char cbuf[256];
+    /* TODO(jec)
 	int idx = SendDlgItemMessage (hTab, ResId, LB_GETCURSEL, 0, 0);
 	SendDlgItemMessage (hTab, ResId, LB_GETTEXT, idx, (LPARAM)cbuf);
+    */
 	OBJHANDLE hV = oapiGetVesselByName (ed->ExtractVesselName (cbuf));
 	return hV;
 }
@@ -515,7 +573,9 @@ EditorTab_Vessel::EditorTab_Vessel (ScnEditor *editor) : ScnEditorTab (editor)
 void EditorTab_Vessel::InitTab ()
 {
 	UINT tbs[1] = {70};
+    /* TODO(jec)
 	SendDlgItemMessage (hTab, IDC_LIST1, LB_SETTABSTOPS, 1, (LPARAM)tbs);
+    */
 	ScanVesselList ();
 }
 
@@ -536,6 +596,7 @@ INT_PTR EditorTab_Vessel::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 	int i;
 	char cbuf[256];
 
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		SendDlgItemMessage (hDlg, IDC_TRACK, BM_SETCHECK, BST_CHECKED, 0);
@@ -572,6 +633,7 @@ INT_PTR EditorTab_Vessel::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 		}
 		break;
 	}
+    */
 	return ScnEditorTab::TabProc (hDlg, uMsg, wParam, lParam);
 }
 
@@ -580,6 +642,7 @@ void EditorTab_Vessel::SelectVessel (OBJHANDLE hV)
 	char cbuf[256];
 	if (!hV) hV = oapiCameraTarget();
 	oapiGetObjectName (hV, cbuf, 256);
+    /* TODO(jec)
 	int idx = SendDlgItemMessage (hTab, IDC_LIST1, LB_FINDSTRING, -1, (LPARAM)cbuf);
 	if (idx == LB_ERR) { // last resort: focus object
 		hV = oapiGetFocusObject();
@@ -590,20 +653,24 @@ void EditorTab_Vessel::SelectVessel (OBJHANDLE hV)
 		SendDlgItemMessage (hTab, IDC_LIST1, LB_SETCURSEL, idx, 0);
 		ed->hVessel = hV;
 	}
+    */
 }
 
 void EditorTab_Vessel::VesselSelected ()
 {
 	OBJHANDLE hV = GetVesselFromList (IDC_LIST1);
 	if (!hV) return;
+    /* TODO(jec)
 	bool track = (SendDlgItemMessage (hTab, IDC_TRACK, BM_GETCHECK, 0, 0) == BST_CHECKED);
 	if (track) oapiCameraAttach (hV, 1);
+    */
 }
 
 void EditorTab_Vessel::VesselDeleted (OBJHANDLE hV)
 {
 	char cbuf[256];
 	oapiGetObjectName (hV, cbuf, 256);
+    /* TODO(jec)
 	int idx = SendDlgItemMessage (hTab, IDC_LIST1, LB_FINDSTRING, -1, (LPARAM)cbuf);
 	if (idx == LB_ERR) return;
 	SendDlgItemMessage (hTab, IDC_LIST1, LB_DELETESTRING, idx, 0);
@@ -612,14 +679,17 @@ void EditorTab_Vessel::VesselDeleted (OBJHANDLE hV)
 		SendDlgItemMessage (hTab, IDC_LIST1, LB_SETCURSEL, 0, 0);
 		VesselSelected ();
 	}
+    */
 }
 
 bool EditorTab_Vessel::DeleteVessel ()
 {
 	char cbuf[256];
+    /* TODO(jevc)
 	int idx = SendDlgItemMessage (hTab, IDC_LIST1, LB_GETCURSEL, 0, 0);
 	if (idx == LB_ERR) return false;
 	SendDlgItemMessage (hTab, IDC_LIST1, LB_GETTEXT, idx, (LPARAM)cbuf);
+    */
 	OBJHANDLE hV = oapiGetVesselByName (ed->ExtractVesselName (cbuf));
 	if (!hV) return false;
 	//ed->hVessel = hV;
@@ -646,19 +716,27 @@ EditorTab_New::EditorTab_New (ScnEditor *editor) : ScnEditorTab (editor)
 
 EditorTab_New::~EditorTab_New ()
 {
+    /* TODO(jec)
 	if (hVesselBmp) DeleteObject (hVesselBmp);
+    */
 }
 
 void EditorTab_New::InitTab ()
 {
+    /* TODO(jec)
 	SendDlgItemMessage (hTab, IDC_CAMERA, BM_SETCHECK, BST_CHECKED, 0);
+    */
 
 	// populate vessel type list
 	RefreshVesselTpList ();
+    /* TODO(jec)
 	SendDlgItemMessage (hTab, IDC_VESSELTP, TVM_SETIMAGELIST, (WPARAM)TVSIL_NORMAL, (LPARAM)ed->imglist);
+    */
 
 	RECT r;
+    /* TODO(jec)
 	GetClientRect (GetDlgItem (hTab, IDC_VESSELBMP), &r);
+    */
 	imghmax = r.bottom;
 }
 
@@ -669,8 +747,11 @@ char *EditorTab_New::HelpTopic ()
 
 INT_PTR EditorTab_New::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	NM_TREEVIEW *pnmtv;
+    */
 
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_COMMAND:
 		switch (LOWORD (wParam)) {
@@ -701,6 +782,7 @@ INT_PTR EditorTab_New::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 		DrawVesselBmp ();
 		break;
 	}
+    */
 	return ScnEditorTab::TabProc (hDlg, uMsg, wParam, lParam);
 }
 
@@ -708,6 +790,7 @@ bool EditorTab_New::CreateVessel ()
 {
 	char name[256], classname[256];
 
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_NAME), name, 256);
 	if (name[0] == '\0') return false;            // no name provided
 	if (oapiGetVesselByName (name)) return false; // vessel name already in use
@@ -719,70 +802,73 @@ bool EditorTab_New::CreateVessel ()
 	if (SendDlgItemMessage (hTab, IDC_CAMERA, BM_GETSTATE, 0, 0) == BST_CHECKED)
 		oapiCameraAttach (ed->hVessel, 1);
 	//	ed->VesselSelection();
+    */
 	return true;
 }
 
-void EditorTab_New::ScanConfigDir (const char *ppath, HTREEITEM hti)
+void EditorTab_New::ScanConfigDir (const std::filesystem::path& ppath, HTREEITEM hti)
 {
 	// recursively scans a directory tree and adds to the list
+    /* TODO(jec)
 	TV_INSERTSTRUCT tvis;
 	HTREEITEM ht, hts0, ht0;
-	struct _finddata_t fdata;
-	intptr_t fh;
-	char cbuf[256], path[256], *fname;
+    */
+	char cbuf[256];
 
-	strcpy (path, ppath);
-	fname = path + strlen(path);
+    std::filesystem::path path_{ppath};
 
+    /* TODO(jec)
 	tvis.hParent = hti;
 	tvis.item.mask = TVIF_TEXT | TVIF_CHILDREN | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
 	tvis.item.pszText = cbuf;
+    */
 
-	// scan for subdirectories
-	strcpy (fname, "*.*");
-	if ((fh = _findfirst (path, &fdata)) != -1) {
-		tvis.hInsertAfter = TVI_SORT;
-		tvis.item.cChildren = 1;
-		tvis.item.iImage = ed->treeicon_idx[0];
-		tvis.item.iSelectedImage = ed->treeicon_idx[0];
-		do {
-			if ((fdata.attrib & _A_SUBDIR) && fdata.name[0] != '.') {
-				strcpy (cbuf, fdata.name);
-				ht = (HTREEITEM)SendDlgItemMessage (hTab, IDC_VESSELTP, TVM_INSERTITEM, 0, (LPARAM)&tvis);
-				strcpy (fname, fdata.name); strcat (fname, "\\");
-				ScanConfigDir (path, ht);
-			}
-		} while (!_findnext (fh, &fdata));
-		_findclose (fh);
-	}
-	hts0 = (HTREEITEM)SendDlgItemMessage (hTab, IDC_VESSELTP, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hti);
-	// the first subdirectory entry in this folder
+     for (auto& dir_entry : std::filesystem::directory_iterator{path_}) {
+         auto dirPath = dir_entry.path();
+         if (dir_entry.is_directory() &&
+             !dirPath.filename().empty() &&
+             dirPath.filename().string().front() != '.') {
 
-	// scan for files
-	strcpy (fname, "*.cfg");
-	if ((fh = _findfirst (path, &fdata)) != -1) {
-		tvis.hInsertAfter = TVI_FIRST;
-		tvis.item.cChildren = 0;
-		tvis.item.iImage = ed->treeicon_idx[2];
-		tvis.item.iSelectedImage = ed->treeicon_idx[3];
-		do {
-			bool skip = false;
-			strcpy (fname, fdata.name);
-			FILEHANDLE hFile = oapiOpenFile (path, FILE_IN);
-			if (hFile) {
-				bool b;
-				skip = (oapiReadItem_bool (hFile, (char*)"EditorCreate", b) && !b);
-				oapiCloseFile (hFile, FILE_IN);
-			}
-			if (skip) continue;
+            /* TODO(jec)
+            tvis.hInsertAfter = TVI_SORT;
+            tvis.item.cChildren = 1;
+            tvis.item.iImage = ed->treeicon_idx[0];
+            tvis.item.iSelectedImage = ed->treeicon_idx[0];
+            */
+            strcpy (cbuf, dirPath.filename().c_str());
+            /* TODO(jec)
+            ht = (HTREEITEM)SendDlgItemMessage (hTab, IDC_VESSELTP, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+            ScanConfigDir (dirPath, ht);
+            */
+         }
+         /* TODO(jec)
+        hts0 = (HTREEITEM)SendDlgItemMessage (hTab, IDC_VESSELTP, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hti);
+        */
 
-			strcpy (cbuf, fdata.name);
-			cbuf[strlen(cbuf)-4] = '\0';
+         if (dirPath.extension() == "cfg") {
+            /* TODO(jec)
+            tvis.hInsertAfter = TVI_FIRST;
+            tvis.item.cChildren = 0;
+            tvis.item.iImage = ed->treeicon_idx[2];
+            tvis.item.iSelectedImage = ed->treeicon_idx[3];
+            */
 
-			char ch[256];
-			TV_ITEM tvi = {TVIF_HANDLE | TVIF_TEXT, 0, 0, 0, ch, 256};
+            bool skip = false;
+            FILEHANDLE hFile = oapiOpenFile(dirPath.c_str(), FILE_IN);
+            if (hFile) {
+                bool b;
+                skip = (oapiReadItem_bool (hFile, (char*)"EditorCreate", b) && !b);
+                oapiCloseFile (hFile, FILE_IN);
+            }
+            if (skip) continue;
 
-			ht0 = (HTREEITEM)SendDlgItemMessage (hTab, IDC_VESSELTP, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hti);
+            strcpy (cbuf, dirPath.stem().c_str());
+
+            char ch[256];
+            /* TODO(jec)
+            TV_ITEM tvi = {TVIF_HANDLE | TVIF_TEXT, 0, 0, 0, ch, 256};
+
+   			ht0 = (HTREEITEM)SendDlgItemMessage (hTab, IDC_VESSELTP, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hti);
 			for (tvi.hItem = ht0; tvi.hItem && tvi.hItem != hts0; tvi.hItem = (HTREEITEM)SendDlgItemMessage (hTab, IDC_VESSELTP, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)tvi.hItem)) {
 				SendDlgItemMessage (hTab, IDC_VESSELTP, TVM_GETITEM, 0, (LPARAM)&tvi);
 				if (strcmp (tvi.pszText, cbuf) > 0) break;
@@ -794,30 +880,33 @@ void EditorTab_New::ScanConfigDir (const char *ppath, HTREEITEM hti)
 				tvis.hInsertAfter = (hts0 ? TVI_FIRST : TVI_LAST);
 			}
 			(HTREEITEM)SendDlgItemMessage (hTab, IDC_VESSELTP, TVM_INSERTITEM, 0, (LPARAM)&tvis);
-		} while (!_findnext (fh, &fdata));
-		_findclose (fh);
+            */
+         }
 	}
 }
 
 void EditorTab_New::RefreshVesselTpList ()
 {
+    /* TODO(jec)
 	SendDlgItemMessage (hTab, IDC_VESSELTP, TVM_DELETEITEM, 0, (LPARAM)TVI_ROOT);
-	ScanConfigDir ("Config\\Vessels\\", NULL);
+    */
+	ScanConfigDir (std::filesystem::path{"Config"} / "Vessels", NULL);
 }
 
 int EditorTab_New::GetSelVesselTp (char *name, int len)
 {
+    /* TODO(jec)
 	TV_ITEM tvi;
+    */
 	char cbuf[256];
 	int type;
 
+    /* TODO(jec)
 	tvi.mask = TVIF_HANDLE | TVIF_TEXT | TVIF_CHILDREN;
 	tvi.hItem = TreeView_GetSelection (GetDlgItem (hTab, IDC_VESSELTP));
 	tvi.pszText = name;
 	tvi.cchTextMax = len;
-
-	if (!TreeView_GetItem (GetDlgItem (hTab, IDC_VESSELTP), &tvi)) return 0;
-	type = (tvi.cChildren ? 2 : 1);
+if (!TreeView_GetItem (GetDlgItem (hTab, IDC_VESSELTP), &tvi)) return 0; type = (tvi.cChildren ? 2 : 1);
 
 	// build path
 	tvi.pszText = cbuf;
@@ -829,6 +918,7 @@ int EditorTab_New::GetSelVesselTp (char *name, int len)
 			strcpy (name, cbuf);
 		}
 	}
+    */
 	return type;
 }
 
@@ -842,16 +932,21 @@ bool EditorTab_New::UpdateVesselBmp ()
 	char classname[256], pathname[256], imagename[256];
 
 	if (hVesselBmp) {
+        /* TODO(jec)
 		DeleteObject (hVesselBmp);
+        */
 		hVesselBmp = NULL;
 	}
 
 	if (GetSelVesselTp (classname, 256) == 1) {
-		sprintf (pathname, "Vessels\\%s.cfg", classname);
-		FILEHANDLE hFile = oapiOpenFile (pathname, FILE_IN, CONFIG);
+        auto cfgPath = std::filesystem::path{"Vessels"} / classname;
+        cfgPath += ".cfg";
+		FILEHANDLE hFile = oapiOpenFile (cfgPath.c_str(), FILE_IN, CONFIG);
 		if (!hFile) return false;
 		if (oapiReadItem_string (hFile, (char*)"ImageBmp", imagename)) {
+            /* TODO(jec)
 			hVesselBmp = (HBITMAP)LoadImage (ed->InstHandle(), imagename, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+            */
 		}
 		oapiCloseFile (hFile, FILE_IN);
 	}
@@ -861,13 +956,18 @@ bool EditorTab_New::UpdateVesselBmp ()
 
 void EditorTab_New::DrawVesselBmp ()
 {
+    /* TODO(jec)
 	HWND hImgWnd = GetDlgItem (hTab, IDC_VESSELBMP);
 	InvalidateRect (hImgWnd, NULL, TRUE);
 	UpdateWindow (hImgWnd);
+    */
 	if (hVesselBmp) {
+        /* TODO(jec)
 	    BITMAP bm;
+        */
 		RECT r;
 		int dx, dy, h;
+        /* TODO(jec)
 		HDC hDC = GetDC (hImgWnd);
 		HDC hBmpDC = CreateCompatibleDC (hDC);
 		SelectObject (hBmpDC, hVesselBmp);
@@ -880,8 +980,11 @@ void EditorTab_New::DrawVesselBmp ()
 		DeleteDC (hBmpDC);
 		ReleaseDC (hImgWnd, hDC);
 		ShowWindow (hImgWnd, SW_SHOW);
+        */
 	} else {
+        /* TODO(jec)
 		ShowWindow (hImgWnd, SW_HIDE);
+        */
 	}
 }
 
@@ -899,8 +1002,10 @@ INT_PTR EditorTab_New::DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 EditorTab_Save::EditorTab_Save (ScnEditor *editor) : ScnEditorTab (editor)
 {
 	CreateTab (IDD_TAB_SAVE, EditorTab_Save::DlgProc);
+    /* TODO(jec)
 	SendDlgItemMessage(hTab, IDC_RADIO1, BM_SETCHECK, BST_CHECKED, 0);
 	SendDlgItemMessage(hTab, IDC_RADIO2, BM_SETCHECK, BST_UNCHECKED, 0);
+    */
 }
 
 char *EditorTab_Save::HelpTopic ()
@@ -910,6 +1015,7 @@ char *EditorTab_Save::HelpTopic ()
 
 INT_PTR EditorTab_Save::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_COMMAND:
 		switch (LOWORD (wParam)) {
@@ -923,6 +1029,7 @@ INT_PTR EditorTab_Save::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		}
 		break;
 	}
+    */
 	return ScnEditorTab::TabProc (hDlg, uMsg, wParam, lParam);
 }
 
@@ -957,9 +1064,11 @@ void EditorTab_Date::Apply ()
 {
 	int OrbitalMode[3] = {PROP_ORBITAL_FIXEDSTATE, PROP_ORBITAL_FIXEDSURF, PROP_ORBITAL_ELEMENTS};
 	int SOrbitalMode[4] = {PROP_SORBITAL_FIXEDSTATE, PROP_SORBITAL_FIXEDSURF, PROP_SORBITAL_ELEMENTS, PROP_SORBITAL_DESTROY};
+    /* TODO(jec)
 	int omode = OrbitalMode[SendDlgItemMessage (hTab, IDC_PROP_ORBITAL, CB_GETCURSEL, 0, 0)];
 	int smode = SOrbitalMode[SendDlgItemMessage (hTab, IDC_PROP_SORBITAL, CB_GETCURSEL, 0, 0)];
 	oapiSetSimMJD (mjd, omode | smode);
+    */
 }
 
 void EditorTab_Date::Refresh ()
@@ -973,32 +1082,44 @@ void EditorTab_Date::UpdateDateTime ()
 
 	sprintf (cbuf, "%02d", date.tm_mday);
 	bIgnore = true;
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_UT_DAY), cbuf);
+    */
 	bIgnore = false;
 
 	sprintf (cbuf, "%02d", date.tm_mon);
 	bIgnore = true;
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_UT_MONTH), cbuf);
+    */
 	bIgnore = false;
 
 	sprintf (cbuf, "%04d", date.tm_year+1900);
 	bIgnore = true;
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_UT_YEAR), cbuf);
+    */
 	bIgnore = false;
 
 	sprintf (cbuf, "%02d", date.tm_hour);
 	bIgnore = true;
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_UT_HOUR), cbuf);
+    */
 	bIgnore = false;
 
 	sprintf (cbuf, "%02d", date.tm_min);
 	bIgnore = true;
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_UT_MIN), cbuf);
+    */
 	bIgnore = false;
 
 	sprintf (cbuf, "%02d", date.tm_sec);
 	bIgnore = true;
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_UT_SEC), cbuf);
+    */
 	bIgnore = false;
 }
 
@@ -1007,7 +1128,9 @@ void EditorTab_Date::UpdateMJD (void)
 	char cbuf[256];
 	sprintf (cbuf, "%0.6f", mjd);
 	bIgnore = true;
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_MJD), cbuf);
+    */
 	bIgnore = false;
 }
 
@@ -1016,7 +1139,9 @@ void EditorTab_Date::UpdateJD (void)
 	char cbuf[256];
 	sprintf (cbuf, "%0.6f", mjd + 2400000.5);
 	bIgnore = true;
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_JD), cbuf);
+    */
 	bIgnore = false;
 }
 
@@ -1025,7 +1150,9 @@ void EditorTab_Date::UpdateJC (void)
 	char cbuf[256];
 	sprintf (cbuf, "%0.10f", MJD2JC(mjd));
 	bIgnore = true;
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_JC2000), cbuf);
+    */
 	bIgnore = false;
 }
 
@@ -1034,7 +1161,9 @@ void EditorTab_Date::UpdateEpoch (void)
 	char cbuf[256];
 	sprintf (cbuf, "%0.8f", MJD2Jepoch (mjd));
 	bIgnore = true;
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_EPOCH), cbuf);
+    */
 	bIgnore = false;
 }
 
@@ -1102,18 +1231,30 @@ void EditorTab_Date::OnChangeDateTime()
 	char cbuf[256];
 	int day, month, year, hour, min, sec;
 
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_UT_DAY), cbuf, 256);
+    */
 	if (sscanf (cbuf, "%d", &day) != 1 || day < 1 || day > 31) return;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_UT_MONTH), cbuf, 256);
+    */
 	if (sscanf (cbuf, "%d", &month) != 1 || month < 1 || month > 12) return;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_UT_YEAR), cbuf, 256);
+    */
 	if (sscanf (cbuf, "%d", &year) != 1) return;
 	year -= 1900;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_UT_HOUR), cbuf, 256);
+    */
 	if (sscanf (cbuf, "%d", &hour) != 1) return;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_UT_MIN), cbuf, 256);
+    */
 	if (sscanf (cbuf, "%d", &min) != 1) return;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_UT_SEC), cbuf, 256);
+    */
 	if (sscanf (cbuf, "%d", &sec) != 1) return;
 
 	if (day == date.tm_mday && month == date.tm_mon && year == date.tm_year &&
@@ -1133,7 +1274,9 @@ void EditorTab_Date::OnChangeMjd()
 	if (bIgnore) return;
 	char cbuf[256];
 	double new_mjd;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_MJD), cbuf, 256);
+    */
 	if (sscanf (cbuf, "%lf", &new_mjd) == 1 && fabs (new_mjd-mjd) > 1e-6)
 		SetMJD (new_mjd);
 }
@@ -1143,7 +1286,9 @@ void EditorTab_Date::OnChangeJd()
 	if (bIgnore) return;
 	char cbuf[256];
 	double new_jd;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_JD), cbuf, 256);
+    */
 	if (sscanf (cbuf, "%lf", &new_jd) == 1)
 		SetJD (new_jd);
 }
@@ -1153,7 +1298,9 @@ void EditorTab_Date::OnChangeJc()
 	if (bIgnore) return;
 	char cbuf[256];
 	double new_jc;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_JC2000), cbuf, 256);
+    */
 	if (sscanf (cbuf, "%lf", &new_jc) == 1)
 		SetJC (new_jc);
 }
@@ -1163,13 +1310,16 @@ void EditorTab_Date::OnChangeEpoch()
 	if (bIgnore) return;
 	char cbuf[256];
 	double new_epoch;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_EPOCH), cbuf, 256);
+    */
 	if (sscanf (cbuf, "%lf", &new_epoch) == 1)
 		SetEpoch (new_epoch);
 }
 
 INT_PTR EditorTab_Date::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG: {
 		int i;
@@ -1265,6 +1415,7 @@ INT_PTR EditorTab_Date::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		}
 		break;
 	}
+*/
 	return ScnEditorTab::TabProc (hDlg, uMsg, wParam, lParam);
 }
 
@@ -1294,23 +1445,33 @@ void EditorTab_Edit::InitTab ()
 		hVessel = ed->hVessel;
 
 		// fill vessel and class name boxes
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (hTab, IDC_EDIT1), vessel->GetName());
 		SetWindowText (GetDlgItem (hTab, IDC_EDIT2), vessel->GetClassName());
 		SetWindowText (GetDlgItem (hTab, IDC_STATIC1), vessel->GetClassName());
+        */
 
 		BOOL bFuel = (vessel->GetPropellantCount() > 0 && vessel->GetMaxFuelMass () > 0.0);
+        /* TODO(jec)
 		EnableWindow (GetDlgItem (hTab, IDC_PROPELLANT), bFuel);
+        */
 
 		BOOL bDocking = (vessel->DockCount() > 0);
+        /* TODO(jec)
 		EnableWindow (GetDlgItem (hTab, IDC_DOCKING), bDocking);
+        */
 
 		// disable custom buttons by default
 		nCustom = 0;
 		ed->DelCustomTabs();
+        /* TODO(jec)
 		ShowWindow (GetDlgItem (hTab, IDC_STATIC1), SW_HIDE);
+        */
 		for (int i = 0; i < 6; i++) {
 			CustomPage[i] = 0;
+            /* TODO(jec)
 			ShowWindow (GetDlgItem (hTab, IDC_EXTRA1+i), SW_HIDE);
+            */
 		}
 
 		// now load vessel-specific interface
@@ -1321,8 +1482,10 @@ void EditorTab_Edit::InitTab ()
 			if (secInit) secInit (hTab, hVessel);
 		}
 	}
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_EDIT3),
 		vessel->GetFlightStatus() & 1 ? "Inactive (Landed)":"Active (Flight)");
+    */
 }
 
 char *EditorTab_Edit::HelpTopic ()
@@ -1333,9 +1496,11 @@ char *EditorTab_Edit::HelpTopic ()
 BOOL EditorTab_Edit::AddFuncButton (EditorFuncSpec *efs)
 {
 	if (nCustom == 6) return FALSE;
+    /* TODO(jec)
 	ShowWindow (GetDlgItem (hTab, IDC_STATIC1), SW_SHOW);
 	SetWindowText (GetDlgItem (hTab, IDC_EXTRA1+nCustom), efs->btnlabel);
 	ShowWindow (GetDlgItem (hTab, IDC_EXTRA1+nCustom), SW_SHOW);
+    */
 	funcCustom[nCustom++] = efs->func;
 	return TRUE;
 
@@ -1344,15 +1509,18 @@ BOOL EditorTab_Edit::AddFuncButton (EditorFuncSpec *efs)
 BOOL EditorTab_Edit::AddPageButton (EditorPageSpec *eps)
 {
 	if (nCustom == 6) return FALSE;
+    /* TODO(jec)
 	ShowWindow (GetDlgItem (hTab, IDC_STATIC1), SW_SHOW);
 	SetWindowText (GetDlgItem (hTab, IDC_EXTRA1+nCustom), eps->btnlabel);
 	ShowWindow (GetDlgItem (hTab, IDC_EXTRA1+nCustom), SW_SHOW);
+    */
 	CustomPage[nCustom++] = ed->AddTab (new EditorTab_Custom (ed, eps->hDLL, eps->ResId, eps->TabProc));
 	return TRUE;
 }
 
 INT_PTR EditorTab_Edit::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_COMMAND:
 		switch (LOWORD (wParam)) {
@@ -1403,6 +1571,7 @@ INT_PTR EditorTab_Edit::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		}
 		break;
 	}
+    */
 	return ScnEditorTab::TabProc (hDlg, uMsg, wParam, lParam);
 }
 
@@ -1428,6 +1597,7 @@ void EditorTab_Elements::InitTab ()
 {
 	VESSEL *vessel = oapiGetVesselInterface (ed->hVessel);
 	OBJHANDLE hRef = vessel->GetGravityRef();
+    /* TODO(jec)
 	SendDlgItemMessage (hTab, IDC_COMBO1, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessage (hTab, IDC_COMBO1, CB_ADDSTRING, 0, (LPARAM)"m");
 	SendDlgItemMessage (hTab, IDC_COMBO1, CB_ADDSTRING, 0, (LPARAM)"km");
@@ -1464,12 +1634,15 @@ void EditorTab_Elements::InitTab ()
 	SendDlgItemMessage (hTab, IDC_FRM, CB_ADDSTRING, 0, (LPARAM)"ecliptic");
 	SendDlgItemMessage (hTab, IDC_FRM, CB_ADDSTRING, 0, (LPARAM)"ref. equator");
 	SendDlgItemMessage (hTab, IDC_FRM, CB_SETCURSEL, 0, 0);
+    */
 
 	ed->ScanCBodyList (hTab, IDC_REF, hRef);
 
 	char cbuf[256];
 	sprintf (cbuf, "%0.5f", elmjd);
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_EDIT7), cbuf);
+    */
 
 	Refresh ();
 }
@@ -1485,18 +1658,28 @@ void EditorTab_Elements::Apply ()
 	char cbuf[256];
 	int i;
 	double mjd;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_REF), cbuf, 256);
+    */
 	VESSEL *vessel = oapiGetVesselInterface (ed->hVessel);
 	OBJHANDLE hRef = oapiGetGbodyByName (cbuf);
 	if (hRef) {
+        /* TODO(jec)
 		int frm = SendDlgItemMessage (hTab, IDC_FRM, CB_GETCURSEL, 0, 0);
 		int epc = SendDlgItemMessage (hTab, IDC_COMBO6, CB_GETCURSEL, 0, 0);
+        */
+        int frm = 0;
+        int epc = 0;
+
 		if (!epc) mjd = 0;
 		else {
+            /* TODO(jec)
 			GetWindowText (GetDlgItem (hTab, IDC_EDIT7), cbuf, 256);
+            */
 			sscanf (cbuf, "%lf", &elmjd);
 			mjd = (elmjd ? elmjd : 1e-10);
 		}
+        /* TODO(jec)
 		GetWindowText (GetDlgItem (hTab, IDC_EDIT1), cbuf, 256);
 		sscanf (cbuf, "%lf", &el.a);
 		i = SendDlgItemMessage (hTab, IDC_COMBO1, CB_GETCURSEL, 0, 0);
@@ -1519,13 +1702,17 @@ void EditorTab_Elements::Apply ()
 		GetWindowText (GetDlgItem (hTab, IDC_EDIT6), cbuf, 256);
 		sscanf (cbuf, "%lf", &el.L);
 		i = SendDlgItemMessage (hTab, IDC_COMBO5, CB_GETCURSEL, 0, 0);
+        */
 		el.L /= anglescale[i];
 		el.a = fabs (el.a);
 		if (el.e > 1.0) el.a = -el.a;
-		if (vessel->SetElements (hRef, el, &prm, mjd, frm))
+		if (vessel->SetElements (hRef, el, &prm, mjd, frm)) {
 			RefreshSecondaryParams (el, prm);
-		else
+        } else {
+            /* TODO(jec)
 			MessageBeep (-1);
+            */
+        }
 		Refresh ();
 	}
 }
@@ -1534,15 +1721,24 @@ void EditorTab_Elements::Refresh ()
 {
 	char cbuf[256];
 	double scale, mjd;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_REF), cbuf, 256);
+    */
 	VESSEL *vessel = oapiGetVesselInterface (ed->hVessel);
 	OBJHANDLE hRef = oapiGetGbodyByName (cbuf);
 	if (!hRef) return;
+    /* TODO(jec)
 	int frm = SendDlgItemMessage (hTab, IDC_FRM, CB_GETCURSEL, 0, 0);
 	int epc = SendDlgItemMessage (hTab, IDC_COMBO6, CB_GETCURSEL, 0, 0);
+    */
+    int frm = 0;
+    int epc = 0;
+
 	if (!epc) mjd = 0;
 	else {
+        /* TODO(jevc)
 		GetWindowText (GetDlgItem (hTab, IDC_EDIT7), cbuf, 256);
+        */
 		sscanf (cbuf, "%lf", &elmjd);
 		mjd = (elmjd ? elmjd : 1e-10);
 	}
@@ -1550,7 +1746,11 @@ void EditorTab_Elements::Refresh ()
 	bool closed = (el.e < 1.0);
 	int prec = (closed ? 6:10);
 	lengthscale[3] = 1.0/oapiGetSize (hRef);
+    /* TODO(jec)
 	scale = lengthscale[SendDlgItemMessage (hTab, IDC_COMBO1, CB_GETCURSEL, 0, 0)];
+    */
+
+    /* TODO(jec)
 	sprintf (cbuf, "%0.10g", el.a*scale);
 	SetWindowText (GetDlgItem (hTab, IDC_EDIT1), cbuf);
 	sprintf (cbuf, "%0.*g", prec, el.e);
@@ -1567,6 +1767,7 @@ void EditorTab_Elements::Refresh ()
 	scale = anglescale[SendDlgItemMessage (hTab, IDC_COMBO5, CB_GETCURSEL, 0, 0)];
 	sprintf (cbuf, "%0.*g", prec, el.L*scale);
 	SetWindowText (GetDlgItem (hTab, IDC_EDIT6), cbuf);
+    */
 	RefreshSecondaryParams (el, prm);
 }
 
@@ -1575,6 +1776,7 @@ void EditorTab_Elements::RefreshSecondaryParams (const ELEMENTS &el, const ORBIT
 	char cbuf[256];
 	bool closed = (el.e < 1.0); // closed orbit?
 
+    /* TODO(jec)
 	sprintf (cbuf, "%g m", prm.PeD); SetWindowText (GetDlgItem (hTab, IDC_PERIAPSIS), cbuf);
 	sprintf (cbuf, "%g s", prm.PeT); SetWindowText (GetDlgItem (hTab, IDC_PET), cbuf);
 	sprintf (cbuf, "%0.3f °", prm.MnA*DEG); SetWindowText (GetDlgItem (hTab, IDC_MNANM), cbuf);
@@ -1590,12 +1792,14 @@ void EditorTab_Elements::RefreshSecondaryParams (const ELEMENTS &el, const ORBIT
 		SetWindowText (GetDlgItem (hTab, IDC_APOAPSIS), "N/A");
 		SetWindowText (GetDlgItem (hTab, IDC_APT), "N/A");
 	}
+    */
 }
 INT_PTR EditorTab_Elements::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	char cbuf[256];
 	int i;
 
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_COMMAND:
 		switch (LOWORD (wParam)) {
@@ -1727,6 +1931,7 @@ INT_PTR EditorTab_Elements::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
 		}
 		break;
 	}
+    */
 	return ScnEditorTab::TabProc (hDlg, uMsg, wParam, lParam);
 }
 
@@ -1751,6 +1956,7 @@ void EditorTab_Statevec::InitTab ()
 	VESSEL *vessel = oapiGetVesselInterface (ed->hVessel);
 	OBJHANDLE hRef = vessel->GetGravityRef();
 
+    /* TODO(jec)
 	SendDlgItemMessage (hTab, IDC_FRM, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessage (hTab, IDC_FRM, CB_ADDSTRING, 0, (LPARAM)"ecliptic");
 	SendDlgItemMessage (hTab, IDC_FRM, CB_ADDSTRING, 0, (LPARAM)"ref. equator (fixed)");
@@ -1761,6 +1967,7 @@ void EditorTab_Statevec::InitTab ()
 	SendDlgItemMessage (hTab, IDC_CRD, CB_ADDSTRING, 0, (LPARAM)"cartesian");
 	SendDlgItemMessage (hTab, IDC_CRD, CB_ADDSTRING, 0, (LPARAM)"polar");
 	SendDlgItemMessage (hTab, IDC_CRD, CB_SETCURSEL, 0, 0);
+    */
 
 	DlgLabels ();
 	ed->ScanCBodyList (hTab, IDC_REF, hRef);
@@ -1773,14 +1980,18 @@ void EditorTab_Statevec::ScanVesselList ()
 	char cbuf[256];
 
 	// populate vessel list
+    /* TODO(jec)
 	SendDlgItemMessage (hTab, IDC_STATECPY, LB_RESETCONTENT, 0, 0);
+    */
 	for (DWORD i = 0; i < oapiGetVesselCount(); i++) {
 		OBJHANDLE hV = oapiGetVesselByIndex (i);
 		if (hV == ed->hVessel) continue;                  // skip myself
 		VESSEL *vessel = oapiGetVesselInterface (hV);
 		if ((vessel->GetFlightStatus() & 1) == 1) continue; // skip landed vessels
 		strcpy (cbuf, vessel->GetName());
+        /* TODO(jec)
 		SendDlgItemMessage (hTab, IDC_STATECPY, LB_ADDSTRING, 0, (LPARAM)cbuf);
+        */
 	}
 }
 
@@ -1791,6 +2002,7 @@ char *EditorTab_Statevec::HelpTopic ()
 
 void EditorTab_Statevec::DlgLabels ()
 {
+    /* TODO(jec)
 	int crd = SendDlgItemMessage (hTab, IDC_CRD, CB_GETCURSEL, 0, 0);
 	SetWindowText (GetDlgItem (hTab, IDC_STATIC1A), crd ? "radius" : "x");
 	SetWindowText (GetDlgItem (hTab, IDC_STATIC2A), crd ? "longitude" : "y");
@@ -1802,10 +2014,12 @@ void EditorTab_Statevec::DlgLabels ()
 	SetWindowText (GetDlgItem (hTab, IDC_STATIC3), crd ? "deg" : "m");
 	SetWindowText (GetDlgItem (hTab, IDC_STATIC5), crd ? "deg/s" : "m/s");
 	SetWindowText (GetDlgItem (hTab, IDC_STATIC6), crd ? "deg/s" : "m/s");
+    */
 }
 
 INT_PTR EditorTab_Statevec::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_COMMAND:
 		switch (LOWORD (wParam)) {
@@ -1908,6 +2122,7 @@ INT_PTR EditorTab_Statevec::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
 		}
 		break;
 	}
+    */
 	return ScnEditorTab::TabProc (hDlg, uMsg, wParam, lParam);
 }
 
@@ -1915,12 +2130,18 @@ void EditorTab_Statevec::Refresh (OBJHANDLE hV)
 {
 	if (!hV) hV = ed->hVessel;
 	char cbuf[256];
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_REF), cbuf, 256);
+    */
 	VESSEL *vessel = oapiGetVesselInterface (hV);
 	OBJHANDLE hRef = oapiGetGbodyByName (cbuf);
 	if (!hRef) return;
-	int frm = SendDlgItemMessage (hTab, IDC_FRM, CB_GETCURSEL, 0, 0);
-	int crd = SendDlgItemMessage (hTab, IDC_CRD, CB_GETCURSEL, 0, 0);
+    /* TODO(jec)
+	int frm = SendDlgItemMessage (hTab, IDC_FRM, CB_GETCURSEL, 0, 0); int crd = SendDlgItemMessage (hTab, IDC_CRD, CB_GETCURSEL, 0, 0);
+    */
+    int frm = 0;
+    int crd = 0;
+
 	VECTOR3 pos, vel;
 	oapiGetRelativePos (hV, hRef, &pos);
 	oapiGetRelativeVel (hV, hRef, &vel);
@@ -1952,18 +2173,22 @@ void EditorTab_Statevec::Refresh (OBJHANDLE hV)
 			vel.z     -= v*cos(phi);
 		}
 	}
+    /* TODO(jec)
 	sprintf (cbuf, "%0.1f", pos.x); SetWindowText (GetDlgItem (hTab, IDC_EDIT1), cbuf);
 	sprintf (cbuf, "%0.*f", (crd?6:1), pos.y); SetWindowText (GetDlgItem (hTab, IDC_EDIT2), cbuf);
 	sprintf (cbuf, "%0.*f", (crd?6:1), pos.z); SetWindowText (GetDlgItem (hTab, IDC_EDIT3), cbuf);
 	sprintf (cbuf, "%0.2f", vel.x); SetWindowText (GetDlgItem (hTab, IDC_EDIT4), cbuf);
 	sprintf (cbuf, "%0.*f", (crd?7:2), vel.y); SetWindowText (GetDlgItem (hTab, IDC_EDIT5), cbuf);
 	sprintf (cbuf, "%0.*f", (crd?7:2), vel.z); SetWindowText (GetDlgItem (hTab, IDC_EDIT6), cbuf);
+    */
 }
 
 void EditorTab_Statevec::Apply ()
 {
 	char cbuf[256];
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_REF), cbuf, 256);
+    */
 	VESSEL *vessel = Vessel();
 	OBJHANDLE hRef = oapiGetGbodyByName (cbuf);
 	if (hRef) {
@@ -1971,6 +2196,7 @@ void EditorTab_Statevec::Apply ()
 		MATRIX3 rot;
 		VECTOR3 pos, vel, refpos, refvel;
 		VESSELSTATUS vs;
+        /* TODO(jec)
 		GetWindowText (GetDlgItem (hTab, IDC_EDIT1), cbuf, 256);
 		sscanf (cbuf, "%lf", &pos.x);
 		GetWindowText (GetDlgItem (hTab, IDC_EDIT2), cbuf, 256);
@@ -1985,6 +2211,10 @@ void EditorTab_Statevec::Apply ()
 		sscanf (cbuf, "%lf", &vel.z);
 		int frm = SendDlgItemMessage (hTab, IDC_FRM, CB_GETCURSEL, 0, 0);
 		int crd = SendDlgItemMessage (hTab, IDC_CRD, CB_GETCURSEL, 0, 0);
+        */
+        int frm = 0;
+        int crd = 0;
+
 		// in the rotating reference frame we need to add the angular
 		// velocity of the planet
 		if (frm == 2) {
@@ -2078,14 +2308,18 @@ void EditorTab_Landed::ScanVesselList ()
 	char cbuf[256];
 
 	// populate vessel list
+    /* TODO(jec)
 	SendDlgItemMessage (hTab, IDC_STATECPY, LB_RESETCONTENT, 0, 0);
+    */
 	for (DWORD i = 0; i < oapiGetVesselCount(); i++) {
 		OBJHANDLE hV = oapiGetVesselByIndex (i);
 		if (hV == ed->hVessel) continue;                  // skip myself
 		VESSEL *vessel = oapiGetVesselInterface (hV);
 		if ((vessel->GetFlightStatus() & 1) == 0) continue; // skip vessels in flight
 		strcpy (cbuf, vessel->GetName());
+        /* TODO(jec)
 		SendDlgItemMessage (hTab, IDC_STATECPY, LB_ADDSTRING, 0, (LPARAM)cbuf);
+        */
 	}
 }
 
@@ -2096,6 +2330,7 @@ char *EditorTab_Landed::HelpTopic ()
 
 INT_PTR EditorTab_Landed::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_COMMAND:
 		switch (LOWORD (wParam)) {
@@ -2208,6 +2443,7 @@ INT_PTR EditorTab_Landed::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 		}
 		break;
 	}
+    */
 	return ScnEditorTab::TabProc (hDlg, uMsg, wParam, lParam);
 }
 
@@ -2218,7 +2454,9 @@ void EditorTab_Landed::Refresh (OBJHANDLE hV)
 	if (!hV) hV = ed->hVessel;
 	VESSEL *vessel = oapiGetVesselInterface (hV);
 	if (scancbody) SelectCBody (vessel->GetSurfaceRef());
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_REF), cbuf, 256);
+    */
 	OBJHANDLE hRef = oapiGetGbodyByName (cbuf);
 	if (!hRef) return;
 
@@ -2241,17 +2479,23 @@ void EditorTab_Landed::Refresh (OBJHANDLE hV)
 		sprintf (lngstr, "%lf", pos.data[1] * DEG);
 		sprintf (latstr, "%lf", pos.data[2] * DEG);
 	}
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_EDIT1), lngstr);
 	SetWindowText (GetDlgItem (hTab, IDC_EDIT2), latstr);
+    */
 
 	sprintf (cbuf, "%lf", vs.surf_hdg * DEG);
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_EDIT3), cbuf);
+    */
 }
 
 void EditorTab_Landed::Apply ()
 {
 	char cbuf[256];
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_REF), cbuf, 256);
+    */
 	VESSEL *vessel = oapiGetVesselInterface (ed->hVessel);
 	OBJHANDLE hRef = oapiGetGbodyByName (cbuf);
 	if (!hRef) return;
@@ -2261,12 +2505,14 @@ void EditorTab_Landed::Apply ()
 	vs.rbody = hRef;
 	vs.status = 1; // landed
 	vs.arot.x = 10; // use default touchdown orientation
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_EDIT1), cbuf, 256);
 	sscanf (cbuf, "%lf", &vs.surf_lng); vs.surf_lng *= RAD;
 	GetWindowText (GetDlgItem (hTab, IDC_EDIT2), cbuf, 256);
 	sscanf (cbuf, "%lf", &vs.surf_lat); vs.surf_lat *= RAD;
 	GetWindowText (GetDlgItem (hTab, IDC_EDIT3), cbuf, 256);
 	sscanf (cbuf, "%lf", &vs.surf_hdg); vs.surf_hdg *= RAD;
+    */
 	vessel->DefSetStateEx (&vs);
 }
 
@@ -2274,16 +2520,22 @@ void EditorTab_Landed::ScanCBodyList (HWND hDlg, int hList, OBJHANDLE hSelect)
 {
 	// populate a list of celestial bodies
 	char cbuf[256];
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, hList, CB_RESETCONTENT, 0, 0);
+    */
 	for (DWORD n = 0; n < oapiGetGbodyCount(); n++) {
 		OBJHANDLE hBody = oapiGetGbodyByIndex (n);
 		if (oapiGetObjectType (hBody) == OBJTP_STAR) continue; // skip stars
 		oapiGetObjectName (hBody, cbuf, 256);
+        /* TODO(jec)
 		SendDlgItemMessage (hDlg, hList, CB_ADDSTRING, 0, (LPARAM)cbuf);
+        */
 	}
 	// select the requested body
 	oapiGetObjectName (hSelect, cbuf, 256);
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, hList, CB_SELECTSTRING, -1, (LPARAM)cbuf);
+    */
 }
 
 void EditorTab_Landed::ScanBaseList (HWND hDlg, int hList, OBJHANDLE hRef)
@@ -2291,10 +2543,14 @@ void EditorTab_Landed::ScanBaseList (HWND hDlg, int hList, OBJHANDLE hRef)
 	char cbuf[256];
 	DWORD n;
 
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, hList, CB_RESETCONTENT, 0, 0);
+    */
 	for (n = 0; n < oapiGetBaseCount (hRef); n++) {
 		oapiGetObjectName (oapiGetBaseByIndex (hRef, n), cbuf, 256);
+        /* TODO(jec)
 		SendDlgItemMessage (hDlg, hList, CB_ADDSTRING, 0, (LPARAM)cbuf);
+        */
 	}
 }
 
@@ -2302,11 +2558,16 @@ void EditorTab_Landed::SelectCBody (OBJHANDLE hBody)
 {
 	char cbuf[256];
 	oapiGetObjectName (hBody, cbuf, 256);
+    /* TODO(jec)
 	int idx = SendDlgItemMessage (hTab, IDC_REF, CB_FINDSTRING, -1, (LPARAM)cbuf);
+    */
+
+    /* TODO(jec)
 	if (idx != LB_ERR) {
 		SendDlgItemMessage (hTab, IDC_REF, CB_SETCURSEL, idx, 0);
 		PostMessage (hTab, WM_USER+0, 0, 0);
 	}
+    */
 }
 
 INT_PTR EditorTab_Landed::DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -2338,6 +2599,7 @@ char *EditorTab_Orientation::HelpTopic ()
 
 INT_PTR EditorTab_Orientation::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_COMMAND:
 		switch (LOWORD (wParam)) {
@@ -2400,6 +2662,7 @@ INT_PTR EditorTab_Orientation::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 		}
 		break;
 	}
+    */
 	return ScnEditorTab::TabProc (hDlg, uMsg, wParam, lParam);
 }
 
@@ -2412,7 +2675,9 @@ void EditorTab_Orientation::Refresh ()
 	vessel->GetGlobalOrientation (arot);
 	for (i = 0; i < 3; i++) {
 		sprintf (cbuf, "%lf", arot.data[i] * DEG);
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (hTab, IDC_EDIT1+i), cbuf);
+        */
 	}
 }
 
@@ -2423,7 +2688,9 @@ void EditorTab_Orientation::Apply ()
 	VESSEL *vessel = oapiGetVesselInterface (ed->hVessel);
 	VECTOR3 arot;
 	for (i = 0; i < 3; i++) {
+        /* TODO(jec)
 		GetWindowText (GetDlgItem (hTab, IDC_EDIT1+i), cbuf, 256);
+        */
 		sscanf (cbuf, "%lf", &arot.data[i]);
 		arot.data[i] *= RAD;
 	}
@@ -2437,7 +2704,9 @@ void EditorTab_Orientation::ApplyAngularVel ()
 	VESSEL *vessel = oapiGetVesselInterface (ed->hVessel);
 	VECTOR3 avel;
 	for (i = 0; i < 3; i++) {
+        /* TODO(jec)
 		GetWindowText (GetDlgItem (hTab, IDC_EDIT4+i), cbuf, 256);
+        */
 		sscanf (cbuf, "%lf", &avel.data[i]);
 		avel.data[i] *= RAD;
 	}
@@ -2493,6 +2762,7 @@ char *EditorTab_AngularVel::HelpTopic ()
 
 INT_PTR EditorTab_AngularVel::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_COMMAND:
 		switch (LOWORD (wParam)) {
@@ -2548,6 +2818,7 @@ INT_PTR EditorTab_AngularVel::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 		}
 		break;
 	}
+    */
 	return ScnEditorTab::TabProc (hDlg, uMsg, wParam, lParam);
 }
 
@@ -2559,7 +2830,9 @@ void EditorTab_AngularVel::Refresh ()
 	vessel->GetAngularVel (avel);
 	for (int i = 0; i < 3; i++) {
 		sprintf (cbuf, "%lf", avel.data[i] * DEG);
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (hTab, IDC_EDIT1+i), cbuf);
+        */
 	}
 }
 
@@ -2569,7 +2842,9 @@ void EditorTab_AngularVel::Apply ()
 	VESSEL *vessel = oapiGetVesselInterface (ed->hVessel);
 	VECTOR3 avel;
 	for (int i = 0; i < 3; i++) {
+        /* TODO(jec)
 		GetWindowText (GetDlgItem (hTab, IDC_EDIT1+i), cbuf, 256);
+        */
 		sscanf (cbuf, "%lf", &avel.data[i]);
 		avel.data[i] *= RAD;
 	}
@@ -2582,7 +2857,9 @@ void EditorTab_AngularVel::Killrot ()
 	VECTOR3 avel;
 	for (int i = 0; i < 3; i++) {
 		avel.data[i] = 0.0;
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (hTab, IDC_EDIT1+i), "0");
+        */
 	}
 	vessel->SetAngularVel (avel);
 
@@ -2608,7 +2885,9 @@ EditorTab_Propellant::EditorTab_Propellant (ScnEditor *editor) : ScnEditorTab (e
 void EditorTab_Propellant::InitTab ()
 {
 	GAUGEPARAM gp = { 0, 100, GAUGEPARAM::LEFT, GAUGEPARAM::BLACK };
+    /* TODO(jec)
 	oapiSetGaugeParams (GetDlgItem (hTab, IDC_PROPLEVEL), &gp);
+    */
 	lastedit = IDC_EDIT2;
 	Refresh();
 }
@@ -2620,6 +2899,7 @@ char *EditorTab_Propellant::HelpTopic ()
 
 INT_PTR EditorTab_Propellant::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_COMMAND:
 		switch (LOWORD (wParam)) {
@@ -2685,6 +2965,7 @@ INT_PTR EditorTab_Propellant::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 		}
 		break;
 	}
+    */
 	return ScnEditorTab::TabProc (hDlg, uMsg, wParam, lParam);
 }
 
@@ -2697,11 +2978,15 @@ void EditorTab_Propellant::Refresh ()
 	VESSEL *vessel = oapiGetVesselInterface (ed->hVessel);
 	ntank = vessel->GetPropellantCount();
 	sprintf (cbuf, "of %d", ntank);
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_STATIC1), cbuf);
 	GetWindowText (GetDlgItem (hTab, IDC_EDIT1), cbuf, 256);
+    */
 	i = sscanf (cbuf, "%d", &n);
 	if (i != 1 || n > ntank) {
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (hTab, IDC_EDIT1), "1");
+        */
 		n = 0;
 	} else n--;
 	PROPELLANT_HANDLE hP = vessel->GetPropellantHandleByIndex (n);
@@ -2709,12 +2994,18 @@ void EditorTab_Propellant::Refresh ()
 	m0 = vessel->GetPropellantMaxMass (hP);
 	m  = vessel->GetPropellantMass (hP);
 	sprintf (cbuf, "Mass (0-%0.2f kg)", m0);
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_STATIC2), cbuf);
+    */
 	sprintf (cbuf, "%0.4f", m/m0);
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_EDIT2), cbuf);
+    */
 	sprintf (cbuf, "%0.2f", m);
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_EDIT3), cbuf);
 	oapiSetGaugePos (GetDlgItem (hTab, IDC_PROPLEVEL), (int)(m/m0*100+0.5));
+    */
 	RefreshTotals();
 }
 
@@ -2725,10 +3016,14 @@ void EditorTab_Propellant::RefreshTotals ()
 	VESSEL *vessel = oapiGetVesselInterface (ed->hVessel);
 	m = vessel->GetTotalPropellantMass ();
 	sprintf (cbuf, "%0.2f kg", m);
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_STATIC3), cbuf);
+    */
 	m = vessel->GetMass ();
 	sprintf (cbuf, "%0.2f kg", m);
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_STATIC4), cbuf);
+    */
 }
 
 void EditorTab_Propellant::Apply ()
@@ -2737,17 +3032,23 @@ void EditorTab_Propellant::Apply ()
 	double level;
 	VESSEL *vessel = oapiGetVesselInterface (ed->hVessel);
 	if (lastedit == IDC_EDIT2) {
+        /* TODO(jec)
 		GetWindowText (GetDlgItem (hTab, IDC_EDIT2), cbuf, 256);
+        */
 		sscanf (cbuf, "%lf", &level);
 		level = max (0.0, min (1.0, level));
 	} else {
 		VESSEL *vessel = oapiGetVesselInterface (ed->hVessel);
+        /* TODO(jec)
 		GetWindowText (GetDlgItem (hTab, IDC_EDIT1), cbuf, 256);
+        */
 		DWORD n, i = sscanf (cbuf, "%d", &n);
 		if (!i || --n >= ntank) return;
 		PROPELLANT_HANDLE hP = vessel->GetPropellantHandleByIndex (n);
 		double m, m0 = vessel->GetPropellantMaxMass (hP);
+        /* TODO(jec)
 		GetWindowText (GetDlgItem (hTab, IDC_EDIT3), cbuf, 256);
+        */
 		sscanf (cbuf, "%lf", &m);
 		level = max (0.0, min (1.0, m/m0));
 	}
@@ -2763,7 +3064,9 @@ void EditorTab_Propellant::SetLevel (double level, bool setall)
 	VESSEL *vessel = oapiGetVesselInterface (ed->hVessel);
 	ntank = vessel->GetPropellantCount();
 	if (!ntank) return;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_EDIT1), cbuf, 256);
+    */
 	i = sscanf (cbuf, "%d", &n);
 	if (!i || --n >= ntank) return;
 	if (setall) k0 = 0, k1 = ntank;
@@ -2774,12 +3077,18 @@ void EditorTab_Propellant::SetLevel (double level, bool setall)
 		vessel->SetPropellantMass (hP, level*m0);
 		if (k == n) {
 			sprintf (cbuf, "%f", level);
+            /* TODO(jec)
 			SetWindowText (GetDlgItem (hTab, IDC_EDIT2), cbuf);
+            */
 			sprintf (cbuf, "%0.2f", level*m0);
+            /* TODO(jec)
 			SetWindowText (GetDlgItem (hTab, IDC_EDIT3), cbuf);
 			i = oapiGetGaugePos (GetDlgItem (hTab, IDC_PROPLEVEL));
+            */
 			j = (int)(level*100.0+0.5);
+            /* TODO(jec)
 			if (i != j) oapiSetGaugePos (GetDlgItem (hTab, IDC_PROPLEVEL), j);
+            */
 		}
 	}
 	RefreshTotals();
@@ -2800,13 +3109,17 @@ INT_PTR EditorTab_Propellant::DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 EditorTab_Docking::EditorTab_Docking (ScnEditor *editor) : ScnEditorTab (editor)
 {
 	CreateTab (IDD_TAB_EDIT8, EditorTab_Docking::DlgProc);
+    /* TODO(jec)
 	SendDlgItemMessage (hTab, IDC_RADIO1, BM_SETCHECK, BST_CHECKED, 0);
 	SendDlgItemMessage (hTab, IDC_RADIO2, BM_SETCHECK, BST_UNCHECKED, 0);
+    */
 }
 
 void EditorTab_Docking::InitTab ()
 {
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_EDIT1), "1");
+    */
 	ScanTargetList();
 	Refresh ();
 }
@@ -2818,6 +3131,7 @@ char *EditorTab_Docking::HelpTopic ()
 
 INT_PTR EditorTab_Docking::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_COMMAND:
 		switch (LOWORD (wParam)) {
@@ -2883,6 +3197,7 @@ INT_PTR EditorTab_Docking::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		}
 		break;
 	}
+    */
 	return ScnEditorTab::TabProc (hDlg, uMsg, wParam, lParam);
 }
 
@@ -2892,7 +3207,9 @@ UINT EditorTab_Docking::DockNo ()
 	// (>= 1, or 0 if invalid)
 	char cbuf[256];
 	UINT dock;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_EDIT1), cbuf, 256);
+    */
 	int res = sscanf (cbuf, "%d", &dock);
 	if (!res || dock > Vessel()->DockCount()) dock = 0;
 	return dock;
@@ -2901,12 +3218,16 @@ UINT EditorTab_Docking::DockNo ()
 void EditorTab_Docking::ScanTargetList ()
 {
 	// populate docking target list
+    /* TODO(jec)
 	SendDlgItemMessage (hTab, IDC_COMBO1, CB_RESETCONTENT, 0, 0);
+    */
 	for (DWORD i = 0; i < oapiGetVesselCount(); i++) {
 		OBJHANDLE hV = oapiGetVesselByIndex (i);
 		VESSEL *v = oapiGetVesselInterface (hV);
 		if (v != Vessel() && v->DockCount() > 0) { // only vessels with docking ports make sense here
+            /* TODO(jec)
 			SendDlgItemMessage (hTab, IDC_COMBO1, CB_ADDSTRING, 0, (LPARAM)v->GetName());
+            */
 		}
 	}
 }
@@ -2916,7 +3237,11 @@ void EditorTab_Docking::ToggleIDS ()
 	UINT dock = DockNo();
 	if (!dock) return;
 	DOCKHANDLE hDock = Vessel()->GetDockHandle (dock-1);
+    /* TODO(jec)
 	bool enable = (SendDlgItemMessage (hTab, IDC_IDS, BM_GETCHECK, 0, 0) == BST_CHECKED);
+    */
+    bool enable = false;
+
 	Vessel()->EnableIDS (hDock, enable);
 }
 
@@ -2927,7 +3252,9 @@ void EditorTab_Docking::IncIDSChannel (int dch)
 	UINT dock = DockNo();
 	if (!dock) return;
 	DOCKHANDLE hDock = Vessel()->GetDockHandle (dock-1);
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_EDIT2), cbuf, 256);
+    */
 	if (sscanf (cbuf, "%lf", &freq)) {
 		int ch = (int)((freq-108.0)*20.0+0.5);
 		ch = max(0, min (639, ch+dch));
@@ -2941,18 +3268,24 @@ void EditorTab_Docking::Dock ()
 	DWORD n, ntgt, mode;
 	VESSEL *vessel = Vessel();
 
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_COMBO1), cbuf, 256);
+    */
 	OBJHANDLE hTarget = oapiGetVesselByName (cbuf);
 	if (!hTarget) return;
 	VESSEL *target = oapiGetVesselInterface (hTarget);
 	n = DockNo();
 	if (!n) return;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_EDIT4), cbuf, 256);
+    */
 	if (!sscanf (cbuf, "%d", &ntgt) || ntgt < 1 || ntgt > target->DockCount()) {
 		DisplayErrorMsg (IDS_ERR4);
 		return;
 	}
+    /* TODO(jec)
 	mode = (SendDlgItemMessage (hTab, IDC_RADIO1, BM_GETCHECK, 0, 0) == BST_CHECKED ? 1:2);
+    */
 	int res = vessel->Dock (hTarget, n-1, ntgt-1, mode);
 	Refresh ();
 	if (res) {
@@ -2977,17 +3310,23 @@ void EditorTab_Docking::Refresh ()
 	char cbuf[256];
 	int i;
 	DWORD n, ndock = vessel->DockCount();
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_ERRMSG), "");
+    */
 
 	sprintf (cbuf, "of %d", vessel->DockCount());
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_STATIC1), cbuf);
 
 	GetWindowText (GetDlgItem (hTab, IDC_EDIT1), cbuf, 256);
+    */
 	if (!sscanf (cbuf, "%d", &n)) n = 0;
 	if (n < 1 || n > ndock) {
 		n = max ((DWORD)1, min (ndock, n));
 		sprintf (cbuf, "%d", n);
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (hTab, IDC_EDIT1), cbuf);
+        */
 	}
 	n--; // zero-based
 
@@ -2995,22 +3334,30 @@ void EditorTab_Docking::Refresh ()
 	NAVHANDLE hIDS = vessel->GetIDS (hDock);
 	if (hIDS) sprintf (cbuf, "%0.2f", oapiGetNavFreq (hIDS));
 	else      strcpy (cbuf, "<none>");
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_EDIT2), cbuf);
 	SendDlgItemMessage (hTab, IDC_IDS, BM_SETCHECK, hIDS ? BST_CHECKED : BST_UNCHECKED, 0);
 	EnableWindow (GetDlgItem (hTab, IDC_EDIT2), hIDS ? TRUE:FALSE);
 	EnableWindow (GetDlgItem (hTab, IDC_SPIN2), hIDS ? TRUE:FALSE);
+    */
 
 	OBJHANDLE hMate = vessel->GetDockStatus (hDock);
 	if (hMate) { // dock is engaged
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (hTab, IDC_STATIC2), "Currently docked to");
 		for (i = 0; i < 7; i++) ShowWindow (GetDlgItem (hTab, dockitem[i]), SW_HIDE);
 		for (i = 0; i < 2; i++) ShowWindow (GetDlgItem (hTab, undockitem[i]), SW_SHOW);
+        */
 		oapiGetObjectName (hMate, cbuf, 256);
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (hTab, IDC_EDIT3), cbuf);
+        */
 	} else { // dock is free
+        /* TODO(jec)
 		SetWindowText (GetDlgItem (hTab, IDC_STATIC2), "Establish docking connection with");
 		for (i = 0; i < 2; i++) ShowWindow (GetDlgItem (hTab, undockitem[i]), SW_HIDE);
 		for (i = 0; i < 7; i++) ShowWindow (GetDlgItem (hTab, dockitem[i]), SW_SHOW);
+        */
 	}
 }
 
@@ -3018,7 +3365,9 @@ void EditorTab_Docking::SetTargetDock (DWORD dock)
 {
 	char cbuf[256];
 	DWORD n = 0;
+    /* TODO(jec)
 	GetWindowText (GetDlgItem (hTab, IDC_COMBO1), cbuf, 256);
+    */
 	OBJHANDLE hTarget = oapiGetVesselByName (cbuf);
 	if (hTarget) {
 		VESSEL *v = oapiGetVesselInterface (hTarget);
@@ -3027,14 +3376,18 @@ void EditorTab_Docking::SetTargetDock (DWORD dock)
 	}
 	if (n) sprintf (cbuf, "%d", n);
 	else   cbuf[0] = '\0';
+    /* TODO(jec)
 	SetWindowText (GetDlgItem (hTab, IDC_EDIT4), cbuf);
+    */
 }
 
 void EditorTab_Docking::DisplayErrorMsg (UINT err)
 {
 	char cbuf[256] = "Error: ";
+    /* TODO(jec)
 	LoadString (ed->InstHandle(), err, cbuf+7, 249);
 	SetWindowText (GetDlgItem (hTab, IDC_ERRMSG), cbuf);
+    */
 }
 
 INT_PTR EditorTab_Docking::DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -3057,12 +3410,15 @@ EditorTab_Custom::EditorTab_Custom (ScnEditor *editor, HINSTANCE hInst, WORD Res
 
 void EditorTab_Custom::OpenHelp ()
 {
+    /* TODO(jec)
 	if (!usrProc (hTab, WM_COMMAND, IDHELP, 0))
 		ScnEditorTab::OpenHelp();
+    */
 }
 
 INT_PTR EditorTab_Custom::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		return usrProc (hDlg, uMsg, wParam, (LPARAM)ed->hVessel);
@@ -3082,6 +3438,7 @@ INT_PTR EditorTab_Custom::TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 		}
 		break;
 	}
+    */
 	return usrProc (hDlg, uMsg, wParam, lParam);
 }
 

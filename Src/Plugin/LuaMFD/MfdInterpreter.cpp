@@ -2,7 +2,9 @@
 // Licensed under the MIT License
 
 #include "MfdInterpreter.h"
+/* TODO(jec)
 #include <process.h>
+*/
 
 // ==============================================================
 // MFD interpreter class implementation
@@ -141,10 +143,12 @@ InterpreterList::Environment::Environment (OBJHANDLE hV)
 InterpreterList::Environment::~Environment()
 {
 	if (interp) {
+        /* TODO(jec)
 		if (hThread) {
 			TerminateThread (hThread, 0);
 			CloseHandle (hThread);
 		}
+        */
 		delete interp;
 	}
 }
@@ -155,7 +159,9 @@ MFDInterpreter *InterpreterList::Environment::CreateInterpreter (OBJHANDLE hV)
 	interp = new MFDInterpreter ();
 	interp->Initialise();
 	interp->SetSelf (hV);
+    /* TODO(jec)
 	hThread = (HANDLE)_beginthreadex (NULL, 4096, &InterpreterThreadProc, this, 0, &id);
+    */
 	return interp;
 }
 
@@ -175,7 +181,9 @@ unsigned int WINAPI InterpreterList::Environment::InterpreterThreadProc (LPVOID 
 		interp->EndExec();  // return control
 	}
 	interp->EndExec();  // release mutex (is this necessary?)
+    /* TODO(jec)
 	_endthreadex(0);
+    */
 	return 0;
 }
 

@@ -28,6 +28,6 @@
 // Function Prototypes ///////////////////////////////////////////////////////////
 /////////////////////////
 //
-NPRESULT NPClient_Init( LPTSTR pszPath );
+NPRESULT NPClient_Init( char* pszPath );
 
 #endif // #ifdef _NPCLIENTWRAPS_H_DEFINED_

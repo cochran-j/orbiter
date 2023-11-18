@@ -11,10 +11,12 @@ add_library(AtmConfig SHARED
 target_include_directories(AtmConfig
 	PUBLIC ${ORBITER_SOURCE_SDK_INCLUDE_DIR}
 	PUBLIC ${MODULE_COMMON_DIR}
+    PUBLIC ${WIN32_INCLUDE_DIR}
 )
 
 target_link_libraries(AtmConfig
-	${ORBITER_LIB}
+    # TODO(jec)
+    #	${ORBITER_LIB}
 	${ORBITER_SDK_LIB}
 )
 

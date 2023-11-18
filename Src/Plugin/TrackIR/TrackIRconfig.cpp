@@ -3,7 +3,9 @@
 #include "resource.h"
 #include <string.h>
 #include <stdio.h>
+/* TODO(jec)
 #include <commctrl.h>
+*/
 
 using std::min;
 using std::max;
@@ -48,26 +50,36 @@ int TrackIRconfig::clbkWriteConfig ()
 void TrackIRconfig::InitDialog (HWND hDlg)
 {
 	char cbuf[256];
+    /* TODO(jec)
 	TC_ITEM tie;
 	tie.mask = TCIF_TEXT;
 	tie.iImage = -1;
 	tie.pszText = cbuf;
+    */
 
 	strcpy (cbuf, "Mode");
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_TAB1, TCM_INSERTITEM, 0, (LPARAM)&tie);
 	hTab[0] = CreateDialog (gParams.hInst, MAKEINTRESOURCE(IDD_CFG_MODE), hDlg, TabProc_mode);
+    */
 
 	strcpy (cbuf, "VC");
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_TAB1, TCM_INSERTITEM, 1, (LPARAM)&tie);
 	hTab[1] = CreateDialog (gParams.hInst, MAKEINTRESOURCE(IDD_CFG_VC), hDlg, TabProc_cfg);
+    */
 
 	strcpy (cbuf, "Track");
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_TAB1, TCM_INSERTITEM, 2, (LPARAM)&tie);
 	hTab[2] = CreateDialog (gParams.hInst, MAKEINTRESOURCE(IDD_CFG_TRACK), hDlg, TabProc_trk);
+    */
 
 	strcpy (cbuf, "Diagnostic");
+    /* TODO(jec)
 	SendDlgItemMessage (hDlg, IDC_TAB1, TCM_INSERTITEM, 3, (LPARAM)&tie);
 	hTab[3] = CreateDialog (gParams.hInst, MAKEINTRESOURCE(IDD_CFG_DIAGNOSTIC), hDlg, TabProc_diag);
+    */
 
 	SwitchTab (hDlg);
 }
@@ -75,17 +87,24 @@ void TrackIRconfig::InitDialog (HWND hDlg)
 void TrackIRconfig::CloseDialog (HWND hDlg)
 {
 	int i;
-	for (i = 0; i < NTAB; i++)
+	for (i = 0; i < NTAB; i++) {
+        /* TODO(jec)
 		DestroyWindow (hTab[i]);
+        */
+    }
+    /* TODO(jec)
 	EndDialog (hDlg, 0);
+    */
 }
 
 void TrackIRconfig::SwitchTab (HWND hDlg)
 {
+    /* TODO(jec)
 	int pg, cpg = TabCtrl_GetCurSel (GetDlgItem (hDlg, IDC_TAB1));
 	for (pg = 0; pg < NTAB; pg++)
 		if (pg != cpg) ShowWindow (hTab[pg], SW_HIDE);
 	ShowWindow (hTab[cpg], SW_SHOW);
+    */
 }
 
 void TrackIRconfig::Apply (HWND hDlg)
@@ -95,25 +114,34 @@ void TrackIRconfig::Apply (HWND hDlg)
 	DWORD cmode = 0;
 
 	// main page
+    /* TODO(jec)
 	if (SendDlgItemMessage (hTab[0], IDC_CHECK1, BM_GETCHECK, 0, 0) == BST_CHECKED) cmode |= CAMMODE_VC;
 	if (SendDlgItemMessage (hTab[0], IDC_CHECK2, BM_GETCHECK, 0, 0) == BST_CHECKED) cmode |= CAMMODE_PANELCOCKPIT;
 	if (SendDlgItemMessage (hTab[0], IDC_CHECK3, BM_GETCHECK, 0, 0) == BST_CHECKED) cmode |= CAMMODE_GENERICCOCKPIT;
 	if (SendDlgItemMessage (hTab[0], IDC_CHECK4, BM_GETCHECK, 0, 0) == BST_CHECKED) cmode |= CAMMODE_TRACK;
 	if (SendDlgItemMessage (hTab[0], IDC_CHECK5, BM_GETCHECK, 0, 0) == BST_CHECKED) cmode |= CAMMODE_GROUND;
+    */
 	trackir->SetCameraMode (cmode);
 
 	// VC config page
+    /* TODO(jec)
 	trackir->vcmode.trackrotation = (SendDlgItemMessage (hTab[1], IDC_CHECK1, BM_GETCHECK, 0, 0) == BST_CHECKED);
 	GetWindowText (GetDlgItem (hTab[1], IDC_EDIT1), cbuf, 256);
+    */
 	if (sscanf (cbuf, "%lf", &t)) trackir->vcmode.rotationrange = max (1.0*RAD, min (PI, t*RAD));
+    /* TODO(jec)
 	trackir->vcmode.trackposition = (SendDlgItemMessage (hTab[1], IDC_CHECK2, BM_GETCHECK, 0, 0) == BST_CHECKED);
 	GetWindowText (GetDlgItem (hTab[1], IDC_EDIT2), cbuf, 256);
+    */
 	if (sscanf (cbuf, "%lf", &t)) trackir->vcmode.positionrange = max (0.0, min (2.0, t));
+    /* TODO(jec)
 	trackir->vcmode.freezeonmouse = (SendDlgItemMessage (hTab[1], IDC_CHECK3, BM_GETCHECK, 0, 0) == BST_CHECKED);
 	GetWindowText (GetDlgItem (hTab[1], IDC_EDIT3), cbuf, 256);
+    */
 	if (sscanf (cbuf, "%lf", &t)) trackir->vcmode.freeze_t = t;
 
 	// Track config mode
+    /* TODO(jec)
 	trackir->trkmode.trackrotation = (SendDlgItemMessage (hTab[2], IDC_CHECK1, BM_GETCHECK, 0, 0) == BST_CHECKED);
 	trackir->trkmode.trackzoom = (SendDlgItemMessage (hTab[2], IDC_CHECK2, BM_GETCHECK, 0, 0) == BST_CHECKED);
 	trackir->trkmode.rotationdata = (SendDlgItemMessage (hTab[2], IDC_RADIO1, BM_GETCHECK, 0, 0) == BST_CHECKED ?
@@ -122,10 +150,12 @@ void TrackIRconfig::Apply (HWND hDlg)
 	if (sscanf (cbuf, "%lf", &t)) trackir->trkmode.deadzone = max (0.0, min (100.0, t))*0.01;
 	GetWindowText (GetDlgItem (hTab[2], IDC_EDIT2), cbuf, 256);
 	if (sscanf (cbuf, "%lf", &t)) trackir->trkmode.speed = max(1.0, min (100.0, t))*0.05;
+    */
 }
 
-INT_PTR CALLBACK TrackIRconfig::DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR TrackIRconfig::DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	LPNMHDR nmh;
 
 	switch (uMsg) {
@@ -151,12 +181,14 @@ INT_PTR CALLBACK TrackIRconfig::DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LP
 		}
 		break;
 	}
+    */
 	return 0;
 }
 
-INT_PTR CALLBACK TrackIRconfig::TabProc_mode (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR TrackIRconfig::TabProc_mode (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	TrackIR *trackir = tirc->trackir;
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG: {
 		DWORD cmode = trackir->GetCameraMode();
@@ -167,14 +199,16 @@ INT_PTR CALLBACK TrackIRconfig::TabProc_mode (HWND hTab, UINT uMsg, WPARAM wPara
 		SendDlgItemMessage (hTab, IDC_CHECK5, BM_SETCHECK, cmode & CAMMODE_GROUND ? BST_CHECKED:BST_UNCHECKED, 0);
 		} break;
 	}
+    */
 	return 0;
 }
 
-INT_PTR CALLBACK TrackIRconfig::TabProc_cfg (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR TrackIRconfig::TabProc_cfg (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	TrackIR *trackir = tirc->trackir;
 	TrackIR::VCMode &vcmode = trackir->vcmode;
 
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG: {
 		char cbuf[256];
@@ -189,14 +223,16 @@ INT_PTR CALLBACK TrackIRconfig::TabProc_cfg (HWND hTab, UINT uMsg, WPARAM wParam
 		SetWindowText (GetDlgItem (hTab, IDC_EDIT3), cbuf);
 		} break;
 	}
+    */
 	return 0;
 }
 
-INT_PTR CALLBACK TrackIRconfig::TabProc_trk (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR TrackIRconfig::TabProc_trk (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	TrackIR *trackir = tirc->trackir;
 	TrackIR::TrackMode &trkmode = trackir->trkmode;
 
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG: {
 		char cbuf[256];
@@ -210,17 +246,20 @@ INT_PTR CALLBACK TrackIRconfig::TabProc_trk (HWND hTab, UINT uMsg, WPARAM wParam
 		SetWindowText (GetDlgItem (hTab, IDC_EDIT2), cbuf);
 		} break;
 	}
+    */
 	return 0;
 }
 
-INT_PTR CALLBACK TrackIRconfig::TabProc_diag (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR TrackIRconfig::TabProc_diag (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	TrackIR *trackir = tirc->trackir;
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		SetWindowText (GetDlgItem (hTab, IDC_EDIT1), trackir->dllPath);
 		SetWindowText (GetDlgItem (hTab, IDC_EDIT2), trackir->cVersion);
 		break;
 	}
+    */
 	return 0;
 }

@@ -16,6 +16,10 @@
 #include <string>
 #include <vector>
 
+/* TODO(jec):  Compatibility definitions */
+using HFONT = void*;
+using HPEN = void*;
+
 const int MAXPLOT = 3;
 const int NDATA = 200;
 

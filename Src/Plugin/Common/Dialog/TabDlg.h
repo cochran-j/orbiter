@@ -12,11 +12,18 @@
 #ifndef __TABDLG_H
 #define __TABDLG_H
 
-#include "windows.h"
+#include <windows.h>
+
+/* TODO(jec):  Compat definitions */
+using WPARAM = UINT_PTR;
+using LPARAM = LONG_PTR;
+
 
 // ==============================================================
 // class TabbedDialog: Dialog containing a single tab control
 // ==============================================================
+
+class TabPage;
 
 class TabbedDialog {
 	friend class TabPage;
@@ -65,7 +72,7 @@ protected:
 	// dialog message callback
 
 private:
-	friend INT_PTR CALLBACK DlgProcHook (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	friend INT_PTR DlgProcHook (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	// entry point for dialog message callback
 
 	HWND hDlg;       // Dialog handle
@@ -102,7 +109,7 @@ public:
 	// Default behaviour: nothing, returns FALSE
 
 private:
-	friend INT_PTR CALLBACK TabProcHook (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	friend INT_PTR TabProcHook (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	// entry point for tab message callback
 
 	TabbedDialog *dlg;

@@ -11,12 +11,15 @@ add_library(Framerate SHARED
 target_include_directories(Framerate
 	PUBLIC ${ORBITER_SOURCE_SDK_INCLUDE_DIR}
 	PUBLIC ${MODULE_COMMON_DIR}
+    PUBLIC ${WIN32_INCLUDE_DIR}
 )
 
 target_link_libraries(Framerate
-	${ORBITER_LIB}
+    # TODO(jec)
+    # ${ORBITER_LIB}
 	${ORBITER_SDK_LIB}
-	UxTheme.lib
+    # TODO(jec)
+    # UxTheme.lib
 )
 
 add_dependencies(Framerate

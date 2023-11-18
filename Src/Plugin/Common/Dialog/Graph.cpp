@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <strstream>
-#include "orbitersdk.h"
+#include "Orbitersdk.h"
 
 static COLORREF plotcol[MAXPLOT] = { 0x0000ff, 0xff0000, 0x00ff00 };
 
@@ -50,12 +50,14 @@ Graph::~Graph()
 void Graph::InitGDI ()
 {
 	if (!gdi.nref) {
+        /* TODO(jec)
 	 	gdi.font[0] = CreateFont (-10, 0, 0, 0, 400, 0, 0, 0, 0, 3, 2, 1, 49, "Arial");
 		gdi.font[1] = CreateFont (-10, 0, 900, 900, 400, 0, 0, 0, 0, 3, 2, 1, 49, "Arial");
 		gdi.pen[0]  = CreatePen (PS_SOLID, 0, 0x808080);
 		gdi.pen[1]  = CreatePen (PS_SOLID, 0, 0xD0D0D0);
 		for (int i = 0; i < MAXPLOT; i++)
 			gdi.pen[2+i]  = CreatePen (PS_SOLID, 1, plotcol[i]);
+        */
 	}
 	gdi.nref++;
 }
@@ -65,8 +67,10 @@ void Graph::FreeGDI ()
 	gdi.nref--;
 	if (!gdi.nref) {
 		DWORD i;
+        /* TODO(jec)
 		for (i = 0; i < 2; i++) DeleteObject (gdi.font[i]);
 		for (i = 0; i < 2+MAXPLOT; i++) DeleteObject (gdi.pen[i]);
+        */
 	}
 }
 
@@ -171,76 +175,114 @@ void Graph::Refresh (HDC hDC, int w, int h)
 	int i, p;
 	char cbuf[256];
 
+    /* TODO(jec)
 	HFONT pfont = (HFONT)SelectObject (hDC, gdi.font[0]);
+    */
 
 	if (m_ndata >= 2) {
 		double f;
 		float ys = dy / (m_vmax - m_vmin);
+        /* TODO(jec)
 		SelectObject (hDC, gdi.pen[0]);
+        */
 
 		// draw grid lines and ordinate labels
+        /* TODO(jec)
 		SetTextAlign (hDC, TA_RIGHT);
+        */
 		for (f = m_tickmin; f <= m_vmax; f += m_dtick) {
 			y = y0 - (int)((f - m_vmin) * ys + 0.5);
+            /* TODO(jec)
 			MoveToEx (hDC, x0, y, 0); LineTo (hDC, x1, y);
 			sprintf (cbuf, "%0.0f", f * m_tickscale);
 			TextOut (hDC, x0, y-5, cbuf, strlen(cbuf));
+            */
 		}
 		if (m_minortick > 1) {
+            /* TODO(jec)
 			SelectObject (hDC, gdi.pen[1]);
+            */
 			for (f = m_tickmin, i = 0; f > m_vmin; f -= m_dtick/m_minortick) {
 				if (i++ % m_minortick) {
 					y = y0 - (int)((f - m_vmin) * ys + 0.5);
+                    /* TODO(jec)
 					MoveToEx (hDC, x0, y, 0); LineTo (hDC, x1, y);
+                    */
 				}
 			}
 			for (f = m_tickmin, i = 0; f < m_vmax; f += m_dtick/m_minortick) {
 				if (i++ % m_minortick) {
 					y = y0 - (int)((f - m_vmin) * ys + 0.5);
+                    /* TODO(jec)
 					MoveToEx (hDC, x0, y, 0); LineTo (hDC, x1, y);
+                    */
 				}
 			}
 		}
 		// draw data
 		for (p = 0; p < m_data.size(); p++) {
+            /* TODO(jec)
 			SelectObject (hDC, gdi.pen[(p%MAXPLOT)+2]);
+            */
 			int j, i = m_idx - 1; if (i < 0) i += NDATA;
+            /* TODO(jec)
 			MoveToEx (hDC, x1, y0 - (int)((m_data[p][i] - m_vmin) * ys + 0.5), NULL);
+            */
 			for (j = 1; j < m_ndata; j++) {
 				i = m_idx - j - 1; if (i < 0) i += NDATA;
+                /* TDOO(jec)
 				LineTo (hDC, x1 - (dx*j)/NDATA, y0 - (int)((m_data[p][i] - m_vmin) * ys + 0.5));
+                */
 			}
 		}
 	}
 
 	// Draw axes
+    /* TODO(jec)
 	SelectObject (hDC, GetStockObject (BLACK_PEN));
 	MoveToEx (hDC, x0, y1, NULL);
 	LineTo (hDC, x0, y0); LineTo (hDC, x1, y0);
+    */
 
 	if (m_legend.size()) {
+        /* TODO(jec)
 		SetTextAlign (hDC, TA_LEFT);
+        */
 		for (p = 0; p < m_legend.size(); p++) {
+            /* TODO(jec)
 			SetTextColor (hDC, plotcol[p%MAXPLOT]);
 			TextOut (hDC, x0+5, y1+p*10, m_legend[p].c_str(), m_legend[p].size());
+            */
 		}
+        /* TODO(jec)
 		SetTextColor (hDC, 0x000000);
+        */
 	}
+    /* TODO(jec)
 	SetTextAlign (hDC, TA_CENTER);
+    */
 	if (m_title.size()) {
+        /* TODO(jec)
 		TextOut (hDC, w/2, 0, m_title.c_str(), m_title.size());
+        */
 	}
-	
+
+    /* TODO(jec)
 	SelectObject (hDC, gdi.font[1]);
+    */
 	std::ostrstream oss(cbuf,64);
 	if (m_ylabel.size()) {
 		oss << m_ylabel;
 		if (m_tickscale && m_tickscale != 1.0f) oss << " x " << 1.0/m_tickscale;
 		oss << '\0';
+        /* TODO(jec)
 		TextOut (hDC, 0, (y0+y1)/2, oss.str(), strlen(oss.str()));
+        */
 	}
 
+    /* TODO(jec)
 	SelectObject (hDC, pfont);
+    */
 }
 
 GDIres Graph::gdi = {0,0,0};

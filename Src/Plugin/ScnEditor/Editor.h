@@ -14,9 +14,16 @@
 #ifndef __SCNEDITOR_H
 #define __SCNEDITOR_H
 
+#include <filesystem>
+
 #include "ScnEditorAPI.h"
 #include "Convert.h"
+/* TODO(jec)
 #include <commctrl.h>
+*/
+/* TODO(jec):  Compatibility definitions */
+using HIMAGELIST = void*;
+using HTREEITEM = void*;
 
 class ScnEditorTab;
 typedef void (*CustomButtonFunc)(OBJHANDLE);
@@ -113,7 +120,7 @@ public:
 	void SelectVessel (OBJHANDLE hV);
 	void VesselSelected ();
 	void VesselDeleted (OBJHANDLE hV);
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
 	
 protected:
 	void ScanVesselList ();
@@ -132,10 +139,10 @@ public:
 	void InitTab ();
 	char *HelpTopic ();
 	INT_PTR TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
 
 protected:
-	void ScanConfigDir (const char *ppath, HTREEITEM hti);
+	void ScanConfigDir (const std::filesystem::path& ppath, HTREEITEM hti);
 	void RefreshVesselTpList ();
 	int GetSelVesselTp (char *name, int len);
 	void VesselTpChanged ();
@@ -161,7 +168,7 @@ public:
 	BOOL AddFuncButton (EditorFuncSpec *efs);
 	BOOL AddPageButton (EditorPageSpec *eps);
 	INT_PTR TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
 
 private:
 	OBJHANDLE hVessel;
@@ -180,7 +187,7 @@ public:
 	EditorTab_Save (ScnEditor *editor);
 	char *HelpTopic ();
 	INT_PTR TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
 };
 
 
@@ -194,7 +201,7 @@ public:
 	void InitTab ();
 	char *HelpTopic ();
 	INT_PTR TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
 
 protected:
 	void Apply ();
@@ -232,7 +239,7 @@ public:
 	void InitTab ();
 	char *HelpTopic ();
 	INT_PTR TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
 
 protected:
 	void Apply ();
@@ -256,7 +263,7 @@ public:
 	void InitTab ();
 	char *HelpTopic ();
 	INT_PTR TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
 
 protected:
 	void ScanVesselList ();
@@ -276,7 +283,7 @@ public:
 	void InitTab ();
 	char *HelpTopic ();
 	INT_PTR TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
 
 protected:
 	void ScanVesselList ();
@@ -298,7 +305,7 @@ public:
 	void InitTab ();
 	char *HelpTopic ();
 	INT_PTR TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
 
 protected:
 	void Refresh ();
@@ -317,7 +324,7 @@ public:
 	void InitTab ();
 	char *HelpTopic ();
 	INT_PTR TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
 
 protected:
 	void Refresh ();
@@ -335,7 +342,7 @@ public:
 	void InitTab ();
 	char *HelpTopic ();
 	INT_PTR TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
 
 protected:
 	void Refresh ();
@@ -358,7 +365,7 @@ public:
 	void InitTab ();
 	char *HelpTopic ();
 	INT_PTR TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
 
 protected:
 	UINT DockNo ();
@@ -381,7 +388,7 @@ public:
 	EditorTab_Custom (ScnEditor *editor, HINSTANCE hInst, WORD ResId, DLGPROC UserProc);
 	void OpenHelp ();
 	INT_PTR TabProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static INT_PTR CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR DlgProc (HWND, UINT, WPARAM, LPARAM);
 
 private:
 	DLGPROC usrProc;

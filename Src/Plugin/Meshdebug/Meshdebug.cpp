@@ -14,8 +14,10 @@
 #define STRICT
 #define ORBITER_MODULE
 #include <windows.h>
+/* TODO(jec)
 #include <commctrl.h>
-#include "orbitersdk.h"
+*/
+#include "Orbitersdk.h"
 #include "resource.h"
 #include <cstdio>
 
@@ -50,7 +52,7 @@ void ChangeMesh (int idx);
 void ChangeGroup (int idx);
 void OpenDlgClbk (void *context);
 void SetMaterialOpacity (MESHHANDLE hMesh, float opac);
-INT_PTR CALLBACK MsgProc (HWND, UINT, WPARAM, LPARAM);
+INT_PTR MsgProc (HWND, UINT, WPARAM, LPARAM);
 
 // ==============================================================
 // API interface
@@ -204,22 +206,27 @@ void RefreshDialog (HWND hDlg)
 	VISHANDLE vis = *g_visptr;
 	char cbuf[256];
 	if (vis) {
+        /* TODO(jec)
 		SendMessage (GetDlgItem (hDlg, IDC_MESHSPIN), UDM_SETRANGE, 0, MAKELONG (g_nmesh-1, 0));
 		//SendMessage (GetDlgItem (hDlg, IDC_MESHSPIN), UDM_SETPOS, 0, MAKELONG (g_imesh, 0));
 		SendMessage (GetDlgItem (hDlg, IDC_GROUPSPIN), UDM_SETRANGE, 0, MAKELONG (g_ngrp-1, 0));
 		SendMessage (GetDlgItem (hDlg, IDC_GROUPSPIN), UDM_SETPOS, 0, MAKELONG (g_igrp, 0));
+        */
 	}
+    /* TODO(jec)
 	sprintf (cbuf, "(0 to %d)", g_nmesh-1);
 	SetWindowText (GetDlgItem (hDlg, IDC_NMESH), cbuf);
 	sprintf (cbuf, "(0 to %d)", g_ngrp-1);
 	SetWindowText (GetDlgItem (hDlg, IDC_NGRP), cbuf);
+    */
 }
 
 // ==============================================================
 // Windows message handler for the dialog box
 
-INT_PTR CALLBACK MsgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR MsgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:          // initialise dialog
 		GetMeshParams();
@@ -253,5 +260,6 @@ INT_PTR CALLBACK MsgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	}
+    */
 	return oapiDefDialogProc (hDlg, uMsg, wParam, lParam);
 }

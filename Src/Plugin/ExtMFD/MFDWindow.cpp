@@ -23,7 +23,7 @@ using std::max;
 // ==============================================================
 // prototype definitions
 
-INT_PTR CALLBACK DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 // ==============================================================
 // class MFDWindow
@@ -40,7 +40,9 @@ MFDWindow::MFDWindow (HINSTANCE _hInst, const MFDSPEC &spec): ExternMFD (spec), 
 MFDWindow::~MFDWindow ()
 {
 	oapiCloseDialog (hDlg);
+    /* TODO(jec)
 	if (hBtnFnt) DeleteObject (hBtnFnt);
+    */
 }
 
 void MFDWindow::Initialise (HWND _hDlg)
@@ -48,9 +50,11 @@ void MFDWindow::Initialise (HWND _hDlg)
 	extern HBITMAP g_hPin;
 
 	hDlg = _hDlg;
+    /* TODO(jec)
 	hDsp = GetDlgItem (hDlg, IDC_DISPLAY);
 	for (int i = 0; i < 15; i++)
 		SetWindowLongPtr (GetDlgItem (hDlg, IDC_BUTTON1+i), GWLP_USERDATA, i);
+    */
 	oapiAddTitleButton (IDSTICK, g_hPin, DLG_CB_TWOSTATE);
 	SetTitle ();
 	gap = 3;
@@ -68,13 +72,17 @@ void MFDWindow::SetTitle ()
 	char cbuf[256] = "MFD [";
 	oapiGetObjectName (hVessel, cbuf+5, 250);
 	strcat (cbuf, "]");
+    /* TODO(jec)
 	SetWindowText (hDlg, cbuf);
+    */
 }
 
 void MFDWindow::Resize (bool fixaspect)
 {
 	RECT r;
+    /* TODO(jec)
 	GetClientRect (hDlg, &r);
+    */
 	int bw = (r.right*35)/300;
 	BW = max (30, min (60, bw));
 	BH = max (15, min (40, (bw*2)/3));
@@ -83,42 +91,55 @@ void MFDWindow::Resize (bool fixaspect)
 	if (fixaspect && dspw != dsph) { // force aspect adjustment
 		RECT wr;
 		ds = max (50, ds);
+        /* TODO(jec)
 		GetWindowRect (hDlg, &wr);
 		SetWindowPos (hDlg, NULL, 0, 0, wr.right-wr.left-r.right+ds+2*(BW+gap), wr.bottom-wr.top-r.bottom+ds+(BH+2*gap), SWP_NOMOVE|SWP_NOOWNERZORDER);
+        */
 		return;
 	}
 
 	int fh = BW/3;
 	if (fh != fnth) {
+        /* TODO(jec)
 		if (hBtnFnt) DeleteObject (hBtnFnt);
 		hBtnFnt = CreateFont (fnth = fh, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET,
 			OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
 			DEFAULT_PITCH|FF_DONTCARE, "Arial");
+        */
 	}
 
 	r.right = ds + (r.left = (r.right-ds)/2);
 	r.bottom = ds + (r.top = gap);
+    /* TODO(jec)
 	SetWindowPos (hDsp, NULL, r.left, r.top, DW = (r.right-r.left), DH = (r.bottom-r.top), SWP_SHOWWINDOW);
+    */
 	
 	int x1 = r.left-BW-gap;
 	int x2 = r.right+gap;
 	int dy = (DH*2)/13, y0 = DH/7, y1 = r.top+y0-BH/2;
 	for (int i = 0; i < 6; i++) {
+        /* TODO(jec)
 		SetWindowPos (GetDlgItem (hDlg, IDC_BUTTON1+i), NULL, x1, y1+i*dy, BW, BH, SWP_SHOWWINDOW);
 		SetWindowPos (GetDlgItem (hDlg, IDC_BUTTON7+i), NULL, x2, y1+i*dy, BW, BH, SWP_SHOWWINDOW);
+        */
 	}
 	y1 = r.top+DH+gap;
+    /* TODO(jec)
 	SetWindowPos (GetDlgItem (hDlg, IDC_BUTTON_PWR), NULL, r.left + DW/2 - (BW*7)/4, y1, BW, BH, SWP_SHOWWINDOW);
 	SetWindowPos (GetDlgItem (hDlg, IDC_BUTTON_SEL), NULL, r.left + DW/2 - BW/2, y1, BW, BH, SWP_SHOWWINDOW);
 	SetWindowPos (GetDlgItem (hDlg, IDC_BUTTON_MNU), NULL, r.left + DW/2 + (BW*3)/4, y1, BW, BH, SWP_SHOWWINDOW);
+    */
 
 	MFDSPEC spec = {{0,0,DW,DH},6,6,y0,dy};
 	ExternMFD::Resize (spec);
+    /* TODO(jec)
 	InvalidateRect (hDlg, NULL, FALSE);
+    */
 }
 
 void MFDWindow::RepaintDisplay (HWND hWnd)
 {
+    /* TODO(jec)
 	PAINTSTRUCT ps;
 	HDC hDCtgt = BeginPaint (hWnd, &ps);
 	SURFHANDLE surf = GetDisplaySurface();
@@ -131,17 +152,21 @@ void MFDWindow::RepaintDisplay (HWND hWnd)
 		Rectangle (hDCtgt, 0, 0, DW, DH);
 	}
 	EndPaint (hWnd, &ps);
+    */
 }
 
 void MFDWindow::RepaintButton (HWND hWnd)
 {
+    /* TODO(jec)
 	int id = GetWindowLongPtr (hWnd, GWLP_USERDATA);
 	PAINTSTRUCT ps;
 	HDC hDC = BeginPaint (hWnd, &ps);
 	SelectObject (hDC, GetStockObject (BLACK_PEN));
 	Rectangle (hDC, 0, 0, BW, BH);
 	SetTextAlign (hDC, TA_CENTER);
+    */
 	const char *label;
+    /* TODO(jec)
 	if (id < 12) {
 		label = GetButtonLabel (id);
 	} else {
@@ -149,13 +174,18 @@ void MFDWindow::RepaintButton (HWND hWnd)
 		label = lbl[id-12];
 		if (id == 12) SetTextColor (hDC, 0x0000FF);
 	}
+    */
 	if (label) {
+        /* TDOO(jec)
 		SetBkMode (hDC, TRANSPARENT);
 		HFONT pFont = (HFONT)SelectObject (hDC, hBtnFnt);
 		TextOut (hDC, BW/2, (BH-fnth)/2, label, strlen(label));
 		SelectObject (hDC, pFont);
+        */
 	}
+    /* TODO(jec)
 	EndPaint (hWnd, &ps);
+    */
 }
 
 void MFDWindow::ProcessButton (int bt, int event)
@@ -181,13 +211,17 @@ void MFDWindow::ProcessButton (int bt, int event)
 
 void MFDWindow::clbkRefreshDisplay (SURFHANDLE)
 {
+    /* TODO(jec)
 	InvalidateRect (hDsp, NULL, FALSE);
+    */
 }
 
 void MFDWindow::clbkRefreshButtons ()
 {
+    /* TODO(jec)
 	for (int i = 0; i < 12; i++)
 		InvalidateRect (GetDlgItem (hDlg, IDC_BUTTON1+i), NULL, FALSE);
+    */
 }
 
 void MFDWindow::clbkFocusChanged (OBJHANDLE hFocus)
@@ -210,8 +244,9 @@ void MFDWindow::StickToVessel (bool stick)
 // ==============================================================
 // Windows message handler for the dialog box
 
-INT_PTR CALLBACK DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		((MFDWindow*)lParam)->Initialise (hDlg);
@@ -233,11 +268,13 @@ INT_PTR CALLBACK DlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	}
+    */
 	return oapiDefDialogProc (hDlg, uMsg, wParam, lParam);
 }
 
-LRESULT FAR PASCAL MFD_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT MFD_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_PAINT: {
 		MFDWindow *mfdw = (MFDWindow*)oapiGetDialogContext (GetParent (hWnd));
@@ -246,10 +283,13 @@ LRESULT FAR PASCAL MFD_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	}
 
 	return DefWindowProc (hWnd, uMsg, wParam, lParam);
+    */
+    return FALSE;
 }
 
-LRESULT FAR PASCAL MFD_BtnProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT MFD_BtnProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_PAINT: {
 		MFDWindow *mfdw = (MFDWindow*)oapiGetDialogContext (GetParent (hWnd));
@@ -268,4 +308,6 @@ LRESULT FAR PASCAL MFD_BtnProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	}
 
 	return DefWindowProc (hWnd, uMsg, wParam, lParam);
+    */
+    return FALSE;
 }

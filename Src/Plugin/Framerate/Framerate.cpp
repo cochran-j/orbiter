@@ -12,7 +12,7 @@
 #define ORBITER_MODULE
 #include <windows.h>
 #include "Orbitersdk.h"
-#include "Dialog\Graph.h"
+#include "Dialog/Graph.h"
 #include "resource.h"
 
 // ==============================================================
@@ -40,16 +40,16 @@ namespace oapi {
 		void clbkPreStep(double simt, double simdt, double mjd);
 
 		/// \brief Entry point for dialog message procedure
-		static INT_PTR CALLBACK hookDlgMsgProc(HWND hDlg, UINT uInt, WPARAM wParam, LPARAM lParam);
+		static INT_PTR hookDlgMsgProc(HWND hDlg, UINT uInt, WPARAM wParam, LPARAM lParam);
 
 		/// \brief Dialog message procedure
 		INT_PTR DlgMsgProc(HWND hDlg, UINT uInt, WPARAM wParam, LPARAM lParam);
 
 		/// \brief Entry point for graph message procedure
-		static LONG_PTR FAR PASCAL hookGraphMsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		static LONG_PTR hookGraphMsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 		/// \brief Graph message procedure
-		LONG_PTR FAR PASCAL GraphMsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		LONG_PTR GraphMsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	protected:
 		/// \brief Protected constructor
@@ -71,7 +71,7 @@ namespace oapi {
 		void ArrangeGraphs(HWND hDlg);
 
 		/// \brief Graph repaint message handler
-		LONG_PTR FAR PASCAL PaintGraph(HWND hWnd);
+		LONG_PTR PaintGraph(HWND hWnd);
 
 	private:
 		static Framerate* self;  ///> Soliton instance pointer
@@ -98,7 +98,9 @@ namespace oapi {
 DLLCLBK void InitModule (HINSTANCE hDLL)
 {
 	// Create and register the module
+    /* TODO(jec)
 	oapiRegisterModule(oapi::Framerate::GetInstance(hDLL));
+    */
 }
 
 /// \brief Module exit point 
@@ -142,6 +144,7 @@ oapi::Framerate::Framerate(HINSTANCE hDLL)
 	, m_hDlg(NULL)
 {
 	// Register the window class for the data graph
+    /* TODO(jec)
 	WNDCLASS wndClass;
 	wndClass.style = CS_HREDRAW | CS_VREDRAW;
 	wndClass.lpfnWndProc = hookGraphMsgProc;
@@ -154,6 +157,7 @@ oapi::Framerate::Framerate(HINSTANCE hDLL)
 	wndClass.lpszMenuName = NULL;
 	wndClass.lpszClassName = "PerfGraphWindow";
 	RegisterClass(&wndClass);
+    */
 
 	for (int i = 0; i < 2; i++)
 		m_graph[i] = 0;
@@ -176,7 +180,9 @@ oapi::Framerate::Framerate(HINSTANCE hDLL)
 oapi::Framerate::~Framerate()
 {
 	// Unregister the window class for the graph
+    /* TODO(jec)
 	UnregisterClass("PerfGraphWindow", GetModule());
+    */
 
 	Graph::FreeGDI();
 
@@ -201,14 +207,18 @@ void oapi::Framerate::clbkPreStep(double simt, double simdt, double mjd)
 			sprintf(cbuf, "FPS: %0.0f", fps);
 			m_graph[0]->AppendDataPoint(fps);
 			m_graph[0]->SetTitle(cbuf);
+            /* TODO(jec)
 			InvalidateRect(GetDlgItem(m_hDlg, IDC_FRAMERATE), NULL, TRUE);
+            */
 		}
 		if (m_showGraph[1] && m_fcount) {
 			float dt = (float)(simt - m_simT) / (float)m_fcount;
 			sprintf(cbuf, "dt: %0.3fs", dt);
 			m_graph[1]->AppendDataPoint(dt);
 			m_graph[1]->SetTitle(cbuf);
+            /* TODO(jec)
 			InvalidateRect(GetDlgItem(m_hDlg, IDC_TIMESTEP), NULL, TRUE);
+            */
 		}
 		m_sysT = syst;
 		m_simT = simt;
@@ -226,12 +236,16 @@ INT_PTR oapi::Framerate::InitDialog(HWND hDlg)
 	m_fcount = 0;
 	m_graph[0] = new Graph(1);
 	m_graph[0]->SetYLabel("FPS");
+    /* TODO(jec)
 	SetWindowLongPtr(GetDlgItem(hDlg, IDC_FRAMERATE), 0, 0);
+    */
 	m_graph[1] = new Graph(1);
 	m_graph[1]->SetYLabel("dt");
+    /* TODO(jec)
 	SetWindowLongPtr(GetDlgItem(hDlg, IDC_TIMESTEP), 0, 1);
 	SendDlgItemMessage(hDlg, IDC_SHOW_FRAMERATE, BM_SETCHECK, m_showGraph[0] ? BST_CHECKED : BST_UNCHECKED, 0);
 	SendDlgItemMessage(hDlg, IDC_SHOW_TIMESTEP, BM_SETCHECK, m_showGraph[1] ? BST_CHECKED : BST_UNCHECKED, 0);
+    */
 	ArrangeGraphs(hDlg);
 
 	return TRUE;
@@ -259,7 +273,9 @@ INT_PTR oapi::Framerate::ToggleGraph(int which)
 
 	m_showGraph[which] = !m_showGraph[which];
 	ArrangeGraphs(m_hDlg);
+    /* TODO(jec)
 	SendDlgItemMessage(m_hDlg, dlg_id[which], BM_SETCHECK, m_showGraph[which] ? BST_CHECKED : BST_UNCHECKED, 0);
+    */
 	return 0;
 }
 
@@ -270,21 +286,27 @@ void oapi::Framerate::ArrangeGraphs(HWND hDlg)
 {
 	static int hdrofs = 0;
 	RECT r;
+    /* TODO(jec)
 	GetClientRect(hDlg, &r);
+    */
 	if (!hdrofs) {
 		RECT r2;
+        /* TODO(jec)
 		GetWindowRect(GetDlgItem(hDlg, IDC_FRAMERATE), &r2);
+        */
 		hdrofs = r.bottom - (r2.bottom - r2.top);
 	}
 	int h = r.bottom - hdrofs;
 	int w = r.right;
 
+    /* TODO(jec)
 	SetWindowPos(GetDlgItem(hDlg, IDC_FRAMERATE), 0,
 		0, hdrofs, w, (m_showGraph[1] ? h / 2 : h),
 		SWP_NOZORDER | SWP_NOCOPYBITS | (m_showGraph[0] ? SWP_SHOWWINDOW : SWP_HIDEWINDOW));
 	SetWindowPos(GetDlgItem(hDlg, IDC_TIMESTEP), 0,
 		0, hdrofs + (m_showGraph[0] ? h / 2 : 0), w, (m_showGraph[0] ? h - h / 2 : h),
 		SWP_NOZORDER | SWP_NOCOPYBITS | (m_showGraph[1] ? SWP_SHOWWINDOW : SWP_HIDEWINDOW));
+    */
 }
 
 // --------------------------------------------------------------
@@ -304,7 +326,7 @@ void oapi::Framerate::clbkOpenDlg(void* context)
 
 // --------------------------------------------------------------
 
-INT_PTR CALLBACK oapi::Framerate::hookDlgMsgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR oapi::Framerate::hookDlgMsgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return self->DlgMsgProc(hDlg, uMsg, wParam, lParam);
 }
@@ -316,6 +338,7 @@ INT_PTR oapi::Framerate::DlgMsgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 {
 	int i;
 
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:            // initialise dialog
 		return InitDialog(hDlg);
@@ -340,29 +363,34 @@ INT_PTR oapi::Framerate::DlgMsgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		}
 		break;
 	}
+    */
 	return oapiDefDialogProc(hDlg, uMsg, wParam, lParam);
 }
 
 // ---------------------------------------------------------------------------------
 // Graph canvas message handler
 
-LONG_PTR FAR PASCAL oapi::Framerate::hookGraphMsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LONG_PTR oapi::Framerate::hookGraphMsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return self->GraphMsgProc(hWnd, uMsg, wParam, lParam);
 }
 
-LONG_PTR FAR PASCAL oapi::Framerate::GraphMsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LONG_PTR oapi::Framerate::GraphMsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_PAINT:
 		return PaintGraph(hWnd);
 	}
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+    */
+    return FALSE;
 }
 
-LONG_PTR FAR PASCAL oapi::Framerate::PaintGraph(HWND hWnd)
+LONG_PTR oapi::Framerate::PaintGraph(HWND hWnd)
 {
 	RECT r;
+    /* TODO(jec)
 	PAINTSTRUCT ps;
 	HDC hDC;
 	int gw, gh;
@@ -374,6 +402,7 @@ LONG_PTR FAR PASCAL oapi::Framerate::PaintGraph(HWND hWnd)
 	int idx = GetWindowLongPtr(hWnd, 0);
 	if (m_showGraph[idx]) m_graph[idx]->Refresh(hDC, gw, gh);
 	EndPaint(hWnd, &ps);
+    */
 
 	return 0;
 }

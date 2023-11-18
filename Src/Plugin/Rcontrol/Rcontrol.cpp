@@ -45,7 +45,7 @@ namespace oapi {
 		void clbkPreStep(double simt, double simdt, double mjd);
 
 		/// \brief Entry point for dialog message procedure
-		static INT_PTR CALLBACK hookDlgMsgProc(HWND hDlg, UINT uInt, WPARAM wParam, LPARAM lParam);
+		static INT_PTR hookDlgMsgProc(HWND hDlg, UINT uInt, WPARAM wParam, LPARAM lParam);
 
 		/// \brief Dialog message procedure
 		INT_PTR DlgMsgProc(HWND hDlg, UINT uInt, WPARAM wParam, LPARAM lParam);
@@ -181,14 +181,20 @@ void oapi::RControl::CreateVesselList(HWND hDlg)
 {
 	char cbuf[128];
 	DWORD i, n = oapiGetVesselCount();
+    /* TODO(jec)
 	SendDlgItemMessage(hDlg, IDC_VESSELLIST, CB_RESETCONTENT, 0, 0);
+    */
 	for (i = 0; i < n; i++) {
 		OBJHANDLE hVessel = oapiGetVesselByIndex(i);
 		oapiGetObjectName(hVessel, cbuf, 128);
+        /* TODO(jec)
 		SendDlgItemMessage(hDlg, IDC_VESSELLIST, CB_ADDSTRING, 0, (LPARAM)cbuf);
+        */
 	}
 	m_pVessel = oapiGetFocusInterface();
+    /* TODO(jec)
 	SendDlgItemMessage(hDlg, IDC_VESSELLIST, CB_SELECTSTRING, 0, (LPARAM)m_pVessel->GetName());
+    */
 }
 
 // --------------------------------------------------------------
@@ -199,16 +205,28 @@ void oapi::RControl::clbkPreStep (double simt, double simdt, double mjd)
 
 	int slider;
 	slider = (int)(m_pVessel->GetThrusterGroupLevel (THGROUP_MAIN) * 100.0 + 0.5);
-	if (slider != m_maingauge)
+	if (slider != m_maingauge) {
+        /* TODO(jec)
 		oapiSetGaugePos (GetDlgItem (m_hDlg, IDC_MAIN_GAUGE), m_maingauge = slider);
+        */
+    }
+
 	slider = (int)(m_pVessel->GetThrusterGroupLevel (THGROUP_RETRO) * 100.0 + 0.5);
-	if (slider != m_retrogauge)
+	if (slider != m_retrogauge) {
+        /* TODO(jec)
 		oapiSetGaugePos (GetDlgItem (m_hDlg, IDC_RETRO_GAUGE), m_retrogauge = slider);
+        */
+    }
+
 	slider = (int)(m_pVessel->GetThrusterGroupLevel (THGROUP_HOVER) * 100.0 + 0.5);
-	if (slider != m_hovergauge)
+	if (slider != m_hovergauge) {
+        /* TODO(jec)
 		oapiSetGaugePos (GetDlgItem (m_hDlg, IDC_HOVER_GAUGE), m_hovergauge = slider);
+        */
+    }
 
 	// RCS button status
+    /* TODO(jec)
 	double rcslevel = oapiGetGaugePos (GetDlgItem (m_hDlg, IDC_RCSLEVEL)) * 0.01;
 	if (SendDlgItemMessage (m_hDlg, IDC_RCS_PITCHUP, BM_GETSTATE, 0, 0) & BST_PUSHED)
 		m_pVessel->IncThrusterGroupLevel_SingleStep (THGROUP_ATT_PITCHUP, rcslevel);
@@ -234,6 +252,7 @@ void oapi::RControl::clbkPreStep (double simt, double simdt, double mjd)
 		m_pVessel->IncThrusterGroupLevel_SingleStep (THGROUP_ATT_FORWARD, rcslevel);
 	else if (SendDlgItemMessage (m_hDlg, IDC_RCS_BACK, BM_GETSTATE, 0, 0) & BST_PUSHED)
 		m_pVessel->IncThrusterGroupLevel_SingleStep (THGROUP_ATT_BACK, rcslevel);
+    */
 }
 
 // --------------------------------------------------------------
@@ -251,6 +270,7 @@ void oapi::RControl::clbkOpenDlg(void* context)
 	if (hDlg) {
 		m_hDlg = hDlg;
 
+        /* TODO(jec)
 		GAUGEPARAM gp = { 0, 100, GAUGEPARAM::LEFT, GAUGEPARAM::BLACK };
 		oapiSetGaugeParams(GetDlgItem(hDlg, IDC_RCSLEVEL), &gp);
 		oapiSetGaugePos(GetDlgItem(hDlg, IDC_RCSLEVEL), 100);
@@ -263,12 +283,13 @@ void oapi::RControl::clbkOpenDlg(void* context)
 		gp.base = GAUGEPARAM::BOTTOM;
 		oapiSetGaugeParams(GetDlgItem(hDlg, IDC_HOVER_GAUGE), &gp);
 		oapiSetGaugePos(GetDlgItem(hDlg, IDC_HOVER_GAUGE), m_hovergauge = 0);
+        */
 	}
 }
 
 // --------------------------------------------------------------
 
-INT_PTR CALLBACK oapi::RControl::hookDlgMsgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR oapi::RControl::hookDlgMsgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return self->DlgMsgProc(hDlg, uMsg, wParam, lParam);
 }
@@ -281,6 +302,7 @@ INT_PTR oapi::RControl::DlgMsgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 	int idx;
 	OBJHANDLE hVessel;
 
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		return InitDialog(hDlg);
@@ -356,5 +378,6 @@ INT_PTR oapi::RControl::DlgMsgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 		}
 		break;
 	}
+    */
 	return oapiDefDialogProc(hDlg, uMsg, wParam, lParam);
 }

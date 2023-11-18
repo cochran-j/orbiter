@@ -3,7 +3,7 @@
 
 #define STRICT 1
 #define ORBITER_MODULE
-#include "orbitersdk.h"
+#include "Orbitersdk.h"
 #include "LuaMFD.h"
 
 using std::min;
@@ -91,9 +91,13 @@ bool ScriptMFD::ConsumeButton (int bt, int event)
 
 void ScriptMFD::SetFontSize (double size)
 {
+    /* TODO(jec)
 	if (hFont) DeleteObject (hFont);
+    */
 	int h = (int)(H*size*9.0/200.0);
+    /* TODO(jec)
 	hFont = CreateFont (-h, 0, 0, 0, 400, 0, 0, 0, 0, 3, 2, 1, 49, "Courier New");
+    */
 	fw = fh = 0;
 }
 
@@ -153,48 +157,65 @@ void ScriptMFD::Update (HDC hDC)
 	char cbuf[256];
 	sprintf (cbuf, "Term %d/%d", pg+1, npg);
 	Title (hDC, cbuf);
-	if (env->interp->IsBusy())
+	if (env->interp->IsBusy()) {
+        /* TODO(jec)
 		TextOut (hDC, W-cw*5, 1, "busy", 4);
+        */
+    }
 
+    /* TODO(jec)
 	SelectDefaultPen (hDC, 0);
 	MoveToEx (hDC, 0, yofs, NULL); LineTo (hDC, W, yofs);
+    */
 
+    /* TODO(jec)
 	HGDIOBJ oFont = SelectObject (hDC, hFont);
+    */
 	if (!fh) {
+        /* TODO(jec)
 		TEXTMETRIC tm;
 		GetTextMetrics (hDC, &tm);
 		fw = tm.tmAveCharWidth;
 		fh = tm.tmHeight-tm.tmInternalLeading;
 		nchar = (W-fw/2)/fw;
 		nline = (H-yofs-fh/2)/fh;
+        */
 	}
 	DWORD nbuf = env->interp->LineCount();
 	MFDInterpreter::LineSpec *ls = env->interp->FirstLine();
 	int xofs = fw/2;
+    /* TODO(jec)
 	COLORREF col = 0;
+    */
 	for (; ls && nbuf > nline; ls = ls->next) { // skip lines scrolled out of sight
 		nbuf--;
 	}
 	for (; ls; ls = ls->next) {
+        /* TODO(jec)
 		if (ls->col != col) {
 			col = ls->col;
 			SetTextColor (hDC, col);
 		}
 		TextOut (hDC, xofs, yofs, ls->buf, min(strlen(ls->buf),(size_t)nchar));
+        */
 		yofs += fh;
 	}
+    /* TODO(jec)
 	SelectObject (hDC, oFont);
+    */
 }
 
 // MFD message parser
 OAPI_MSGTYPE ScriptMFD::MsgProc (UINT msg, UINT mfd, WPARAM wparam, LPARAM lparam)
 {
+    /* TODO(jec)
 	switch (msg) {
 	case OAPI_MSG_MFD_OPENED:
 		// Our new MFD mode has been selected, so we create the MFD and
 		// return a pointer to it.
 		return (OAPI_MSGTYPE) new ScriptMFD(LOWORD(wparam), HIWORD(wparam), (VESSEL*)lparam);
 	}
+    */
 	return 0;
 }
 

@@ -6,7 +6,9 @@
 #include "LuaConsole.h"
 #include "ConsoleCfg.h"
 #include "resource.h"
+/* TODO(jec)
 #include <process.h>
+*/
 #include <set>
 
 using std::min;
@@ -57,6 +59,7 @@ LuaConsole::LuaConsole (HINSTANCE hDLL): Module (hDLL)
 	ninp = 0;
 
 	// Register a window class for the terminal display
+    /* TODO(jec)
 	WNDCLASS wc;
 	wc.style = CS_HREDRAW | CS_VREDRAW;
 	wc.lpfnWndProc = TermProcHook;
@@ -69,6 +72,7 @@ LuaConsole::LuaConsole (HINSTANCE hDLL): Module (hDLL)
 	wc.lpszMenuName = NULL;
 	wc.lpszClassName = "ConsoleDsp";
 	RegisterClass (&wc);
+    */
 }
 
 // ==============================================================
@@ -79,7 +83,9 @@ LuaConsole::~LuaConsole ()
 	oapiUnregisterCustomCmd (dwCmd);
 
 	// Unregister the terminal window class
+    /* TODO(jec)
 	UnregisterClass ("ConsoleDsp", hModule);
+    */
 
 	// Delete terminal buffer
 	for (DWORD i = 0; i < NLINE; i++)
@@ -97,7 +103,9 @@ void LuaConsole::clbkSimulationStart (RenderMode mode)
 	SetParams ();
 
 	// GDI resources
+    /* TODO(jec)
 	hFont = CreateFont (-(int)fH, 0, 0, 0, FW_NORMAL, 0, 0, 0, 0, 3, 2, 1, 49, "Courier New");
+    */
 
 	// make user-selectable
 	col[0] = 0x000000;
@@ -119,11 +127,13 @@ void LuaConsole::clbkSimulationEnd ()
 			termInterp = true;
 			interp->Terminate();
 			interp->EndExec(); // give the thread opportunity to close
+            /* TODO(jec)
 			if (WaitForSingleObject (hThread, 1000) != 0) {
 				oapiWriteLog ((char*)"LuaConsole: timeout while waiting for interpreter thread");
 				TerminateThread (hThread, 0);
 			}
 			CloseHandle (hThread);
+            */
 			hThread = NULL;
 		}
 		delete interp;
@@ -131,7 +141,9 @@ void LuaConsole::clbkSimulationEnd ()
 	}
 
 	// Free GDI resources
+    /* TODO(jec)
 	DeleteObject (hFont);
+    */
 }
 
 // ==============================================================
@@ -160,7 +172,9 @@ HWND LuaConsole::Open ()
 	// open the terminal dialog
 	if (oapiFindDialog (hModule, IDD_CONSOLE)) return NULL; // console open already
 	hWnd = oapiOpenDialogEx (hModule, IDD_CONSOLE, DlgProc, 0, this);
+    /* TODO(jec)
 	hTerm = GetDlgItem (hWnd, IDC_TERM);
+    */
 
 	// get some text parameters
 	SetFontGeometry (hTerm);
@@ -207,8 +221,10 @@ void LuaConsole::SetFontSize (DWORD size)
 {
 	if (size == fH) return; // nothing to do
 	fH = size;
+    /* TODO(jec)
 	if (hFont) DeleteObject (hFont);
 	hFont = CreateFont (-(int)fH, 0, 0, 0, FW_NORMAL, 0, 0, 0, 0, 3, 2, 1, 49, "Courier New");
+    */
 
 	// get some text parameters
 	SetFontGeometry (hTerm);
@@ -219,9 +235,11 @@ void LuaConsole::SetFontSize (DWORD size)
 void LuaConsole::Resize (DWORD w, DWORD h)
 {
 	if (hTerm) {
+        /* TODO(jec)
 		SetWindowPos (hTerm, hWnd,
 			0, 0, w, h,
 			SWP_NOZORDER);
+        */
 	}
 	SetTermGeometry (hTerm);
 
@@ -233,6 +251,7 @@ void LuaConsole::Resize (DWORD w, DWORD h)
 
 void LuaConsole::SetFontGeometry (HWND hTerm)
 {
+    /* TODO(jec)
 	HDC hDC = GetDC (hTerm);
 	HFONT pFont = (HFONT)SelectObject (hDC, hFont);
 	if (!fW) {
@@ -242,6 +261,7 @@ void LuaConsole::SetFontGeometry (HWND hTerm)
 	}
 	SelectObject (hDC, pFont);
 	ReleaseDC (hTerm, hDC);
+    */
 }
 
 // ==============================================================
@@ -249,7 +269,9 @@ void LuaConsole::SetFontGeometry (HWND hTerm)
 void LuaConsole::SetTermGeometry (HWND hTerm)
 {
 	RECT rc;
+    /* TODO(jec)
 	GetClientRect (hTerm, &rc);
+    */
 	int w = rc.right, h = rc.bottom;
 	tline = h/fH; // terminal lines
 }
@@ -259,8 +281,10 @@ void LuaConsole::SetTermGeometry (HWND hTerm)
 void LuaConsole::RefreshTerminal ()
 {
 	if (hTerm) {
+        /* TODO(jec)
 		InvalidateRect (hTerm, NULL, TRUE);
 		UpdateWindow (hTerm);
+        */
 		PaintTerminal ();
 	}
 }
@@ -276,13 +300,17 @@ void LuaConsole::PaintTerminal ()
 	DWORD nnline = nline;
 	if (bPrompt) nnline++;
 	HFONT pFont;
+    /* TODO(jec)
 	HDC hDC = GetDC (hTerm);
 	SelectObject (hDC, GetStockObject (NULL_BRUSH));
 	SelectObject (hDC, GetStockObject (BLACK_PEN));
 	pFont = (HFONT)SelectObject (hDC, hFont);
 	SetTextColor (hDC, col[0]);
+    */
 	int pmode = 0;
+    /* TODO(jec)
 	SetBkMode (hDC, TRANSPARENT);
+    */
 	x0 = x = 2; y = 1;
 	int dtop = (topline-line0+NLINE)%NLINE;
 	DWORD ndisp = min (nline-dtop,tline-1);
@@ -290,15 +318,20 @@ void LuaConsole::PaintTerminal ()
 		idx = (topline+i)%NLINE;
 		if (!i || line[idx].mode != pmode) {
 			pmode = line[idx].mode;
+            /* TODO(jec)
 			SetTextColor (hDC, col[pmode]);
+            */
 			x = (!pmode ? x0+fW : x0);
 		}
+        /* TODO(jec)
 		if (!pmode) TextOut (hDC, x0, y, "%", 1);
 		TextOut (hDC, x, y, line[idx].buf, strlen(line[idx].buf));
+        */
 		y += fH;
 	}
 	if (bPrompt && nline-dtop >= 0 && nline-dtop < tline) {
 		x = x0+fW;
+        /* TODO(jec)
 		if (pmode) SetTextColor (hDC, col[0]);
 		TextOut (hDC, x0, y, "%", 1);
 		if (inp[0])
@@ -306,10 +339,13 @@ void LuaConsole::PaintTerminal ()
 		// draw caret
 		MoveToEx (hDC, x+fW*caret, y, NULL);
 		LineTo (hDC, x+fW*caret, y+fH);
+        */
 	}
 
+    /* TODO(jec)
 	SelectObject (hDC, pFont);
 	ReleaseDC (hTerm, hDC);
+    */
 }
 
 // ==============================================================
@@ -408,6 +444,7 @@ void LuaConsole::ScrollBy (int dpos)
 void LuaConsole::UpdateScrollbar ()
 {
 	if (!tline) return;
+    /* TODO(jec)
 	static SCROLLINFO si = {
 		sizeof(SCROLLINFO),
 		SIF_POS | SIF_RANGE,
@@ -416,6 +453,7 @@ void LuaConsole::UpdateScrollbar ()
 	si.nMax = max (0, nline-1);
 	si.nPos = (topline-line0+NLINE)%NLINE;
 	SetScrollInfo (hTerm, SB_VERT, &si, TRUE);
+    */
 }
 
 // ==============================================================
@@ -470,6 +508,7 @@ bool LuaConsole::ScanHistory (int step)
 
 LRESULT WINAPI LuaConsole::TermProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_CHAR:
 		switch (wParam) {
@@ -558,22 +597,27 @@ LRESULT WINAPI LuaConsole::TermProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 		return 0;
 	}
 	return DefWindowProc (hWnd, uMsg, wParam, lParam);
+    */
+    return FALSE;
 }
 
 // ==============================================================
 
 LRESULT WINAPI LuaConsole::TermProcHook (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* TODO(jec)
 	LuaConsole *pConsole = (LuaConsole*)GetWindowLongPtr (hWnd, GWLP_USERDATA);
 	return pConsole->TermProc (hWnd, uMsg, wParam, lParam);
+    */
 }
 
 // ==============================================================
 
-INT_PTR CALLBACK LuaConsole::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR LuaConsole::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LuaConsole *pConsole = (LuaConsole*)oapiGetDialogContext (hWnd);
 
+    /* TODO(jec)
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		SetFocus (GetDlgItem (hWnd, IDC_TERM));
@@ -594,6 +638,7 @@ INT_PTR CALLBACK LuaConsole::DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		pConsole->Resize (LOWORD(lParam), HIWORD(lParam));
 		return 0;
 	}
+    */
 	return oapiDefDialogProc (hWnd, uMsg, wParam, lParam);
 }
 
@@ -634,7 +679,9 @@ Interpreter *LuaConsole::CreateInterpreter ()
 	termInterp = false;
 	interp = new ConsoleInterpreter (this);
 	interp->Initialise();
+    /* TODO(jec):  Replace with std::thread
 	hThread = (HANDLE)_beginthreadex (NULL, 4096, &InterpreterThreadProc, this, 0, &id);
+    */
 	return interp;
 }
 // Interpreter thread function
@@ -655,6 +702,8 @@ unsigned int WINAPI LuaConsole::InterpreterThreadProc (LPVOID context)
 		interp->EndExec();        // return control
 	}
 	interp->EndExec();  // release mutex (is this necessary?)
+    /* TODO(jec)
 	_endthreadex(0);
+    */
 	return 0;
 }
