@@ -3,10 +3,34 @@
 
 #include <iostream>
 #include <string>
+#include <cstdint>
+#include <cctype>
+#include <algorithm>
+#include <string_view>
+#include <cstring>
+#include <filesystem>
+
+/* TODO(jec)
 #include <windows.h>
 #include <direct.h>
 #include <Shlwapi.h>
+*/
 #include <zlib.h>
+
+using BYTE = std::uint8_t;
+using DWORD = std::uint32_t;
+
+
+static bool caseInsensitiveEquals(const std::string_view& str1,
+                                  const std::string_view& str2) {
+
+    return std::equal(str1.begin(), str1.end(),
+                      str2.begin(), str2.end(),
+                      [](char c1, char c2) {
+                          return std::tolower(static_cast<unsigned char>(c1)) ==
+                                 std::tolower(static_cast<unsigned char>(c2));
+                      });
+}
 
 #define TREE_DEFLATE 1
 
@@ -70,18 +94,18 @@ MemTree::MemTree(const char *rootpath, const char *layer)
 {
 	root1 = root2 = root3 = root4[0] = root4[1] = 0;
 	sprintf(path, "%s\\%s", rootpath, layer);
-	if (!stricmp(layer, "Surf"))
-		strcpy(ext, "dds");
-	else if (!stricmp(layer, "Mask"))
-		strcpy(ext, "dds");
-	else if (!stricmp(layer, "Cloud"))
-		strcpy(ext, "dds");
-	else if (!stricmp(layer, "Elev"))
-		strcpy(ext, "elv");
-	else if (!stricmp(layer, "Elev_mod"))
-		strcpy(ext, "elv");
-	else if (!stricmp(layer, "Label"))
-		strcpy(ext, "lab");
+	if (caseInsensitiveEquals(layer, "Surf"))
+		std::strcpy(ext, "dds");
+	else if (caseInsensitiveEquals(layer, "Mask"))
+		std::strcpy(ext, "dds");
+	else if (caseInsensitiveEquals(layer, "Cloud"))
+		std::strcpy(ext, "dds");
+	else if (caseInsensitiveEquals(layer, "Elev"))
+		std::strcpy(ext, "elv");
+	else if (caseInsensitiveEquals(layer, "Elev_mod"))
+		std::strcpy(ext, "elv");
+	else if (caseInsensitiveEquals(layer, "Label"))
+		std::strcpy(ext, "lab");
 	else ext[0] = '\0';
 }
 
@@ -119,8 +143,11 @@ void MemTree::AddLevels(int minlvl, int maxlvl)
 
 void MemTree::AddLevel(int lvl)
 {
+    /* TODO(jec)
 	char lvlpath[256];
 	sprintf(lvlpath, "%s\\%02d", path, lvl);
+    std::filesystem::path lvlpath {path};
+
 	if (PathFileExists(lvlpath)) {
 		WIN32_FIND_DATA fdata, fdata2;
 		strcat(lvlpath, "\\*");
@@ -134,7 +161,7 @@ void MemTree::AddLevel(int lvl)
 				int ilat, ilng;
 				sscanf(fdata.cFileName, "%d", &ilat);
 				char latpath[256];
-				strcpy(latpath, lvlpath); strcpy(latpath+strlen(latpath)-1, fdata.cFileName);
+                std::strcpy(latpath, lvlpath); std::strcpy(latpath+strlen(latpath)-1, fdata.cFileName);
 				strcat(latpath, "\\*."); strcat(latpath, ext);
 				HANDLE h2 = FindFirstFile(latpath, &fdata2);
 				BOOL ok2 = (h2 != INVALID_HANDLE_VALUE);
@@ -149,6 +176,7 @@ void MemTree::AddLevel(int lvl)
 		}
 		FindClose (h);
 	}
+    */
 }
 
 // -----------------------------------------------------------------------------
@@ -236,7 +264,7 @@ MemTreeNode *MemTree::FindNode(int lvl, int ilat, int ilng)
 // Table of contents entry for a tree node
 
 struct TOCEntry {
-	__int64 pos;     // file position of compressed data block (from end of TOC)
+    std::int64_t pos;     // file position of compressed data block (from end of TOC)
 	DWORD size;      // uncompressed data size
 	DWORD child[4];  // array positions of the children ((DWORD)-1=no child)
 
@@ -257,7 +285,7 @@ public:
 	~TreeTOC();
 	TOCEntry &operator[](int idx);
 	DWORD length() const { return header.ntoc; }
-	__int64 DataSize() const { return header.totlength; }
+    std::int64_t DataSize() const { return header.totlength; }
 	size_t fwrite(FILE *f);
 	size_t fread(FILE *f);
 	void WriteData(FILE *f);
@@ -274,7 +302,7 @@ private:
 		DWORD size;         // header size [BYTE]
 		DWORD flags;		// bit flags
 		DWORD dataOfs;      // file offset of start of data block (header + TOC)
-		__int64 totlength;  // total deflated data size
+        std::int64_t totlength;  // total deflated data size
 		DWORD ntoc;         // number of tree nodes
 		DWORD rootPos1;     // array index of level 1 tilWriteSubtreeDatae ((DWORD)-1 for not present)
 		DWORD rootPos2;     // array index of level 2 tile ((DWORD)-1 for not present)
@@ -296,21 +324,21 @@ TreeTOC::TreeTOC(const char *_root, const char *_layer, const MemTree *tree): mt
 {
 	deflateData = true;
 
-	root = new char[strlen(_root)+1]; strcpy(root, _root);
-	layer = new char[strlen(_layer)+1]; strcpy(layer, _layer);
+	root = new char[strlen(_root)+1]; std::strcpy(root, _root);
+	layer = new char[strlen(_layer)+1]; std::strcpy(layer, _layer);
 
-	if (!stricmp(layer, "Surf"))
-		strcpy(ext, "dds");
-	else if (!stricmp(layer, "Mask"))
-		strcpy(ext, "dds");
-	else if (!stricmp(layer, "Cloud"))
-		strcpy(ext, "dds");
-	else if (!stricmp(layer, "Elev"))
-		strcpy(ext, "elv");
-	else if (!stricmp(layer, "Elev_mod"))
-		strcpy(ext, "elv");
-	else if (!stricmp(layer, "Label"))
-		strcpy(ext, "lab");
+	if (caseInsensitiveEquals(layer, "Surf"))
+		std::strcpy(ext, "dds");
+	else if (caseInsensitiveEquals(layer, "Mask"))
+		std::strcpy(ext, "dds");
+	else if (caseInsensitiveEquals(layer, "Cloud"))
+		std::strcpy(ext, "dds");
+	else if (caseInsensitiveEquals(layer, "Elev"))
+		std::strcpy(ext, "elv");
+	else if (caseInsensitiveEquals(layer, "Elev_mod"))
+		std::strcpy(ext, "elv");
+	else if (caseInsensitiveEquals(layer, "Label"))
+		std::strcpy(ext, "lab");
 	else ext[0] = '\0';
 
 	header.magic[0] = 'T';
@@ -339,21 +367,21 @@ TreeTOC::TreeTOC(const char *_root, const char *_layer): mtree(0)
 {
 	deflateData = true;
 
-	root = new char[strlen(_root)+1]; strcpy(root, _root);
-	layer = new char[strlen(_layer)+1]; strcpy(layer, _layer);
+	root = new char[strlen(_root)+1]; std::strcpy(root, _root);
+	layer = new char[strlen(_layer)+1]; std::strcpy(layer, _layer);
 
-	if (!stricmp(layer, "Surf"))
-		strcpy(ext, "dds");
-	else if (!stricmp(layer, "Mask"))
-		strcpy(ext, "dds");
-	else if (!stricmp(layer, "Cloud"))
-		strcpy(ext, "dds");
-	else if (!stricmp(layer, "Elev"))
-		strcpy(ext, "elv");
-	else if (!stricmp(layer, "Elev_mod"))
-		strcpy(ext, "elv");
-	else if (!stricmp(layer, "Label"))
-		strcpy(ext, "lab");
+	if (caseInsensitiveEquals(layer, "Surf"))
+		std::strcpy(ext, "dds");
+	else if (caseInsensitiveEquals(layer, "Mask"))
+		std::strcpy(ext, "dds");
+	else if (caseInsensitiveEquals(layer, "Cloud"))
+		std::strcpy(ext, "dds");
+	else if (caseInsensitiveEquals(layer, "Elev"))
+		std::strcpy(ext, "elv");
+	else if (caseInsensitiveEquals(layer, "Elev_mod"))
+		std::strcpy(ext, "elv");
+	else if (caseInsensitiveEquals(layer, "Label"))
+		std::strcpy(ext, "lab");
 	else ext[0] = '\0';
 
 	header.magic[0] = 'T';
@@ -562,7 +590,7 @@ void TreeTOC::ExtractSubtreeData (DWORD idx, int lvl, int ilat, int ilng, FILE *
 	DWORD zsize = (DWORD)((idx < header.ntoc-1 ? toc[idx+1].pos : header.totlength) - entry->pos);
 	BYTE *zbuf = new BYTE[zsize];
 
-	_fseeki64(f, (__int64)header.dataOfs + entry->pos, SEEK_SET);
+	_fseeki64(f, (std::int64_t)header.dataOfs + entry->pos, SEEK_SET);
 	int nread = ::fread(zbuf, 1, zsize, f);
 
 	BYTE *ebuf = new BYTE[esize];
