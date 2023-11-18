@@ -664,6 +664,16 @@ void Orbiter::LoadModules(const std::string& path, const std::list<std::string>&
 
 void Orbiter::LoadModules(const std::string& path)
 {
+    /* NOTE(jec):  Previous finddata() behavior was to skip silently when
+     * tree not present.  This occurs with Modules/Startup if you haven't
+     * created startup modules.
+     */
+    if (!std::filesystem::exists(path) ||
+        !std::filesystem::is_directory(path)) {
+
+        return;
+    }
+
     for (auto& p : std::filesystem::directory_iterator{path}) {
         auto file_ext = p.path().extension();
         auto file_name = p.path().filename();
@@ -1225,6 +1235,7 @@ INT Orbiter::Run ()
 	hRenderWnd = NULL;
     return msg.wParam;
     */
+    return 0;
 }
 
 void Orbiter::SingleFrame ()
