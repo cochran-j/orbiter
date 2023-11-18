@@ -18,10 +18,12 @@ add_dependencies(${ATM_TARGET}
 
 target_include_directories(${ATM_TARGET}
 	PUBLIC ${CMAKE_SOURCE_DIR}/Orbitersdk/include
+    PUBLIC ${WIN32_INCLUDE_DIR}
 )
 
 target_link_libraries(${ATM_TARGET}
-	${ORBITER_LIB}
+    # TODO(jec)
+    # ${ORBITER_LIB}
 	${ORBITER_SDK_LIB}
 )
 

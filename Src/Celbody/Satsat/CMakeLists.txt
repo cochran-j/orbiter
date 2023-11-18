@@ -20,10 +20,12 @@ add_dependencies(Satsat
 
 target_include_directories(Satsat
 	PUBLIC ${CMAKE_SOURCE_DIR}/Orbitersdk/include
+    PUBLIC ${WIN32_INCLUDE_DIR}
 )
 
 target_link_libraries(Satsat
-	${ORBITER_LIB}
+    # TODO(jec)
+    # ${ORBITER_LIB}
 	${ORBITER_SDK_LIB}
 )
 

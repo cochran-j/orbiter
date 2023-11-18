@@ -15,10 +15,12 @@ add_dependencies(Vsop87
 
 target_include_directories(Vsop87
 	PUBLIC ${CMAKE_SOURCE_DIR}/Orbitersdk/include
+    PUBLIC ${WIN32_INCLUDE_DIR}
 )
 
 target_link_libraries(Vsop87
-	${ORBITER_LIB}
+    # TODO(jec)
+    #${ORBITER_LIB}
 )
 
 set(VSOP87_LIB $<TARGET_LINKER_FILE:Vsop87>)

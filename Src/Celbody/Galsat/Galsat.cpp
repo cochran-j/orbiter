@@ -4,6 +4,7 @@
 #define ORBITER_MODULE
 #include "Galsat.h"
 
+#include <filesystem>
 #include <stdio.h> // temp
 
 // ===========================================================
@@ -172,8 +173,10 @@ DLLCLBK void InitModule (HINSTANCE hModule)
 	// Load the data for the Lieske perturbation solutions
 	// into global data structures
 
-	if (cd2com("Config\\Jupiter\\Data\\ephem_e15.dat")) {
-		oapiWriteLogError("Galsat: file not found: Config\\Jupiter\\Data\\ephem_e15.dat");
+    auto datPath = std::filesystem::path{"Config"} /
+        "Jupiter" / "Data" / "ephem_e15.dat";
+	if (cd2com(datPath.c_str())) {
+		oapiWriteLogError("Galsat: file not found: %s", datPath.c_str());
 	}
 	chkgal();
 }
