@@ -125,9 +125,12 @@ void Interpolate (double t, double *data, const Sample *s0, const Sample *s1)
 		data[i] = fac * (s1->param[i] - s0->param[i]) + s0->param[i];
 
 	// step 2: radius interpolation
-	fac = ((t - s0->t)/dt * s1->rad + (s1->t - t)/dt * s0->rad)/Radius(data);
-	for (i = 0; i < 3; i++)
-		data[i] *= fac;
+    // NOTE(jec) skip for no radius.  No factor can change radius of data.
+    if (Radius(data) != 0.0) {
+        fac = ((t - s0->t)/dt * s1->rad + (s1->t - t)/dt * s0->rad)/Radius(data);
+        for (i = 0; i < 3; i++)
+            data[i] *= fac;
+    }
 	// Warning: velocities are not corrected here!
 }
 
