@@ -8,8 +8,14 @@
 #pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 #ifndef _WIN32
+
 #include <unistd.h> // execl
-#endif
+#define _GNU_SOURCE
+#include <fenv.h> // feenableexcept
+#define _POSIX_C_SOURCE
+#include <signal.h> // signal
+
+#endif /* _WIN32 */
 
 #include <windows.h>
 /* NOTE(jec) Headers missing
@@ -311,9 +317,155 @@ INT WINAPI WinMain (HINSTANCE hInstance, HINSTANCE, LPSTR strCmdLine, INT nCmdSh
 {
     return xplat_main(hInstance, strCmdLine);
 }
-#else
+
+#else /* _WIN32 */
+
+void handle_sig(int sig, siginfo_t* siginfo, void* user_context) {
+    static_cast<void>(user_context);
+
+    int si_code = siginfo->si_code;
+    void* addr = siginfo->si_addr;
+
+    // NOTE(jec):  Avoid LOGOUT() because it's not clear how signal handler
+    // interacts with threading.
+
+    std::cerr << "FATAL:  ";
+    switch (sig) {
+        case SIGSEGV:
+            std::cerr << "SIGSEGV ";
+            switch (si_code) {
+                case SEGV_MAPERR:
+                    std::cerr << "Address not mapped to object ";
+                    break;
+
+                case SEGV_ACCERR:
+                    std::cerr << "Invalid permissions for mapped object ";
+                    break;
+
+                case SEGV_BNDERR:
+                    std::cerr << "Failed address bound checks ";
+                    break;
+
+                case SEGV_PKUERR:
+                    std::cerr << "Access denied by memory protection keys ";
+                    break;
+
+                default:
+                    std::cerr << "Code " << si_code << " ";
+                    break;
+            }
+            break;
+
+        case SIGFPE:
+            std::cerr << "SIGFPE ";
+            switch (si_code) {
+                case FPE_INTDIV:
+                    std::cerr << "Integer divide by zero ";
+                    break;
+
+                case FPE_INTOVF:
+                    std::cerr << "Integer overflow ";
+                    break;
+
+                case FPE_FLTDIV:
+                    std::cerr << "Floating-point divide by zero ";
+                    break;
+
+                case FPE_FLTOVF:
+                    std::cerr << "Floating-point overflow ";
+                    break;
+
+                case FPE_FLTUND:
+                    std::cerr << "Floating-point underflow ";
+                    break;
+
+                case FPE_FLTRES:
+                    std::cerr << "Floating-point inexact result ";
+                    break;
+
+                case FPE_FLTINV:
+                    std::cerr << "Floating-point invalid operation ";
+                    break;
+
+                case FPE_FLTSUB:
+                    std::cerr << "Subscript out of range ";
+                    break;
+
+                default:
+                    std::cerr << "Code " << si_code << " ";
+                    break;
+            }
+            break;
+
+        case SIGILL:
+            std::cerr << "SIGILL ";
+            switch (si_code) {
+                case ILL_ILLOPC:
+                    std::cerr << "Illegal opcode ";
+                    break;
+
+                case ILL_ILLOPN:
+                    std::cerr << "Illegal operand ";
+                    break;
+
+                case ILL_ILLADR:
+                    std::cerr << "Illegal addressing mode ";
+                    break;
+
+                case ILL_ILLTRP:
+                    std::cerr << "Illegal trap ";
+                    break;
+
+                case ILL_PRVOPC:
+                    std::cerr << "Privileged opcode ";
+                    break;
+
+                case ILL_PRVREG:
+                    std::cerr << "Privileged register ";
+                    break;
+
+                case ILL_COPROC:
+                    std::cerr << "Coprocessor error ";
+                    break;
+
+                case ILL_BADSTK:
+                    std::cerr << "Internal stack error ";
+                    break;
+
+                default:
+                    std::cerr << "Code " << si_code << " ";
+                    break;
+            }
+            break;
+
+        default:
+            std::cerr << "SIGNAL " << sig << " ";
+            break;
+    }
+
+    std::cerr << "at address:  " << std::hex << addr;
+    std::cerr << std::endl;
+
+    exit(1);
+}
+
 int main(int argv, char* argc[]) {
 
+    /* Enable floating point traps. */
+    /* feenableexcept(FE_INEXACT); */ // Uncomment to trap inexact results.
+    feenableexcept(FE_DIVBYZERO | FE_INVALID |
+                   FE_OVERFLOW | FE_UNDERFLOW);
+
+    /* Enable signal handler */
+    struct sigaction act { 0 };
+    act.sa_flags = SA_SIGINFO;
+    act.sa_sigaction = handle_sig;
+
+    sigaction(SIGSEGV, &act, nullptr);
+    sigaction(SIGFPE, &act, nullptr);
+    sigaction(SIGILL, &act, nullptr);
+
+    /* Setup signal handling. */
 
     /* TODO(jec):  hInstance--what do we need it for? What does it need to be? */
     /* NOTE(jec):  It appears that the cmdLine processor does not want to look
@@ -327,7 +479,8 @@ int main(int argv, char* argc[]) {
 
     return xplat_main(nullptr, cmdLine.c_str());
 }
-#endif
+
+#endif /* _WIN32 */
 
 
 
