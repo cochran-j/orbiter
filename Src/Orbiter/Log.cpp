@@ -67,7 +67,7 @@ void LogOutVA(const char *format, va_list ap)
 {
 	FILE *f = fopen(logname, "a+t");
 	fprintf(f, "%010.3f: ",
-            std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - t0));
+            std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::steady_clock::now() - t0));
 
     va_list ap2;
     va_copy(ap2, ap);
