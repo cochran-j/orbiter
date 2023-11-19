@@ -38,7 +38,11 @@ HINSTANCE LoadDLL(const char* path) {
 #ifdef _WIN32
     return LoadLibrary(path);
 #else
-    return dlopen(path, RTLD_LAZY | RTLD_GLOBAL);
+    // NOTE(jec):  RTLD_DEEPBIND is important so that each plugin DLL gets its
+    // own copy of DllEnter() from the Orbitersdk static lib.  Otherwise they
+    // all will just call the first plugin's DllEnter().  (In a typical
+    // scenarios libSun is the first plugin loaded).
+    return dlopen(path, RTLD_LAZY | RTLD_GLOBAL | RTLD_DEEPBIND);
 #endif
 }
 
@@ -48,7 +52,7 @@ HINSTANCE LoadDLLEx(const char* path) {
                                         LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 #else
     // Unsure if we need similar special handling on other platforms
-    return dlopen(path, RTLD_LAZY | RTLD_GLOBAL);
+    return dlopen(path, RTLD_LAZY | RTLD_GLOBAL | RTLD_DEEPBIND);
 #endif
 }
 
