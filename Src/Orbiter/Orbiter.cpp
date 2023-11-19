@@ -269,7 +269,10 @@ int xplat_main(HINSTANCE hInstance, const char* strCmdLine)
         // Initialise random number generator
         //srand ((unsigned)time (NULL));
         srand(12345);
-        LOGOUT("Timer precision: %g sec", fine_counter_step);
+        if (use_fine_counter) {
+            LOGOUT("Timer precision: %g sec", fine_counter_step);
+        }
+
 
         oapiRegisterCustomControls(hInstance);
 
