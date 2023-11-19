@@ -36,7 +36,13 @@ CelestialBody::CelestialBody (double _mass, double _size)
 : RigidBody (_mass, _size, Vector (1,1,1)), pinesgrav(NULL)
 {
 	DefaultParam();
+
 	el = new Elements; TRACENEW
+    /* Set mass for unattached object (no major).  This updated if this body
+     * is latter Attach()-ed.
+     */
+    el->Setup(mass, 0.0, td.MJD_ref);
+
 	ClearModule();
 	usePinesGravity = false;
 }
@@ -151,7 +157,13 @@ CelestialBody::CelestialBody (char *fname)
 		bFixedElements = false;
 	}
 
-	if (!el) { el = new Elements; TRACENEW }
+	if (!el) {
+        el = new Elements; TRACENEW
+        /* Set mass for unattached object (no major).  This updated if this body
+         * is latter Attach()-ed.
+         */
+        el->Setup(mass, 0.0, td.MJD_ref);
+    }
 
 	Dphi += (td.MJD0 - el->MJDepoch()) * (86400.0/rot_T)*Pi2; // merge rotation at t=0 into offset
 	Dphi += Lrel0*cos(eps_rel); // merge precession state into offset
