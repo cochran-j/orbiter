@@ -1,5 +1,6 @@
 #include <math.h>
 #include <fstream>
+#include <filesystem>
 
 #include "OrbiterAPI.h"
 
@@ -191,10 +192,13 @@ int ELP82_read (double prec)
 	pre[1] = prec*rad;
 	pre[2] = prec*ath;
 
-	const char *datf = "Config\\Moon\\Data\\ELP82.dat";
+	auto datf = std::filesystem::path{"Config"}
+        / "Moon"
+        / "Data"
+        / "ELP82.dat";
 	ifstream ifs (datf);  // term data stream
 	if (!ifs) {
-		oapiWriteLogError("ELP82: Data file not found: %s", datf);
+		oapiWriteLogError("ELP82: Data file not found: %s", datf.c_str());
 		return -1;
 	}
 
