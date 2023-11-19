@@ -81,12 +81,13 @@ Camera::Camera (double _nearplane, double _farplane)
 	mmoveT = -1000.0;
 	ap_int = ap_ext = RAD*25.0;
 	ap = &ap_ext;
-	SetAperture (*ap, true, true);
 	nearplane = (float)_nearplane;
 	farplane = (float)_farplane;
 	aspect = 1.0; // arbitrary default - reset with ResizeViewport
 	w05 = h05 = 100;
 	mbdown[0] = mbdown[1] = false;
+
+    SetAperture (*ap, true, true);
 	VMAT_identity (view_mat);
 	SetFrustumLimits (nearplane, farplane);
 	ECC = 0;
@@ -897,7 +898,15 @@ void Camera::ResizeViewport (int w, int h)
 {
 	w05 = 0.5*w;
 	h05 = 0.5*h;
-	aspect = h05/w05;
+    /* NOTE(jec):  If no graphics client is loaded, we can reach this function
+     * with width == height == 0.  In that case use a finite aspect ratio.
+     */
+    if (w05 == 0.0) {
+        aspect = 1.0;
+    } else {
+        aspect = h05/w05;
+    }
+
 	UpdateProjectionMatrix ();
 }
 
