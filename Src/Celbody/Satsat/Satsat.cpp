@@ -5,6 +5,7 @@
 #include "Satsat.h"
 
 #include <stdio.h> // temp
+#include <filesystem>
 #define NSAT 8
 
 using namespace std;
@@ -241,7 +242,9 @@ DLLCLBK void InitModule (HINSTANCE hModule)
 	// Load the data for the TASS 1.7 perturbation solutions
 	// into global data structures
 
-	ReadData ("Config\\Saturn\\Data\\tass17.dat", 0);
+    auto datPath =
+        std::filesystem::path{"Config"} / "Saturn" / "Data" / "tass17.dat";
+    ReadData (datPath.c_str(), 0);
 
 	// invalidate all data structures
 	int i;
