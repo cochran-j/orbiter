@@ -291,8 +291,14 @@ int samjay (int nx, int nv, int nz, double *cx, double *cv, double *cz,
 			vdot += q1 * cv[k + nmv * 3];
 		}
     }
-    dt = v / rat[nsat];
-    sdfac = vdot / rat[nsat] + 1.;
+    /* NOTE(jec):  Basic div-by-zero protection */
+    if (rat[nsat] == 0.0) {
+        dt = 0.0;
+        sdfac = 1.0;
+    } else {
+        dt = v / rat[nsat];
+        sdfac = vdot / rat[nsat] + 1.;
+    }
 /* >>  sdfac is irrelevant (its value will be 1) when nflag=1 (position-only) */
     for (k = 1; k <= nz; ++k) {
 		d__1 = cz[k + (nmz << 1)] + cz[k + nmz * 3] * (local_1.t + dt);
