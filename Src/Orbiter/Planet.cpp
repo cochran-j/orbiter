@@ -179,6 +179,7 @@ Planet::Planet (double _mass, double _mean_radius)
 	emgr         = NULL;
 	elev_res     = 1.0;
 	fog.dens_0 = fog.dens_ref = fog.alt_ref = 0.0;
+    fog.col      = { 0 };
 	nbase        = 0;
 	nnav         = 0;
 	nobserver    = 0;
@@ -224,6 +225,7 @@ Planet::Planet (char *fname)
 	emgr         = NULL;
 	elev_res     = 1.0;
 	fog.dens_0 = fog.dens_ref = fog.alt_ref = 0.0;
+    fog.col      = { 0 };
 	vislimit     = spotlimit = 2e-5;
 	horizon_excess = 0.002;
 	bb_excess    = 0.0;
