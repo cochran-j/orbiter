@@ -720,13 +720,17 @@ void CelestialBody::RegisterModule (char *dllname)
 	char cbuf[256];
 	module = 0;                              // reset new interface
 	memset (&modIntf, 0, sizeof (modIntf));  // reset old interface
-    auto dllPath = std::filesystem::path{"Modules"} / "Celbody" / dllname;
+    auto dllPath = std::filesystem::path{"Modules"} / "Celbody";
+    dllPath /= DLL::DLLPrefix;
+    dllPath += dllname;
     dllPath += ".";
     dllPath += DLL::DLLExt;
 
 	hMod = DLL::LoadDLL(dllPath.c_str());
 	if (!hMod) {
-        dllPath = std::filesystem::path{"Modules"} / dllname;
+        dllPath = std::filesystem::path{"Modules"};
+        dllPath /= DLL::DLLPrefix;
+        dllPath += dllname;
         dllPath += ".";
         dllPath += DLL::DLLExt;
 		hMod = DLL::LoadDLL (dllPath.c_str());

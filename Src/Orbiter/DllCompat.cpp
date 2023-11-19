@@ -16,7 +16,8 @@ bool FindStandaloneDll(const std::filesystem::path& path,
                        const std::string_view& moduleName,
                        std::filesystem::path& composedPathOut) {
 
-    composedPathOut = path / moduleName;
+    composedPathOut = path / DLL::DLLPrefix;
+    composedPathOut += moduleName;
     composedPathOut.replace_extension(DLLExt);
     return std::filesystem::exists(composedPathOut);
 }
@@ -26,7 +27,9 @@ bool FindDllInPluginFolder(const std::filesystem::path& path,
                            std::filesystem::path& composedPathOut) {
 
     // The idea is that the DLL is in a plugin folder named after the plugin.
-    composedPathOut = path / moduleName / moduleName;
+    composedPathOut = path / moduleName;
+    composedPathOut /= DLL::DLLPrefix;
+    composedPathOut += moduleName;
     composedPathOut.replace_extension(DLLExt);
     return std::filesystem::exists(composedPathOut);
 }

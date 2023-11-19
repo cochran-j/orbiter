@@ -5853,7 +5853,8 @@ bool Vessel::LoadModule (ifstream &classf)
 bool Vessel::RegisterModule (const char *dllname)
 {
     auto dllPath = std::filesystem::path{"Modules"};
-    dllPath /= dllname;
+    dllPath /= DLL::DLLPrefix;
+    dllPath += dllname;
     dllPath += ".";
     dllPath += DLL::DLLExt;
 	hMod = DLL::LoadDLL (dllPath.c_str());

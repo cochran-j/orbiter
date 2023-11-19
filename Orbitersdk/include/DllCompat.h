@@ -15,6 +15,7 @@
 #define DLLEXIT
 
 namespace DLL {
+    const char *const DLLPrefix = "";
     const char *const DLLExt = "dll";
 }
 
@@ -31,6 +32,7 @@ inline HINSTANCE DllGetInstance(void* fcn) {
 #define DLLEXIT __attribute__ ((destructor))
 
 namespace DLL {
+    const char *const DLLPrefix = "lib";
     const char *const DLLExt = "so"; // TODO(jec): other extensions, MacOS?
 }
 

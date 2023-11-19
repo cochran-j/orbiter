@@ -221,7 +221,8 @@ void orbiter::DefVideoTab::ScanDir(HWND hTab, PCSTR dir)
 
             // Special case: look for DLLs in subdirectories if subdir and DLL names match
             auto special_path = found_path;
-            special_path /= found_path.filename();
+            special_path /= DLL::DLLPrefix;
+            special_path += found_path.filename();
             special_path += ".";
             special_path += DLL::DLLExt;
 
