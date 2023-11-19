@@ -244,19 +244,19 @@ Vessel::~Vessel ()
 
 bool Vessel::OpenConfigFile (ifstream &cfgfile) const
 {
-	char cbuf[256];
-	strcpy (cbuf, "Vessels\\");
-	strcat (cbuf, classname ? classname : name.c_str());
+    auto filename = classname ? classname : name.c_str();
+    auto filepath = std::filesystem::path{"Vessels"} / filename;
+
 	// first search in $CONFIGDIR\Vessels
-	cfgfile.open (g_pOrbiter->ConfigPath (cbuf));
+	cfgfile.open (g_pOrbiter->ConfigPath (filepath.c_str()));
 	if (cfgfile.good()) return true;
 	else cfgfile.clear();
 	// next search in $CONFIGDIR
-	cfgfile.open (g_pOrbiter->ConfigPath (cbuf+8));
+	cfgfile.open (g_pOrbiter->ConfigPath (filename));
 	if (cfgfile.good()) return true;
 	else {
 		cfgfile.clear();
-		LOGOUT_ERR_FILENOTFOUND_MSG(g_pOrbiter->ConfigPath(cbuf + 8).c_str(), "No vessel class configuration file found for: %s", classname ? classname : name.c_str());
+		LOGOUT_ERR_FILENOTFOUND_MSG(g_pOrbiter->ConfigPath(filename).c_str(), "No vessel class configuration file found for: %s", filename);
 		//LogOut (">>> ERROR: No vessel class configuration file found for:");
 		//LOGOUT_ERR(classname ? classname : name);
 		return false;
