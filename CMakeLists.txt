@@ -121,6 +121,12 @@ if(MSVC)
   add_link_options("/NODEFAULTLIB:\"LIBCMTD\"")
 endif()
 
+if(UNIX)
+    # Lookup additional modules in ./Modules.  Compile this into all plugin so
+    # modules
+    add_link_options("-Wl,-rpath,Modules")
+endif()
+
 # Copy data and binary assets from source to binary tree to provide a working Orbiter environment
 add_custom_target(CopyData ALL
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/BinAssets/ ${CMAKE_BINARY_DIR}
