@@ -104,11 +104,13 @@ AAP::AAP (AAPSubsystem *_subsys)
 	int i;
 	hAAP = oapiCreateInterpreter();
 	hsi = NULL;
-	oapiExecScriptCmd (hAAP, "run('dg/aap')"); // load the autopilot code
+    if (hAAP) {
+        oapiExecScriptCmd (hAAP, "run('dg/aap')"); // load the autopilot code
 
-	char setVesselCmd[256];
-    std::snprintf(setVesselCmd,256,"setvessel(vessel.get_interface('%s'))",vessel->GetName());
-	oapiAsyncScriptCmd (hAAP, setVesselCmd); // set autopilot vessel
+        char setVesselCmd[256];
+        std::snprintf(setVesselCmd,256,"setvessel(vessel.get_interface('%s'))",vessel->GetName());
+        oapiAsyncScriptCmd (hAAP, setVesselCmd); // set autopilot vessel
+    }
 
 	active_block = -1;
 	for (i = 0; i < 3; i++) {
@@ -122,7 +124,9 @@ AAP::AAP (AAPSubsystem *_subsys)
 
 AAP::~AAP()
 {
-	oapiDelInterpreter(hAAP);
+    if (hAAP) {
+        oapiDelInterpreter(hAAP);
+    }
 }
 
 // ==============================================================
@@ -239,6 +243,10 @@ bool AAP::ProcessMouse2D (int event, int mx, int my)
 
 void AAP::SetValue (int block, double val)
 {
+    if (!hAAP) {
+        return;
+    }
+
 	char cbuf[256];
 	switch (block) {
 		case 0: // altitude
@@ -264,10 +272,14 @@ void AAP::ToggleActive (int block)
 void AAP::SetActive (int block, bool activate)
 {
 	if (activate == active[block]) return; // nothing to do
+	active[block] = activate;
+
+    if (!hAAP) {
+        return;
+    }
 
 	char cbuf[256];
 
-	active[block] = activate;
 	switch (block) {
 		case 0: // altitude
 			if (activate) sprintf (cbuf, "aap.alt(%e)", tgt[block]);
