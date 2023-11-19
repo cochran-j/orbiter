@@ -108,7 +108,7 @@ inline void PinesGravProp::GenerateAssocLegendreMatrix(int maxDegree)
 
 }
 
-int PinesGravProp::readGravModel(char* filename, int cutoff, int &actualLoadedTerms, int &maxModelTerms)
+int PinesGravProp::readGravModel(const char* filename, int cutoff, int &actualLoadedTerms, int &maxModelTerms)
 {
 	FILE* gravModelFile = nullptr;
 	char gravFileLine[512];
