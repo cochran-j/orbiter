@@ -484,6 +484,12 @@ bool Planet::FindFirst (const char* extension,
         }
         path = thisPath.string();
 	}
+    if (!std::filesystem::exists(thisPath) ||
+        !std::filesystem::is_directory(thisPath)) {
+
+        return false;
+    }
+
     dir_it = std::filesystem::directory_iterator{thisPath};
     while (dir_it != std::filesystem::end(dir_it)) {
         if (dir_it->path().extension() == extension) {
@@ -543,6 +549,12 @@ void Planet::ScanBases (char *path)
     auto spath = std::filesystem::path{g_pOrbiter->ConfigPath(path)};
     // strip extension for directory_iterator
     spath.replace_extension({});
+    if (!std::filesystem::exists(spath) ||
+        !std::filesystem::is_directory(spath)) {
+
+        return;
+    }
+
     for (auto& dir_entry : std::filesystem::directory_iterator{spath}) {
         if (dir_entry.path().extension() != "cfg") {
             continue;
