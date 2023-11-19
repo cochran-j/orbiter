@@ -147,10 +147,12 @@ DLLCLBK void InitModule(HINSTANCE hDLL)
 
 	D3D9InitLog("Modules/D3D9Client/D3D9ClientLog.html");
 
+    /* TODO(jec) D3DX?  Not a part of dxvk
 	if (!D3DXCheckVersion(D3D_SDK_VERSION, D3DX_SDK_VERSION)) {
 		MissingRuntimeError();
 		return;
 	}
+    */
 
 #ifdef _NVAPI_H
 	if (NvAPI_Initialize()==NVAPI_OK) {
