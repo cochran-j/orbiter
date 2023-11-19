@@ -9,6 +9,7 @@
 #include "Util.h"
 
 #include <cstring>
+#include <algorithm>
 
 #ifdef INLINEGRAPHICS
 #include "OGraphics.h"
@@ -673,6 +674,10 @@ void Mesh::TexScale (D3DVALUE su, D3DVALUE sv)
 		TexScaleGroup (grp, su, sv);
 }
 
+static double safe_acos(double in) {
+    return std::acos(std::clamp(in, -1.0, 1.0));
+}
+
 void Mesh::CalcNormals (DWORD grp, bool missingonly)
 {
 	const float eps = 1e-8f;
@@ -711,15 +716,15 @@ void Mesh::CalcNormals (DWORD grp, bool missingonly)
 			D3DVALUE d02 = D3DMath_Length(V02);
 			D3DVALUE d12 = D3DMath_Length(V12);
 			if (calcNml[i0]) {
-				D3DVALUE a0 = acos((d01 * d01 + d02 * d02 - d12 * d12) / (2.0f * d01 * d02));
+				D3DVALUE a0 = safe_acos((d01 * d01 + d02 * d02 - d12 * d12) / (2.0f * d01 * d02));
 				vtx[i0].nx += nm.x * a0, vtx[i0].ny += nm.y * a0, vtx[i0].nz += nm.z * a0;
 			}
 			if (calcNml[i1]) {
-				D3DVALUE a1 = acos((d01 * d01 + d12 * d12 - d02 * d02) / (2.0f * d01 * d12));
+				D3DVALUE a1 = safe_acos((d01 * d01 + d12 * d12 - d02 * d02) / (2.0f * d01 * d12));
 				vtx[i1].nx += nm.x * a1, vtx[i1].ny += nm.y * a1, vtx[i1].nz += nm.z * a1;
 			}
 			if (calcNml[i2]) {
-				D3DVALUE a2 = acos((d02 * d02 + d12 * d12 - d01 * d01) / (2.0f * d02 * d12));
+				D3DVALUE a2 = safe_acos((d02 * d02 + d12 * d12 - d01 * d01) / (2.0f * d02 * d12));
 				vtx[i2].nx += nm.x * a2, vtx[i2].ny += nm.y * a2, vtx[i2].nz += nm.z * a2;
 			}
 		}
@@ -728,7 +733,9 @@ void Mesh::CalcNormals (DWORD grp, bool missingonly)
 		if (calcNml[i]) {
 			D3DVECTOR nm = { vtx[i].nx, vtx[i].ny, vtx[i].nz };
 			D3DVALUE len = D3DMath_Length(nm);
-			vtx[i].nx /= len, vtx[i].ny /= len, vtx[i].nz /= len;
+            if (len > 0.0) {
+                vtx[i].nx /= len, vtx[i].ny /= len, vtx[i].nz /= len;
+            }
 		}
 	delete []calcNml;
 	calcNml = NULL;
