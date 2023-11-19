@@ -36,4 +36,6 @@ set_target_properties(LuaInline
 install(TARGETS LuaInline
 	RUNTIME
 	DESTINATION ${ORBITER_INSTALL_ROOT_DIR}
+    LIBRARY
+    DESTINATION ${ORBITER_INSTALL_ROOT_DIR}
 )

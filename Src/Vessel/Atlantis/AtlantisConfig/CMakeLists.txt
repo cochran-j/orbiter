@@ -33,4 +33,6 @@ set_target_properties(AtlantisConfig
 install(TARGETS AtlantisConfig
 	RUNTIME
 	DESTINATION ${ORBITER_INSTALL_MODULE_DIR}/Startup
+    LIBRARY
+    DESTINATION ${ORBITER_INSTALL_MODULE_DIR}/Startup
 )

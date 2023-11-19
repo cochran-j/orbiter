@@ -36,4 +36,6 @@ set_target_properties(Framerate
 install(TARGETS Framerate
 	RUNTIME
 	DESTINATION ${ORBITER_INSTALL_PLUGIN_DIR}
+    LIBRARY
+    DESTINATION ${ORBITER_INSTALL_PLUGIN_DIR}
 )

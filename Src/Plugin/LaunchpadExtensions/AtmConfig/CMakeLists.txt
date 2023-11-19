@@ -34,4 +34,6 @@ set_target_properties(AtmConfig
 install(TARGETS AtmConfig
 	RUNTIME
 	DESTINATION ${ORBITER_INSTALL_MODULE_DIR}/Startup
+    LIBRARY
+    DESTINATION ${ORBITER_INSTALL_MODULE_DIR}/Startup
 )
