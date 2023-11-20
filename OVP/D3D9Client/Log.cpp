@@ -162,7 +162,7 @@ void D3D9InitLog(const char *file)
 {
     qpcStart = d3d_clock::now();
 
-    auto d3d9client_log = std::fopen(file, "w+");
+    d3d9client_log = std::fopen(file, "w+");
 	if (!d3d9client_log) { d3d9client_log=nullptr; } // Failed
 	else {
         qpcRef = d3d_clock::now();
