@@ -34,7 +34,7 @@ DWORD BuildDate()
 	const char *months[] = { "???","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 	char month[8];
 	unsigned int day = 0, year = 0;
-	assert(std::sscanf(__DATE__, "%s %u %u", month, 8, &day, &year) == 3);
+	assert(std::sscanf(__DATE__, "%8s %u %u", month, &day, &year) == 3);
 	DWORD m = 0;
 	for (DWORD i = 1; i <= 12; i++) if (strncmp(month, months[i], 3) == 0) { m = i; break; }
 	assert(m != 0);
