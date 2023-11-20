@@ -16,6 +16,7 @@
 #include <chrono>
 #include <string>
 #include <cstring>
+#include <unordered_map>
 
 #include "Orbitersdk.h"
 #include "D3D9Client.h"
@@ -44,7 +45,7 @@
 #include "Surfmgr2.h"
 #include "gcCore.h"
 #include "gcConst.h"
-#include <unordered_map>
+#include "DXVKExtensions.h"
 
 
 #if defined(_MSC_VER) && (_MSC_VER <= 1700 ) // Microsoft Visual Studio Version 2012 and lower
@@ -185,6 +186,10 @@ DLLCLBK void InitModule(HINSTANCE hDLL)
 	AtmoControls::Create();
 	vPlanet::ParseMicroTexturesFile();
 
+#if CONFIG_DXVK
+    DXVK::init_DXVK();
+#endif
+
 	g_hInst = hDLL;
 	g_client = new D3D9Client(hDLL);
 
@@ -212,6 +217,10 @@ DLLCLBK void ExitModule(HINSTANCE hDLL)
 		oapiUnregisterGraphicsClient(g_client);
 		g_client = 0;
 	}
+
+#if CONFIG_DXVK
+    DXVK::exit_DXVK();
+#endif
 
 #ifdef _NVAPI_H
 	if (bNVAPI) if (NvAPI_Unload()==NVAPI_OK) LogAlw("[nVidia API Unloaded]");

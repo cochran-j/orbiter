@@ -41,6 +41,7 @@ set(SourceFiles
 	D3D9TextMgr.cpp
 	D3D9Util.cpp
 	DebugControls.cpp
+    DXVKExtensions.cpp
 	gcCore.cpp
 	gcConst.cpp
 	GDIPad.cpp
@@ -176,14 +177,12 @@ add_library(D3D9Client MODULE
 target_include_directories(D3D9Client PUBLIC
 	${ORBITER_SOURCE_SDK_INCLUDE_DIR}
 	${DXSDK_DIR}/Include
-    ${DXVK_INCLUDE_DIR}/directx
     ${WIN32_INCLUDE_DIR}
 )
 
 target_link_directories(D3D9Client PUBLIC
 	${ORBITER_BINARY_SDK_DIR}/lib
 	${DXSDK_LIB_DIR}
-    ${DXVK_LIB_DIR}
 )
 
 target_link_libraries(D3D9Client
@@ -210,14 +209,34 @@ target_link_libraries(D3D9Client
     # version.lib
     # msimg32.lib
 )
+target_compile_definitions(D3D9Client PUBLIC
+    D3D9CLIENT_EXPORTS
+)
 
 if(ORBITER_DXVK)
+    target_compile_definitions(D3D9Client PUBLIC
+        CONFIG_DXVK=1
+    )
+    target_include_directories(D3D9Client PUBLIC
+        ${DXVK_INCLUDE_DIR}/directx
+        ${SDL2_INCLUDE_DIRS}
+    )
+    target_link_directories(D3D9Client PUBLIC
+        ${DXVK_LIB_DIR}
+        ${SDL2_LIB_DIR}
+    )
+    target_compile_definitions(D3D9Client PUBLIC
+        CONFIG_DXVK=1
+    )
     target_link_libraries(D3D9Client
         dxvk_d3d9
         # TODO(jec)
         # d3dx9
     )
 else()
+    target_compile_definitions(D3D9Client PUBLIC
+        CONFIG_DXVK=0
+    )
     target_link_libraries(D3D9Client
         d3d9.lib
         debug d3dx9d.lib
@@ -230,7 +249,6 @@ set_target_properties(D3D9Client
 	PROPERTIES
 	LIBRARY_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Modules/Plugin
 	LIBRARY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Modules/Plugin
-	COMPILE_DEFINITIONS D3D9CLIENT_EXPORTS
 	FOLDER OVP
 )
 
