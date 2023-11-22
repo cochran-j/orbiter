@@ -305,6 +305,7 @@ if(ORBITER_BUILD_XRSOUND)
 endif()
 
 if(ORBITER_DXVK)
+    find_package(SDL2 REQUIRED)
     find_package(DXVK REQUIRED)
     set(DXVK_LIB_DIR
         ${DXVK_LIB_DIR}
