@@ -41,6 +41,8 @@
 #include <math.h>
 #include <time.h>
 
+#include <filesystem>
+
 using std::min;
 using std::max;
 
@@ -317,7 +319,8 @@ void DeltaGlider::ApplySkin ()
 
 	time_t lt; time(&lt); struct tm *st = localtime(&lt);
 	if (vcmesh && st->tm_mon==3 && st->tm_mday==1) {
-		SURFHANDLE t = oapiLoadTexture ("generic\\noisep.dds");
+        auto texpath = std::filesystem::path{"generic"} / "noisep.dds";
+		SURFHANDLE t = oapiLoadTexture (texpath.c_str());
 		if (t) oapiSetTexture (vcmesh, 17, t);
 	}
 }
@@ -1108,12 +1111,14 @@ void DeltaGlider::clbkSetClassCaps (FILEHANDLE cfg)
 	}
 	if (ssys_scram) beacon[4].pos = &beaconpos_scram;
 
-	SetMeshVisibilityMode (AddMesh (exmesh_tpl = oapiLoadMeshGlobal (ScramVersion() ? "DG\\deltaglider" : "DG\\deltaglider_ns")), MESHVIS_EXTERNAL);
-	//SetMeshVisibilityMode (AddMesh (vcmesh_tpl = oapiLoadMeshGlobal ("DG\\deltaglider_vc")), MESHVIS_VC);
-	panelmesh0 = oapiLoadMeshGlobal ("DG\\dg_2dpanel0");
-	panelmesh1 = oapiLoadMeshGlobal ("DG\\dg_2dpanel1");
+    auto dgPath = std::filesystem::path{"DG"};
 
-	vcmesh_tpl = oapiLoadMeshGlobal ("DG\\deltaglider_vc");
+	SetMeshVisibilityMode (AddMesh (exmesh_tpl = oapiLoadMeshGlobal (ScramVersion() ? (dgPath / "deltaglider").c_str() : (dgPath / "deltaglider_ns").c_str())), MESHVIS_EXTERNAL);
+	//SetMeshVisibilityMode (AddMesh (vcmesh_tpl = oapiLoadMeshGlobal ("DG\\deltaglider_vc")), MESHVIS_VC);
+	panelmesh0 = oapiLoadMeshGlobal ((dgPath / "dg_2dpanel0").c_str());
+	panelmesh1 = oapiLoadMeshGlobal ((dgPath / "dg_2dpanel1").c_str());
+
+	vcmesh_tpl = oapiLoadMeshGlobal ((dgPath / "deltaglider_vc").c_str());
 	SetMeshVisibilityMode (AddMesh (vcmesh_tpl), MESHVIS_VC);
 
 	// **************** vessel-specific insignia ****************
@@ -1140,13 +1145,16 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 				if (pi[i]-1 < 4) psngr[pi[i]-1] = true;
 		} else if (caseInsensitiveStartsWith(line, "SKIN")) {
 			sscanf (line+4, "%s", skinpath);
-			char fname[256];
-			strcpy (fname, "DG\\Skins\\");
-			strcat (fname, skinpath);
-			int n = strlen(fname); fname[n++] = '\\';
-			strcpy (fname+n, "dgmk4_1.dds");  skin[0] = oapiLoadTexture (fname);
-			strcpy (fname+n, ssys_scram ? "dgmk4_2.dds" : "dgmk4_2_ns.dds");  skin[1] = oapiLoadTexture (fname);
-			strcpy (fname+n, "idpanel1.dds"); skin[2] = oapiLoadTexture (fname);
+            auto skinPath = std::filesystem::path{"DG"} /
+                "Skins" /
+                skinpath;
+
+            skin[0] = oapiLoadTexture((skinPath / "dgmk4_1.dds").c_str());
+            skin[1] = oapiLoadTexture((ssys_scram ?
+                        (skinPath / "dgmk4_2.dds") :
+                        (skinPath / "dgmk4_2_ns.dds")).c_str());
+            skin[2] = oapiLoadTexture((skinPath / "idpanel1.dds").c_str());
+
 			if (skin[2]) {
 				oapiBlt (insignia_tex, skin[2], 0, 0, 0, 0, 256, 256);
 				oapiReleaseTexture (skin[2]);

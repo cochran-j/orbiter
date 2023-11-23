@@ -105,7 +105,7 @@ AAP::AAP (AAPSubsystem *_subsys)
 	hAAP = oapiCreateInterpreter();
 	hsi = NULL;
     if (hAAP) {
-        oapiExecScriptCmd (hAAP, "run('dg/aap')"); // load the autopilot code
+        oapiExecScriptCmd (hAAP, "run('DG/aap')"); // load the autopilot code
 
         char setVesselCmd[256];
         std::snprintf(setVesselCmd,256,"setvessel(vessel.get_interface('%s'))",vessel->GetName());
