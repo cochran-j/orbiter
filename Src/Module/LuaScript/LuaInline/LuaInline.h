@@ -24,6 +24,7 @@
 #define __LUAINLINE_H
 
 #include <thread>
+#include <atomic>
 
 #include "Interpreter.h"
 
@@ -38,10 +39,10 @@ public:
 		Interpreter *CreateInterpreter ();
 		Interpreter *interp;  // interpreter instance
         std::thread hThread;       // interpreter thread
-		bool termInterp;      // interpreter kill flag
+        std::atomic<bool> termInterp;      // interpreter kill flag
 		bool singleCmd;       // terminate after single command
 		char *cmd;            // interpreter command
-		static unsigned int WINAPI InterpreterThreadProc (LPVOID context);
+		static void InterpreterThreadProc (Environment* context);
 	};
 
 	InterpreterList (HINSTANCE hDLL);

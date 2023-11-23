@@ -12,6 +12,10 @@
 #include "MFDAPI.h"
 #include "DrawAPI.h"
 #include <list>
+#include <mutex>
+#include <chrono>
+#include <utility>
+#include <filesystem>
 
 using std::min;
 using std::max;
@@ -64,6 +68,8 @@ VECTOR3 lua_tovector (lua_State *L, int idx)
 // class Interpreter
 
 Interpreter::Interpreter ()
+    : hExecMutex{},
+      hWaitMutex{}
 {
 	L = luaL_newstate();  // create new Lua context
 	is_busy = false;      // waiting for input
@@ -79,20 +85,12 @@ Interpreter::Interpreter ()
 	lua_pushlightuserdata (L, this);
 	lua_setfield (L, LUA_REGISTRYINDEX, "interp");
 
-    /* TODO(jec)  std::mutex
-	hExecMutex = CreateMutex (NULL, TRUE, NULL);
-	hWaitMutex = CreateMutex (NULL, FALSE, NULL);
-    */
+    hExecMutex.lock();
 }
 
 Interpreter::~Interpreter ()
 {
 	lua_close (L);
-
-    /* TODO(jec)
-	if (hExecMutex) CloseHandle (hExecMutex);
-	if (hWaitMutex) CloseHandle (hWaitMutex);
-    */
 }
 
 void Interpreter::Initialise ()
@@ -580,19 +578,23 @@ void Interpreter::WaitExec (DWORD timeout)
 {
 	// Called by orbiter thread or interpreter thread to wait its turn
 	// Orbiter waits for the script for 1 second to return
-    /* TODO(jec)
-	WaitForSingleObject (hWaitMutex, timeout); // wait for synchronisation mutex
-	WaitForSingleObject (hExecMutex, timeout); // wait for execution mutex
-	ReleaseMutex (hWaitMutex);              // release synchronisation mutex
-    */
+    if (timeout == INFINITE) {
+        hWaitMutex.lock();
+        hExecMutex.lock();
+        hWaitMutex.unlock();
+    } else {
+        // WARNING(jec):  This function is unsafe when used with any
+        // non-infinite timeout.  (This is original behavior)
+        hWaitMutex.try_lock_for(std::chrono::milliseconds{timeout});
+        hExecMutex.try_lock_for(std::chrono::milliseconds{timeout});
+        hWaitMutex.unlock();
+    }
 }
 
 void Interpreter::EndExec ()
 {
 	// called by orbiter thread or interpreter thread to hand over control
-    /* TODO(jec)
-	ReleaseMutex (hExecMutex);
-    */
+    hExecMutex.unlock();
 }
 
 void Interpreter::frameskip (lua_State *L)
@@ -633,7 +635,7 @@ int Interpreter::RunChunk (const char *chunk, int n)
                     /* NOTE(jec):  variadic macros cannot have zero variadic
                      *             arguments.
                      */
-					oapiWriteLogError("Lua %s", error);
+					oapiWriteLogError("Lua %s, Chunk %s", error, chunk);
 				}
 				is_busy = false;
 				return res;
@@ -1072,7 +1074,13 @@ void Interpreter::LoadAnnotationAPI ()
 
 void Interpreter::LoadStartupScript ()
 {
-	luaL_dofile (L, ".\\Script\\oapi_init.lua");
+    auto path = std::filesystem::path{"Script"} / "oapi_init.lua";
+	int result = luaL_dofile (L, path.c_str());
+    if (result) {
+        auto error = lua_tostring(L, -1);
+
+        oapiWriteLogError("oapi_init.lua:  %s", error);
+    }
 }
 
 bool Interpreter::InitialiseVessel (lua_State *L, VESSEL *v)
