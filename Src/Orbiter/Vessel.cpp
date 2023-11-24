@@ -47,6 +47,10 @@
 #include <stdlib.h>
 #include <string>
 
+// TEST
+#include <dlfcn.h>
+
+
 #ifdef INLINEGRAPHICS
 #include "VVessel.h"
 #endif // INLINEGRAPHICS
@@ -5837,7 +5841,8 @@ bool Vessel::LoadModule (ifstream &classf)
 		if (!found) {
 			DWORD code = DLL::GetLastError();
 			char errbuf[256];
-			sprintf(errbuf, "Could not load vessel module: %s (code %d)", cbuf, code);
+            // TEST
+			sprintf(errbuf, "Could not load vessel module: %s (code %d) %s", cbuf, code, dlerror());
 			LOGOUT_ERR (errbuf);
 		}
 		if (modIntf.ovcInit)
@@ -5855,7 +5860,6 @@ bool Vessel::RegisterModule (const char *dllname)
     auto dllPath = std::filesystem::path{"Modules"};
     dllPath /= DLL::DLLPrefix;
     dllPath += dllname;
-    dllPath += ".";
     dllPath += DLL::DLLExt;
 	hMod = DLL::LoadDLL (dllPath.c_str());
 	if (!hMod)
