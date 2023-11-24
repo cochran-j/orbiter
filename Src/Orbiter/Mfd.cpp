@@ -388,10 +388,16 @@ bool Instrument::UnregisterUserMode (int id)
 		if (GlobalMode[i].id == id) break;
 	if (i == nGlobalModes) return false;
 
-	delete []GlobalMode[i].spec->name;
-	GlobalMode[i].spec->name = NULL;
-	delete GlobalMode[i].spec;
-	delete GlobalMode[i].oldspec; // obsolete
+    if (GlobalMode[i].spec) {
+        if (GlobalMode[i].spec->name) {
+            delete []GlobalMode[i].spec->name;
+            GlobalMode[i].spec->name = NULL;
+        }
+        delete GlobalMode[i].spec;
+    }
+    if (GlobalMode[i].oldspec) {
+        delete GlobalMode[i].oldspec; // obsolete
+    }
 	MFDMODE *tmp = new MFDMODE[nGlobalModes-1]; TRACENEW
 	for (j = k = 0; j < nGlobalModes; j++)
 		if (j != i) { 
