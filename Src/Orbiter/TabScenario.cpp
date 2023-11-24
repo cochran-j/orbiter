@@ -352,7 +352,7 @@ void orbiter::ScenarioTab::ScanDirectory (const char *ppath, HTREEITEM hti)
 
         // scan for files
         bool first_scn = true;
-        if (found_path.extension() == "scn") {
+        if (found_path.extension() == ".scn") {
             if (first_scn) {
                 /* TODO(jec)
                 tvis.hInsertAfter = TVI_FIRST;
@@ -773,7 +773,7 @@ void orbiter::ScenarioTab::ClearQSFolder()
     auto quicksavePath = pLp->App()->ScnPath ("Quicksave");
     quicksavePath.remove_filename();
     for (auto& dir_entry : std::filesystem::directory_iterator{quicksavePath}) {
-        if (dir_entry.path().extension() == "scn") {
+        if (dir_entry.path().extension() == ".scn") {
             std::filesystem::remove(dir_entry.path());
         }
     }

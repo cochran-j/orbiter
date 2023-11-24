@@ -478,7 +478,7 @@ bool Planet::FindFirst (const char* extension,
     // NOTE(jec):  Conceivably other extension "types" added later.
     // NOTE(jec):  Original function fell through for anything besides marker.
     std::filesystem::path thisPath {};
-    if (strcmp(extension, "mkr") == 0) {
+    if (strcmp(extension, ".mkr") == 0) {
 		if (!labelpath.empty()) {
             thisPath = labelpath;
         } else {
@@ -558,7 +558,7 @@ void Planet::ScanBases (char *path)
     }
 
     for (auto& dir_entry : std::filesystem::directory_iterator{spath}) {
-        if (dir_entry.path().extension() != "cfg") {
+        if (dir_entry.path().extension() != ".cfg") {
             continue;
         }
 
@@ -603,7 +603,7 @@ void Planet::ScanLabelLists (ifstream &cfg)
 	nlabellist = 0;
 
     std::filesystem::directory_iterator dir_it {};
-	bool found = FindFirst ("mkr", dir_it, lbpath, fname);
+	bool found = FindFirst (".mkr", dir_it, lbpath, fname);
 	if (found) {
 
 		oapi::GraphicsClient::LABELLIST *ll;
@@ -687,7 +687,7 @@ void Planet::ScanLabelLists (ifstream &cfg)
 			}
 			nlabellist++;
 
-		} while (!FindNext ("mkr", dir_it, fname));
+		} while (!FindNext (".mkr", dir_it, fname));
 	}
 }
 

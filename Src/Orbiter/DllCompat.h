@@ -24,11 +24,11 @@ namespace DLL {
 
 #ifdef _WIN32
 constexpr std::string_view DLLPrefix = "";
-constexpr std::string_view DLLExt = "dll";
+constexpr std::string_view DLLExt = ".dll";
 #else
 using HINSTANCE = void*;
 constexpr std::string_view DLLPrefix = "lib";
-constexpr std::string_view DLLExt = "so";
+constexpr std::string_view DLLExt = ".so";
 #endif
 
 bool FindStandaloneDll(const std::filesystem::path& path,

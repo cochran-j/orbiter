@@ -266,7 +266,7 @@ void PlanetarySystem::ScanLabelLists (ifstream &cfg, bool bScanHeaders)
     std::string fname {};
 
     std::filesystem::directory_iterator dir_it {};
-	bool found = FindFirst ("mkr", dir_it, fname);
+	bool found = FindFirst (".mkr", dir_it, fname);
 	if (found) {
 
 		oapi::GraphicsClient::LABELLIST *ll;
@@ -275,7 +275,7 @@ void PlanetarySystem::ScanLabelLists (ifstream &cfg, bool bScanHeaders)
 		do {
 			// open marker file
             auto fpath = m_labelPath / fname;
-            fpath.replace_extension("mkr");
+            fpath.replace_extension(".mkr");
 			ifstream ulf (fpath.c_str());
 
 			// read label header
@@ -360,7 +360,7 @@ void PlanetarySystem::ScanLabelLists (ifstream &cfg, bool bScanHeaders)
 				}
 			}
 
-		} while (FindNext("mkr", dir_it, fname));
+		} while (FindNext(".mkr", dir_it, fname));
 	}
 }
 
