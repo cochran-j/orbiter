@@ -306,6 +306,8 @@ endif()
 
 if(ORBITER_DXVK)
     find_package(DXVK REQUIRED)
+    find_package(SDL2 REQUIRED)
+
     set(DXVK_LIB_DIR
         ${DXVK_LIB_DIR}
         CACHE
