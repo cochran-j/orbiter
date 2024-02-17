@@ -15,6 +15,9 @@
 #define _POSIX_C_SOURCE
 #include <signal.h> // signal
 
+// TEST
+#include <dlfcn.h>
+
 #endif /* _WIN32 */
 
 #include <windows.h>
@@ -886,7 +889,8 @@ HINSTANCE Orbiter::LoadModule (const char *path, const char *name)
 		m_Plugin.push_back(module_);
 	} else {
 		int err = DLL::GetLastError();
-		LOGOUT_ERR ("Failed loading module %s (code %d)", dllPath.c_str(), err);
+		LOGOUT_ERR ("Failed loading module %s (code %d). %s",
+                    dllPath.c_str(), err, dlerror()); // TEST
 	}
 	return hDLL;
 }
