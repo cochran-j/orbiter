@@ -210,10 +210,10 @@ void orbiter::ModuleTab::RefreshLists ()
 		}
 
         /* TODO(jec):  This is LOAD_LIBRARY_AS_DATA_FILE */
+        /*
 		HMODULE hMod = DLL::LoadDLL(filepath.c_str());
 		if (hMod) {
 			char buf[1024];
-            /* TODO(jec):  Resources
 			// read module info string
 			if (LoadString (hMod, 1000, buf, 1024)) {
 				buf[1023] = '\0';
@@ -226,9 +226,9 @@ void orbiter::ModuleTab::RefreshLists ()
 			} else {
 				strcpy (catstr, "Miscellaneous");
 			}
-            */
             DLL::UnloadDLL(hMod);
 		}
+        */
 
 		if (!strcmp (catstr, "Graphics engines"))
 			continue; // graphics client modules are loaded via the Video tab

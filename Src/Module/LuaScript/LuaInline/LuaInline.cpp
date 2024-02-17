@@ -48,13 +48,7 @@ InterpreterList::Environment::~Environment()
 			interp->Terminate();
 			interp->EndExec(); // give the thread opportunity to close
 
-            /* TODO(jec)
-			if (WaitForSingleObject (hThread, 1000) != 0) {
-				oapiWriteLog((char*)"LuaInline: timeout while waiting for interpreter thread");
-				TerminateThread (hThread, 0);
-			}
-			CloseHandle (hThread);
-            */
+            hThread.join();
 		}
 		delete interp;
 	}
@@ -62,19 +56,17 @@ InterpreterList::Environment::~Environment()
 
 Interpreter *InterpreterList::Environment::CreateInterpreter ()
 {
-	unsigned id;
 	termInterp = false;
 	interp = new Interpreter ();
 	interp->Initialise();
-    /* TODO(jec)
-	hThread = (HANDLE)_beginthreadex (NULL, 4096, &InterpreterThreadProc, this, 0, &id);
-    */
+    hThread = std::thread{InterpreterThreadProc, this};
 	return interp;
 }
 
-unsigned int WINAPI InterpreterList::Environment::InterpreterThreadProc (LPVOID context)
+void InterpreterList::Environment::InterpreterThreadProc
+    (InterpreterList::Environment* context)
 {
-	InterpreterList::Environment *env = (InterpreterList::Environment*)context;
+	InterpreterList::Environment *env = context;
 	Interpreter *interp = env->interp;
 
 	// interpreter loop
@@ -93,10 +85,6 @@ unsigned int WINAPI InterpreterList::Environment::InterpreterThreadProc (LPVOID 
 		interp->EndExec();  // return control
 	}
 	interp->EndExec();  // return mutex (is this necessary?)
-    /* TODO(jec)
-	_endthreadex(0);
-    */
-	return 0;
 }
 
 

@@ -4,6 +4,8 @@
 #ifndef __INTERPRETER_H
 #define __INTERPRETER_H
 
+#include <mutex>
+
 extern "C" {
 #include "Lua/lua.h"
 #include "Lua/lualib.h"
@@ -815,8 +817,8 @@ protected:
 	friend int OpenHelp (void *context);
 
 private:
-	HANDLE hExecMutex; // flow control synchronisation
-	HANDLE hWaitMutex;
+    std::timed_mutex hExecMutex; // flow control synchronisation
+    std::timed_mutex hWaitMutex;
 
 	bool bExecLocal;   // flag for locally created mutexes
 	bool bWaitLocal;
