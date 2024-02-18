@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <windows.h>
 #include <filesystem>
+#include <memory>
 
 #ifndef _WIN32
 typedef void *HDC;
@@ -1847,6 +1848,8 @@ private:
 	VIDEODATA VideoData;    // the standard video options from config
 
 	IWICImagingFactory *m_pIWICFactory; // Windows Image Component factory instance
+    struct GCImpl;
+    std::unique_ptr<GCImpl> m_pImpl; // Private hidden implementation
 };
 
 
