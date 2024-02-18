@@ -5,6 +5,8 @@
 #define OAPI_IMPLEMENTATION
 
 #include <filesystem>
+#include <memory>
+#include <string>
 
 #include "Orbiter.h"
 #include "Launchpad.h"
@@ -18,6 +20,7 @@
 #include "Log.h"
 #include "Util.h"
 #include "resource.h"
+#include "RenderWindowFactory.h"
 /* TODO(jec)
 #include <wincodec.h>
 #include <io.h>
@@ -46,11 +49,13 @@ using namespace oapi;
 
 const char *strWndClass = "Orbiter Render Window";
 
-OAPIFUNC LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
-// Render window callback (calls RenderWndProc)
-
 OAPIFUNC INT_PTR CALLBACK LaunchpadVideoWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 // 'Video' tab window callback
+
+// Private internal implementation
+struct GraphicsClient::GCImpl {
+    std::unique_ptr<orbiter::IRenderWindowFactory> renderWindowFactory;
+};
 
 // ======================================================================
 // class GraphicsClient
@@ -82,6 +87,8 @@ GraphicsClient::GraphicsClient (HINSTANCE hInstance): Module (hInstance)
     */
 		m_pIWICFactory = NULL;
 
+
+    m_pImpl = std::make_unique<GCImpl>();
 }
 
 // ======================================================================
@@ -99,20 +106,16 @@ GraphicsClient::~GraphicsClient ()
 bool GraphicsClient::clbkInitialise ()
 {
     // Register a window class for the render window
-    /* TODO(jec)
-    WNDCLASS wndClass = {0, ::WndProc, 0, 0, hModule,
-		LoadIcon (g_pOrbiter->GetInstance(), MAKEINTRESOURCE(IDI_MAIN_ICON)),
-		LoadCursor (NULL, IDC_ARROW),
-		(HBRUSH)GetStockObject (WHITE_BRUSH),
-		NULL, strWndClass};
-    RegisterClass (&wndClass);
-    */
+    m_pImpl->renderWindowFactory =
+        orbiter::IRenderWindowFactory::instantiate(hModule);
 
 	if (clbkUseLaunchpadVideoTab() && g_pOrbiter->Launchpad()) {
 		hVid = g_pOrbiter->Launchpad()->GetTab(PG_VID)->TabWnd();
-        /* TODO(jec)
-		SetWindowLongPtr (hVid, GWLP_USERDATA, (LONG_PTR)this);
-        */
+        /* TODO(jec)--This provides GraphicsClient to an already-existing
+         * UI window.
+         *
+         * SetWindowLongPtr(hVid, GWLP_USERDATA, (LONG_PTR) this);
+         */
 	} else hVid = NULL;
 
 	// set default parameters from config data
@@ -316,17 +319,10 @@ HWND GraphicsClient::clbkCreateRenderWindow ()
         /* TODO(jec):  I think this is the key interface to hook main D3D window
          * to window system.
          */
-        /* TODO(jec)
-		hWnd = CreateWindow (strWndClass, "", // dummy window
-			WS_POPUP | WS_EX_TOPMOST| WS_VISIBLE,
-			CW_USEDEFAULT, CW_USEDEFAULT, 10, 10, 0, 0, hModule, (LPVOID)this);
-        */
+        hWnd = m_pImpl->renderWindowFactory->createFullscreen();
 	} else {
-        /* TODO(jec)
-		hWnd = CreateWindow (strWndClass, "",
-			WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_VISIBLE,
-			CW_USEDEFAULT, CW_USEDEFAULT, VideoData.winw, VideoData.winh, 0, 0, hModule, (LPVOID)this);
-        */
+        hWnd = m_pImpl->renderWindowFactory->create
+            (VideoData.winw, VideoData.winh);
 	}
 	return hWnd;
 }
@@ -731,49 +727,38 @@ bool GraphicsClient::clbkCopyBitmap (SURFHANDLE pdds, HBITMAP hbm,
 HWND GraphicsClient::InitRenderWnd (HWND hWnd)
 {
 	if (!hWnd) { // create a dummy window
-        /* TODO(jec)
-		hWnd = CreateWindow (strWndClass, "",
-			WS_POPUP | WS_VISIBLE,
-			CW_USEDEFAULT, CW_USEDEFAULT, 10, 10, 0, 0, hModule, 0);
-        */
+        // TODO(jec):  Should we throw a fatal error here instead of creating
+        // a dummy window?
+        hWnd = m_pImpl->renderWindowFactory->createFullscreen();
 	}
-    /* TODO(jec)
-	SetWindowLongPtr (hWnd, GWLP_USERDATA, (LONG_PTR)this);
-    */
 	// store class instance with window for access in the message handler
 
-	char title[256], cbuf[128];
-    /* NOTE(jec):  extern definition here technically is in namespace oapi */
-	strcpy (title, g_strAppTitle);
-    /* TODO(jec)
-	GetWindowText (hWnd, cbuf, 128);
-    */
-	if (cbuf[0]) {
-		strcat (title, " ");
-		strcat (title, cbuf);
-	}
-    /* TODO(jec)
-	SetWindowText (hWnd, title);
-    */
-	hRenderWnd = hWnd;
+    std::string winTitle = g_strAppTitle;
+    if (!winTitle.empty()) {
+        winTitle += " ";
+        winTitle += m_pImpl->renderWindowFactory->windowTitle(hWnd);
+    }
+    m_pImpl->renderWindowFactory->setWindowTitle(hWnd, winTitle);
+
+    hRenderWnd = hWnd;
 	return hRenderWnd;
 }
 
 // ======================================================================
 
+// NOTE(jec):  Provided only because this is a public part of the API
+// This function now located in Win32RenderWindowFactory.
+LRESULT GraphicsClient::RenderWndProc(HWND hWnd,
+                                      UINT uMsg,
+                                      WPARAM wParam,
+                                      LPARAM lParam) {
 
-LRESULT GraphicsClient::RenderWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    /* TODO(jec)
-	switch (uMsg) {
-	// graphics-specific stuff to go here
-	default:
-		return g_pOrbiter->MsgProc (hWnd, uMsg, wParam, lParam);
-	}
-    return DefWindowProc (hWnd, uMsg, wParam, lParam);
-    */
+    static_cast<void>(hWnd);
+    static_cast<void>(uMsg);
+    static_cast<void>(wParam);
+    static_cast<void>(lParam);
     return FALSE;
-}
+};
 
 // ======================================================================
 
@@ -976,21 +961,6 @@ void ScreenAnnotation::Render ()
 
 // ======================================================================
 // Nonmember functions
-
-//-----------------------------------------------------------------------
-// Name: WndProc()
-// Desc: Static msg handler which passes messages from the render window
-//       to the application class.
-//-----------------------------------------------------------------------
-DLLEXPORT LRESULT CALLBACK WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    /* TODO(jec)
-	GraphicsClient *gc = (GraphicsClient*)GetWindowLongPtr (hWnd, GWLP_USERDATA);
-	if (gc) return gc->RenderWndProc (hWnd, uMsg, wParam, lParam);
-	else return DefWindowProc (hWnd, uMsg, wParam, lParam);
-    */
-    return FALSE;
-}
 
 // ======================================================================
 

@@ -38,6 +38,7 @@ set(common_src
 	VectorMap.cpp
     ConsoleManager.cpp
 	TimeData.cpp
+    ServiceLocator.cpp
 # Launchpad
 	Launchpad.cpp
 	LpadTab.cpp
@@ -165,15 +166,11 @@ set(Orbiter_includes
 	${CMAKE_CURRENT_BINARY_DIR}
 	${HTMLHELP_INCLUDE_DIR}
 	${DX7SDK_INCLUDE_DIR}
-    ${DXVK_INCLUDE_DIR}/directx
     ${WIN32_INCLUDE_DIR}
 )
 
 set(Orbiter_common_libs
     # TODO(jec) libraries
-    #Winmm.dll
-    #comctl32.lib
-    #UxTheme.lib
     #${HTML_HELP_LIBRARY}
     zlibstatic
     #${HTMLHELP_LIB}
@@ -192,14 +189,42 @@ set(Orbiter_depends
 	DlgCtrl
 )
 
+if(ORBITER_DXVK)
+    set(Orbiter_DXVK_includes
+        ${DXVK_INCLUDE_DIR}/directx
+        ${SDL2_INCLUDE_DIR}
+    )
+    set(Orbiter_DXVK_libs
+        ${SDL2_LIBS}
+    )
+    set(Orbiter_Win32GDI_libs
+    )
+    set(Orbiter_RenderWin_src
+        SDL2RenderWindowFactory.cpp
+    )
+else()
+    set(Orbiter_DXVK_includes
+    )
+    set(Orbiter_DXVK_libs
+    )
+    set(Orbiter_Win32GDI_libs
+        Winmm.dll
+        comctl32.lib
+        UxTheme.lib
+    )
+    set(Orbiter_RenderWin_src
+        Win32RenderWindowFactory.cpp
+    )
+endif()
+
 if(ORBITER_SDL_INPUT)
-    set(Orbiter_defines
+    set(Orbiter_input_defines
         CONFIG_SDL_INPUT=1
         CONFIG_DIRECT_INPUT=0
     )
     set(Orbiter_dinput_libs)
 else()
-    set(Orbiter_defines
+    set(Orbiter_input_defines
         CONFIG_SDL_INPUT=0
         CONFIG_DIRECT_INPUT=1
     )
@@ -215,6 +240,7 @@ if(BUILD_ORBITER_DX7)
 	add_executable(Orbiter
 		${common_src}
 		${graphics_src}
+        ${Orbiter_RenderWin_src}
 	)
 
     if (MSVC)
@@ -234,14 +260,17 @@ if(BUILD_ORBITER_DX7)
 
 	target_include_directories(Orbiter PUBLIC
 		${Orbiter_includes}
+        ${Orbiter_DXVK_includes}
 	)
 
     target_compile_definitions(Orbiter PUBLIC
-        ${Orbiter_defines}
+        ${Orbiter_input_defines}
     )
 	
 	target_link_libraries(Orbiter
 		${Orbiter_common_libs}
+        ${Orbiter_Win32GDI_libs}
+        ${Orbiter_DXVK_libs}
 		${Orbiter_dx7_libs}
         ${Orbiter_dinput_libs}
 	)
@@ -279,10 +308,12 @@ if(BUILD_ORBITER_SERVER)
     add_library(Orbiter_server_objects
         OBJECT
         ${common_src}
+        ${Orbiter_RenderWin_src}
     )
 
 	add_executable(Orbiter_server
         ${common_src}
+        ${Orbiter_RenderWin_src}
     )
 
     if(MSVC)
@@ -302,32 +333,38 @@ if(BUILD_ORBITER_SERVER)
 
 	target_include_directories(Orbiter_server_objects PUBLIC
 		${Orbiter_includes}
+        ${Orbiter_DXVK_includes}
 	)
 
     target_include_directories(Orbiter_server PUBLIC
         ${Orbiter_includes}
+        ${Orbiter_DXVK_includes}
     )
 
     target_compile_definitions(Orbiter_server_objects PUBLIC
-        ${Orbiter_defines}
+        ${Orbiter_input_defines}
         NOGRAPHICS
         DIRECTINPUT_VERSION=0x0800
     )
 
     target_compile_definitions(Orbiter_server PUBLIC
-        ${Orbiter_defines}
+        ${Orbiter_input_defines}
         NOGRAPHICS
         DIRECTINPUT_VERSION=0x0800
     )
 
 	target_link_libraries(Orbiter_server_objects
 		${Orbiter_common_libs}
-		${Orbiter_server_libs}
+		${Orbiter_Win32GDI_libs}
+        ${Orbiter_DXVK_libs}
+        ${Orbiter_server_libs}
         ${Orbiter_dinput_libs}
 	)
 
     target_link_libraries(Orbiter_server
         ${Orbiter_common_libs}
+		${Orbiter_Win32GDI_libs}
+        ${Orbiter_DXVK_libs}
         ${Orbiter_server_libs}
         ${Orbiter_dinput_libs}
     )

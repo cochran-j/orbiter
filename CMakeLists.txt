@@ -307,7 +307,6 @@ endif()
 if(ORBITER_DXVK)
     find_package(SDL2 REQUIRED)
     find_package(DXVK REQUIRED)
-    find_package(SDL2 REQUIRED)
 
     set(DXVK_LIB_DIR
         ${DXVK_LIB_DIR}
@@ -323,6 +322,18 @@ if(ORBITER_DXVK)
         "DXVK header files"
     )
     message(INFO "DXVK_INCLUDE_DIR ${DXVK_INCLUDE_DIR}")
+    set(SDL2_LIBS
+        ${SDL2_LIBRARIES}
+        CACHE
+        PATH
+        "SDL2 native libraries"
+    )
+    set(SDL2_INCLUDE_DIR
+        ${SDL2_INCLUDE_DIRS}
+        CACHE
+        PATH
+        "SDL2 header files"
+    )
     set(WIN32_INCLUDE_DIR
         ${DXVK_INCLUDE_DIR}/windows
     )

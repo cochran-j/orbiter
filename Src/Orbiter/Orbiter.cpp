@@ -84,6 +84,7 @@
 #include "ConsoleManager.h"
 #include "Input.h"
 #include "DllCompat.h"
+#include "ServiceLocator.h"
 
 #ifdef INLINEGRAPHICS
 #include "OGraphics.h"
@@ -177,6 +178,16 @@ InputBox        *g_input = 0;          // global input box resource
 PlanetarySystem *g_psys = 0;
 Vessel          *g_focusobj = 0;       // current vessel with input focus
 Vessel          *g_pfocusobj = 0;      // previous vessel with input focus
+
+// Implement global getter for services.
+// Only this file can "provide" services, but many modules can use the
+// services.
+orbiter::ServiceLocator g_services {};
+namespace orbiter {
+    const ServiceLocator& getService() {
+        return g_services;
+    }
+}
 
 char DBG_MSG[256] = "";
 
@@ -515,8 +526,13 @@ bool Orbiter::InitializeWorld (char *name)
 		g_pane = new Pane (gclient, hRenderWnd, viewW, viewH, viewBPP); TRACENEW
 	if (g_camera) delete g_camera;
 	g_camera = new Camera (g_nearplane, g_farplane); TRACENEW
+    g_services.provideCamera(g_camera);
 	g_camera->ResizeViewport (viewW, viewH);
-	if (g_psys) delete g_psys;
+	if (g_psys) {
+        delete g_psys;
+        g_psys = nullptr;
+        g_services.providePSys(nullptr);
+    }
 
 	auto outputCallback = [](const char* msg, int line, void* callbackContext) 
 	{ 
@@ -525,6 +541,7 @@ bool Orbiter::InitializeWorld (char *name)
 	};
 
 	g_psys = new PlanetarySystem(name, pConfig, outputCallback, this); TRACENEW
+    g_services.providePSys(g_psys);
 	if (!g_psys->nObj()) {  // sanity check
 		DestroyWorld();
 		return false;
@@ -538,8 +555,16 @@ bool Orbiter::InitializeWorld (char *name)
 
 VOID DestroyWorld ()
 {
-	if (g_camera) { delete g_camera; g_camera = 0; }
-	if (g_psys)   { delete g_psys;   g_psys = 0; }
+	if (g_camera) {
+        delete g_camera;
+        g_camera = nullptr;
+        g_services.provideCamera(nullptr); 
+    }
+	if (g_psys)   {
+        delete g_psys;
+        g_psys = nullptr;
+        g_services.providePSys(nullptr);
+    }
 }
 
 //=============================================================================
@@ -553,6 +578,8 @@ VOID DestroyWorld ()
 //-----------------------------------------------------------------------------
 Orbiter::Orbiter ()
 {
+    g_services.provideOrbiter(this);
+
 	// override base class defaults
     //m_bAppUseZBuffer  = TRUE;
     //m_fnConfirmDevice = ConfirmDevice;
@@ -578,6 +605,7 @@ Orbiter::Orbiter ()
 # endif
 #endif
 	pConfig         = new Config; TRACENEW
+    g_services.provideConfig(pConfig);
 	pState          = NULL;
 	m_pLaunchpad    = NULL;
 	pDlgMgr         = NULL;
@@ -774,7 +802,10 @@ VOID Orbiter::CloseApp (bool fast_shutdown)
 		}
 #endif
 		if (memstat) delete memstat;
-		if (pConfig)  delete pConfig;
+		if (pConfig) {
+            delete pConfig;
+            g_services.provideConfig(nullptr);
+        }
 		if (m_pLaunchpad) delete m_pLaunchpad;
         /* TODO(jec)
 		if (hBk) DestroyWindow (hBk);
@@ -1072,7 +1103,9 @@ HWND Orbiter::CreateRenderWindow (Config *pCfg, const char *scenario)
 		// global dialog resources
 		InlineDialog::GlobalInit (gclient);
 		g_select = new Select (gclient, hRenderWnd); TRACENEW
+        g_services.provideSelectBox(g_select);
 		g_input = new InputBox (gclient, hRenderWnd, 256); TRACENEW
+        g_services.provideInputBox(g_input);
 		
 		// playback screen annotation manager
 		snote_playback = gclient->clbkCreateAnnotation ();
@@ -1215,8 +1248,16 @@ void Orbiter::CloseSession ()
 		}
 		InlineDialog::GlobalExit (gclient);
 
-		if (g_input)  { delete g_input; g_input = 0; }
-		if (g_select) { delete g_select; g_select = 0; }
+		if (g_input)  {
+            delete g_input;
+            g_input = nullptr;
+            g_services.provideInputBox(nullptr);
+        }
+		if (g_select) { 
+            delete g_select;
+            g_select = nullptr;
+            g_services.provideSelectBox(nullptr);
+        }
 		if (g_pane) { delete g_pane;   g_pane = 0; }
 		if (pDlgMgr)  { delete pDlgMgr; pDlgMgr = 0; }
 		Instrument::GlobalExit (gclient);
@@ -3026,6 +3067,8 @@ void Orbiter::BroadcastBufferedKeyboardEvent (char *kstate, const std::vector<I_
 	}
 }
 
+/* NOTE(jec):  MsgProc()  now moved to Win32RenderWindowFactory.
+ *
 //-----------------------------------------------------------------------------
 // Name: MsgProc()
 // Desc: Render window message handler
@@ -3035,7 +3078,6 @@ LRESULT Orbiter::MsgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	WORD kmod;
 
-    /* TODO(jec)
 	switch (uMsg) {
 
 	case WM_ACTIVATE:
@@ -3176,8 +3218,8 @@ LRESULT Orbiter::MsgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         break;
 	}
     return DefWindowProc (hWnd, uMsg, wParam, lParam);
-    */
 }
+*/
 
 //-----------------------------------------------------------------------------
 // Name: ActivateRoughType()
