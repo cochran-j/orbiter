@@ -73,6 +73,9 @@ set(SourceFiles
 	WindowMgr.cpp
 	ZTreeMgr.cpp
 	Tilemgr2_imp.hpp
+    D3DXCompat.cpp
+    TextureImage.cpp
+    DDSTextureImage.cpp
 )
 
 set(IncludeFiles

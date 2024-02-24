@@ -456,40 +456,34 @@ HRESULT CD3DFramework9::Initialize(HWND _hWnd, GraphicsClient::VIDEODATA *vData)
 
 	// Setup some default fonts
 	//
+    /* TODO(jec):  Skip all fonts
 	D3DXFONT_DESC fontDesc;
 	fontDesc.Height          = 30;
 	fontDesc.Width           = 22;
-    /*TODO(jec)
 	fontDesc.Weight          = FW_BOLD;
-    */
 	fontDesc.MipLevels       = 0;
 	fontDesc.Italic          = false;
-    /* TODO(Jec)
 	fontDesc.CharSet         = DEFAULT_CHARSET;
 	fontDesc.OutputPrecision = OUT_DEFAULT_PRECIS;
 	fontDesc.Quality         = ANTIALIASED_QUALITY;
 	fontDesc.PitchAndFamily  = DEFAULT_PITCH | FF_DONTCARE;
-    */
 	strcpy(fontDesc.FaceName, "Arial");
 
 	HR(D3DXCreateFontIndirect(pDevice, &fontDesc, &pLargeFont));
 
 	fontDesc.Height          = 16;
 	fontDesc.Width           = 10;
-    /* TODO(jec)
 	fontDesc.Weight          = FW_NORMAL;
-    */
 	fontDesc.MipLevels       = 0;
 	fontDesc.Italic          = false;
-    /* TODO(jec)
 	fontDesc.CharSet         = DEFAULT_CHARSET;
 	fontDesc.OutputPrecision = OUT_DEFAULT_PRECIS;
 	fontDesc.Quality         = ANTIALIASED_QUALITY;
 	fontDesc.PitchAndFamily  = DEFAULT_PITCH | FF_DONTCARE;
-    */
 	strcpy(fontDesc.FaceName, "Arial");
 
 	HR(D3DXCreateFontIndirect(pDevice, &fontDesc, &pSmallFont));
+    */
 
 	LogAlw("=== [3DDevice Initialized] ===");
 	return S_OK;
