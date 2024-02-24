@@ -7,3 +7,12 @@
 [submodule "Extern/Catch2"]
 	path = Extern/Catch2
 	url = https://github.com/orbitersim/Catch2.git
+[submodule "Extern/DirectXTK"]
+	path = Extern/DirectXTK
+	url = https://github.com/microsoft/DirectXTK.git
+[submodule "Extern/DirectXTex"]
+	path = Extern/DirectXTex
+	url = https://github.com/microsoft/DirectXTex.git
+[submodule "Extern/DirectXMath"]
+	path = Extern/DirectXMath
+	url = https://github.com/microsoft/DirectXMath.git
