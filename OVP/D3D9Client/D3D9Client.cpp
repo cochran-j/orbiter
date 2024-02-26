@@ -46,6 +46,7 @@
 #include "gcCore.h"
 #include "gcConst.h"
 #include "DXVKExtensions.h"
+#include "WinCompat.h"
 
 
 #if defined(_MSC_VER) && (_MSC_VER <= 1700 ) // Microsoft Visual Studio Version 2012 and lower
@@ -412,8 +413,8 @@ HWND D3D9Client::clbkCreateRenderWindow()
 	}
 
 	RECT rect;
+    d3d9client::GetWindowDims(hRenderWnd, &rect);
     /* TODO(jec)
-	GetClientRect(hRenderWnd, &rect);
 	HDC hWnd = GetDC(hRenderWnd);
 	HBRUSH hBr = CreateSolidBrush(RGB(0,0,0));
 	FillRect(hWnd, &rect, hBr);
@@ -1271,9 +1272,7 @@ static void FixOutOfScreenPositions (const HWND *hWnd, DWORD count)
 		for (DWORD i=0; i<count; ++i)
 		{
 			RECT rect;
-            /* TODO(jec)
-			GetWindowRect(hWnd[i], &rect);
-            */
+            d3d9client::GetWindowDimsWithBorders(hWnd[i], &rect);
 
 			int x = -1, y, w, h; // x != -1 indicates "position change needed"
 			if (rect.left < 0) {
@@ -2912,9 +2911,7 @@ void D3D9Client::SplashScreen()
 
 	RECT rS;
 
-    /* TODO(jec)
-	GetWindowRect(hRenderWnd, &rS);
-    */
+    d3d9client::GetWindowDimsWithBorders(hRenderWnd, &rS);
 
 	LogAlw("Splash Window Size = [%u, %u]", rS.right - rS.left, rS.bottom - rS.top);
 	LogAlw("Splash Window LeftTop = [%d, %d]", rS.left, rS.top);

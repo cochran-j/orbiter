@@ -76,6 +76,7 @@ set(SourceFiles
     D3DXCompat.cpp
     TextureImage.cpp
     DDSTextureImage.cpp
+    WinCompat.cpp
 )
 
 set(IncludeFiles
@@ -192,10 +193,6 @@ target_link_libraries(D3D9Client
     # TODO(jec)
     # ${ORBITER_LIB}
     ${ORBITER_SDK_LIB}
-    # TODO(jec) if not DXVK mode
-    # d3d9.lib
-    # debug d3dx9d.lib
-    # optimized d3dx9.lib
 
     # TODO(jec):  Should delete most of these
     #             Replace some of the codlg and commctl stuff with Widgets.
@@ -233,7 +230,7 @@ if(ORBITER_DXVK)
     )
     target_link_libraries(D3D9Client
         dxvk_d3d9
-        # TODO(jec)
+        # TODO(jec): Remove all d3dx9 dependency
         # d3dx9
     )
 else()
@@ -242,8 +239,9 @@ else()
     )
     target_link_libraries(D3D9Client
         d3d9.lib
-        debug d3dx9d.lib
-        d3dx9.lib
+        # TODO(jec):  Remove
+        #debug d3dx9d.lib
+        #optimized d3dx9.lib
         uuid.lib
     )
 endif()

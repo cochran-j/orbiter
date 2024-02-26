@@ -20,6 +20,7 @@
 #include "Log.h"
 #include "D3D9Config.h"
 #include "OapiExtension.h"
+#include "WinCompat.h"
 
 #include <thread>
 #include <chrono>
@@ -206,6 +207,11 @@ HRESULT CD3DFramework9::Initialize(HWND _hWnd, GraphicsClient::VIDEODATA *vData)
 			case 1:
 			{
 				dwDisplayMode = 1;
+                int x = 0;
+                int y = 0;
+                d3d9client::GetPrimaryScreenSize(&x, &y);
+                d3d9client::MoveWindowDims(hWnd, 0, 0, x, y);
+
                 /* TODO(jec)
 				int x = GetSystemMetrics(SM_CXSCREEN);
 				int y = GetSystemMetrics(SM_CYSCREEN);
@@ -221,7 +227,13 @@ HRESULT CD3DFramework9::Initialize(HWND _hWnd, GraphicsClient::VIDEODATA *vData)
 			case 2:
 			{
 				dwDisplayMode = 1;
-				RECT rect;
+				RECT rect {};
+                d3d9client::GetPrimaryScreenSizeLessTaskbar(&rect.right,
+                                                            &rect.bottom);
+                d3d9client::MoveWindowDims(hWnd,
+                                           rect.left, rect.top,
+                                           rect.right, rect.bottom);
+
                 /* TODO(jec)
 				SystemParametersInfo(SPI_GETWORKAREA,0,&rect,0);
 				SetWindowLongA(hWnd, GWL_STYLE, WS_CLIPCHILDREN | WS_VISIBLE);
@@ -499,6 +511,10 @@ HRESULT CD3DFramework9::CreateFullscreenMode()
 
 	// Get the dimensions of the screen bounds
 	// Store the rectangle which contains the renderer
+    rcScreenRect.left = 0;
+    rcScreenRect.top = 0;
+    rcScreenRect.right = dwRenderWidth;
+    rcScreenRect.bottom = dwRenderHeight;
     /* TODO(jec)
 	SetRect(&rcScreenRect, 0, 0, dwRenderWidth, dwRenderHeight);
     */
@@ -566,9 +582,7 @@ HRESULT CD3DFramework9::CreateWindowedMode()
 	_TRACE;
 
 	// Get the dimensions of the viewport and screen bounds
-    /* TODO(jec)
-	GetClientRect(hWnd, &rcScreenRect);
-    */
+    d3d9client::GetWindowDims(hWnd, &rcScreenRect);
 	
 	// What is this ?!!
 	//ClientToScreen(hWnd, (POINT*)&rcScreenRect.left);

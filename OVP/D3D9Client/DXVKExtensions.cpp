@@ -30,4 +30,7 @@ void exit_DXVK() {
 
 }
 
+
+
+
 #endif /* ORBITER_DXVK */
