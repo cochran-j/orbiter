@@ -182,6 +182,9 @@ target_include_directories(D3D9Client PUBLIC
 	${ORBITER_SOURCE_SDK_INCLUDE_DIR}
 	${DXSDK_DIR}/Include
     ${WIN32_INCLUDE_DIR}
+    #${DIRECTXMATH_INCLUDE_DIR}
+    ${CMAKE_SOURCE_DIR}/Extern/DirectXMath/Inc
+    ${CMAKE_SOURCE_DIR}/Extern/SAL
 )
 
 target_link_directories(D3D9Client PUBLIC

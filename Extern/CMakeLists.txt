@@ -57,3 +57,27 @@ install(TARGETS zlib
 if(ORBITER_MAKE_TESTS)
     add_subdirectory(Catch2)
 endif()
+
+
+#########################################
+## DirectXTK and DirectXTex.
+## Designated replacements for D3DX.
+if(ORBITER_BUILD_D3D9CLIENT)
+    add_subdirectory(DirectXMath)
+
+    set(DIRECTXMATH_INCLUDE_DIR
+        ${CMAKE_SOURCE_DIR}/Extern/DirectXMath/Inc
+    )
+    # WARN(jec):  DirectXTK is not very portable.
+    # DirectXTK shader build uses cmd batch script.
+    #set(USE_PREBUILT_SHADERS ON CACHE BOOL
+    #"build shaders separately"
+    #FORCE)
+    #add_subdirectory(DirectXTK)
+    #target_include_directories(DirectXTK PRIVATE
+    #${WIN32_INCLUDE_DIR}
+    #${DXVK_INCLUDE_DIR}/directx
+    #${CMAKE_SOURCE_DIR}/Extern/DirectXMath/Inc
+    #${CMAKE_SOURCE_DIR}/Extern/SAL
+    #)
+endif()

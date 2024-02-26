@@ -21,6 +21,7 @@
 #include "VectorHelpers.h"
 #include "Log.h"
 
+#include "DirectXMath.h"
 /* TODO(jec)
 #pragma warning(push)
 #pragma warning(disable : 4838)
@@ -29,28 +30,48 @@
 */
 
 using std::min;
+using namespace DirectX;
 
 // =================================================================================================================================
 //
 bool SolveLUSystem(int n, double *A, double *b, double *x, double *det)
-{		
-	int e=0, *p = new int[n]; 
-	for (int i=0;i<n;i++) p[i] = i;
+{
+	int e=0, *p = new int[n];
+
+	for (int i=0;i<n;i++) {
+        p[i] = i;
+    }
+
 	for (int k=0;k<n;k++) {
-		int r = 0; double d = 0.0; 
-		for (int s=k;s<n;s++) if (fabs(A[s*n+k])>d) { d = fabs(A[s*n+k]); r = s; }
-		if (d == 0.0) { LogErr("Singular Matrix in SolveLUSystem()"); delete []p; p = NULL; return false; }
+		int r = 0;
+        double d = 0.0;
+
+		for (int s=k;s<n;s++) {
+            if (fabs(A[s*n+k])>d) {
+                d = fabs(A[s*n+k]);
+                r = s;
+            }
+        }
+
+		if (d == 0.0) {
+            LogErr("Singular Matrix in SolveLUSystem()");
+            delete[] p;
+            p = nullptr;
+            return false;
+        }
+
 		if (r!=k) { // Do Swaps
 			for (int i=0;i<n;i++) { double x = A[k*n+i]; A[k*n+i] = A[r*n+i]; A[r*n+i] = x; } 
 			int x=p[k]; p[k]=p[r]; p[r]=x; e++;
 		}
 		for (int i=k+1;i<n;i++) { A[i*n+k]/=A[k*n+k]; for (int j=k+1;j<n;j++) A[i*n+j]-=(A[i*n+k]*A[k*n+j]); }
 	}
+
 	for (int i=0;i<n;i++) {	x[i] = b[p[i]];	for (int j=0;j<i;j++) x[i] -= A[i*n+j]*x[j]; }
 	for (int i=n-1;i>=0;i--) { for (int j=i+1;j<n;j++) x[i] -= A[i*n+j]*x[j]; x[i] /= A[i*n+i]; }
 	if (det) { *det = 1.0; for (int i=0;i<n;i++) *det *= A[i*n+i]; if (e&1) *det*=-1.0; } 
-	delete []p;
-	p = NULL;
+	delete[] p;
+	p = nullptr;
 	return true;
 }
 
@@ -61,7 +82,7 @@ D3DXVECTOR3 WorldPickRay(float x, float y, const LPD3DXMATRIX mProj, const LPD3D
 	y = float((y*2.0-1.0)/mProj->_22);
 	D3DXVECTOR3 pick(x, 1.0f, y);
 	D3DXMATRIX mViewI;
-	D3DXMatrixInverse(&mViewI, NULL, (const D3DXMATRIX *)&mView);
+	D3DXMatrixInverse(&mViewI, nullptr, (const D3DXMATRIX *)&mView);
 	D3DXVec3TransformNormal(&pick, &pick, &mViewI);
 	D3DXVec3Normalize(&pick, &pick);
 	return pick;
@@ -297,7 +318,6 @@ int D9ComputeMinMaxDistance(LPDIRECT3DDEVICE9 pDev, const D9BBox *in, const D3DX
 }
 
 
-/* TODO(jec)
 void D9UpdateAABB(D9BBox *box, const D3DXMATRIX *pFirst, const D3DXMATRIX *pSecond)
 {
 
@@ -334,12 +354,7 @@ void D9UpdateAABB(D9BBox *box, const D3DXMATRIX *pFirst, const D3DXMATRIX *pSeco
 
 	box->bs.w = XMVectorGetX(XMVector3Length(XMVectorSubtract(q,w))) * 0.5f;
 }
-*/
 
-
-
-	
-/* TODO(jec)
 void D9AddAABB(const D9BBox *in, const D3DXMATRIX *pM, D9BBox *out, bool bReset)
 {
 
@@ -390,7 +405,6 @@ void D9AddAABB(const D9BBox *in, const D3DXMATRIX *pM, D9BBox *out, bool bReset)
 	XMStoreFloat4((XMFLOAT4*)&out->min, mi);
 	XMStoreFloat4((XMFLOAT4*)&out->max, mx);
 }
-*/
 
 
 void EnvMapDirection(int dir, D3DXVECTOR3 *Dir, D3DXVECTOR3 *Up)
