@@ -26,7 +26,7 @@ class Base;
 class Nav {
 	friend class NavManager;
 public:
-	Nav (float _freq = 100.0, float _range = 500e3);
+	Nav (float _freq = NAV_RADIO_FREQ_MIN, float _range = 500e3);
 	virtual DWORD Type() const { return TRANSMITTER_NONE; }
 	void SetFreq (float _freq);
 	void SetStep (DWORD _step);
