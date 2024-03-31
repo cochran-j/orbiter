@@ -16,6 +16,13 @@ bool FindStandaloneDll(const std::filesystem::path& path,
                        const std::string_view& moduleName,
                        std::filesystem::path& composedPathOut) {
 
+    // If the "moduleName" is a real file, just try to load the file.
+    if (std::filesystem::exists(path / moduleName)) {
+        composedPathOut = path / moduleName;
+        return true;
+    }
+
+    // Otherwise compose a module DLL name from moduleName.
     composedPathOut = path / DLL::DLLPrefix;
     composedPathOut += moduleName;
     composedPathOut.replace_extension(DLLExt);
