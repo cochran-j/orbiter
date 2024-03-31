@@ -145,7 +145,7 @@ void ProcessPlanetFlats(OBJHANDLE hPlanet)
 	oapiGetObjectName(hPlanet, name.data(), name.size() - 6);
     fname = std::filesystem::path{name} / "Flat";
 	g_client->TexturePath(fname, fname_texpath);
-	auto files = EnumerateDirectory(fname_texpath, "flt");
+	auto files = EnumerateDirectory(fname_texpath, ".flt");
 	// Load all planet shapes
 	for (auto file : files)
 	{

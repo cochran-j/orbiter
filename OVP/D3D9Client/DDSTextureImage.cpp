@@ -478,8 +478,8 @@ bool DDSTextureImage::isFileTypeHandled
 
     try {
 
-        if ((filepath.extension() != "dds") &&
-            (filepath.extension() != "DDS")) {
+        if ((filepath.extension() != ".dds") &&
+            (filepath.extension() != ".DDS")) {
 
             return false;
         }
