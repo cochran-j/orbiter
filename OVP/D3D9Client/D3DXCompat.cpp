@@ -48,6 +48,11 @@ HRESULT D3DXCreateTexture(struct IDirect3DDevice9* device,
         height = width;
     }
 
+    if (miplevels == D3DX_DEFAULT) {
+        miplevels = 0;
+    }
+
+
     /* NOTE(jec):  Skipping validation from D3DXCheckTextureRequirements() */
 
     HRESULT hr = device->CreateTexture
@@ -84,6 +89,10 @@ HRESULT D3DXCreateVolumeTexture(struct IDirect3DDevice9* device,
         width = height;
     } else if (height == D3DX_DEFAULT) {
         height = width;
+    }
+
+    if (miplevels == D3DX_DEFAULT) {
+        miplevels = 0;
     }
 
     /* NOTE(jec):  Skipping validation checks */
@@ -146,7 +155,9 @@ HRESULT D3DXCreateTextureFromFileA(struct IDirect3DDevice9* device,
          D3DX_DEFAULT,
          0,
          D3DFMT_UNKNOWN,
-         D3DPOOL_MANAGED,
+         /* This is D3DPOOL_MANAGED in the MSDN docs.  But MANAGED pool is not
+          * valid with IDirect3dDevice9 */
+         D3DPOOL_DEFAULT,
          D3DX_DEFAULT,
          D3DX_DEFAULT,
          0,
@@ -183,6 +194,22 @@ HRESULT D3DXCreateTextureFromFileExA(struct IDirect3DDevice9* device,
     auto hr = texImage->loadFromFile(srcFile);
     if (hr != S_OK) {
         return hr;
+    }
+
+    if ((width == 0) || (width == D3DX_DEFAULT)) {
+        width = texImage->getWidth();
+    }
+
+    if ((height == 0) || (height == D3DX_DEFAULT)) {
+        height = texImage->getHeight();
+    }
+
+    if ((miplevels == 0) || (miplevels == D3DX_DEFAULT)) {
+        miplevels = texImage->getMipLevels();
+    }
+
+    if (format == D3DFMT_UNKNOWN) {
+        format = texImage->getFormat();
     }
 
     struct IDirect3DTexture9* mainTexture {nullptr};

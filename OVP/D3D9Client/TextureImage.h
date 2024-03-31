@@ -11,6 +11,7 @@
 
 #include <filesystem>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 
 #include <d3d9.h>
@@ -29,6 +30,11 @@ public:
     virtual HRESULT loadFromFile(const std::filesystem::path& filepath) = 0;
     virtual HRESULT loadFromBuffer
         (const void* fileBuf, std::size_t bufSize) = 0;
+
+    virtual std::uint32_t getWidth() const = 0;
+    virtual std::uint32_t getHeight() const = 0;
+    virtual std::uint32_t getMipLevels() const = 0;
+    virtual D3DFORMAT getFormat() const = 0;
 
     virtual HRESULT createTexture
         (struct IDirect3DDevice9* device,

@@ -536,7 +536,7 @@ HRESULT DDSTextureImage::loadFromFile
         return E_FAIL;
     }
 
-    return E_FAIL;
+    return S_OK;
 }
 
 HRESULT DDSTextureImage::loadFromBuffer
@@ -559,6 +559,22 @@ HRESULT DDSTextureImage::loadFromBuffer
     }
 
     return E_FAIL;
+}
+
+std::uint32_t DDSTextureImage::getWidth() const {
+    return pImpl->header.width;
+}
+
+std::uint32_t DDSTextureImage::getHeight() const {
+    return pImpl->header.height;
+}
+
+std::uint32_t DDSTextureImage::getMipLevels() const {
+    return pImpl->header.mipMapCount;
+}
+
+D3DFORMAT DDSTextureImage::getFormat() const {
+    return getD3DFormat(pImpl->header.ddspf);
 }
 
 HRESULT DDSTextureImage::createTexture

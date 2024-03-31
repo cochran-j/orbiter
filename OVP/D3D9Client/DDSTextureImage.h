@@ -11,6 +11,7 @@
 #include "TextureImage.h"
 
 #include <filesystem>
+#include <cstdint>
 #include <cstddef>
 #include <memory>
 
@@ -30,6 +31,11 @@ public:
 
     HRESULT loadFromFile(const std::filesystem::path& filepath) override;
     HRESULT loadFromBuffer(const void* fileBuf, std::size_t bufSize) override;
+
+    std::uint32_t getWidth() const override;
+    std::uint32_t getHeight() const override;
+    std::uint32_t getMipLevels() const override;
+    D3DFORMAT getFormat() const override;
 
     HRESULT createTexture
         (struct IDirect3DDevice9* device,
