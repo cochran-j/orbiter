@@ -211,10 +211,15 @@ target_link_libraries(D3D9Client
     # odbccp32.lib
     # version.lib
     # msimg32.lib
+
+    # TEST
+    stdc++fs
 )
 target_compile_definitions(D3D9Client PUBLIC
     D3D9CLIENT_EXPORTS
 )
+
+target_compile_features(D3D9Client PRIVATE cxx_std_17)
 
 if(ORBITER_DXVK)
     target_compile_definitions(D3D9Client PUBLIC
@@ -233,8 +238,6 @@ if(ORBITER_DXVK)
     )
     target_link_libraries(D3D9Client
         dxvk_d3d9
-        # TODO(jec): Remove all d3dx9 dependency
-        # d3dx9
     )
 else()
     target_compile_definitions(D3D9Client PUBLIC

@@ -1148,7 +1148,9 @@ D3D9Pad * SurfNative::GetPooledSketchPad()
 
 // -----------------------------------------------------------------------------------------------
 //
-bool NatCreateName(std::filesystem::path& out, std::filesystem::path& fname, const char* id)
+bool NatCreateName(std::filesystem::path& out,
+                   const std::filesystem::path& fname,
+                   const char* id)
 {
     out = std::filesystem::path{};
     out += fname.stem();

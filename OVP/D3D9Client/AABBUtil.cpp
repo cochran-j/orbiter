@@ -102,16 +102,14 @@ void D9InitAABB(D9BBox *box)
 }
 
 
-/* TODO(jec)
 void D9AddPointAABB(D9BBox *box, LPD3DXVECTOR3 point)
 {
 	XMVECTOR q = XMLoadFloat4((const XMFLOAT4*)&box->min);
 	XMVECTOR w = XMLoadFloat4((const XMFLOAT4*)&box->max);
 	XMVECTOR p = XMLoadFloat3((const XMFLOAT3*)point);
 	XMStoreFloat4((XMFLOAT4*)&box->min, XMVectorMin(q,p));
-	XMStoreFloat4((XMFLOAT4*)&box->max, XMVectorMax(w,p));	
+	XMStoreFloat4((XMFLOAT4*)&box->max, XMVectorMax(w,p));
 }
-*/
 
 
 D3DXVECTOR4 D9LinearFieldOfView(const D3DXMATRIX *pProj)
