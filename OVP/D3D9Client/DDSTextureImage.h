@@ -34,6 +34,7 @@ public:
 
     std::uint32_t getWidth() const override;
     std::uint32_t getHeight() const override;
+    std::uint32_t getDepth() const override;
     std::uint32_t getMipLevels() const override;
     D3DFORMAT getFormat() const override;
 

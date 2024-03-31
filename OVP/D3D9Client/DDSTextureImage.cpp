@@ -569,6 +569,10 @@ std::uint32_t DDSTextureImage::getHeight() const {
     return pImpl->header.height;
 }
 
+std::uint32_t DDSTextureImage::getDepth() const {
+    return pImpl->header.depth;
+}
+
 std::uint32_t DDSTextureImage::getMipLevels() const {
     return pImpl->header.mipMapCount;
 }

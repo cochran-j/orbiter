@@ -333,10 +333,32 @@ HRESULT D3DXCreateEffectFromFileExA(struct IDirect3DDevice9* /*device*/,
     return E_FAIL;
 }
 
-HRESULT D3DXGetImageInfoFromFileA(const char* /*srcFile*/,
-                                  D3DXIMAGE_INFO* /*srcInfo*/) {
+HRESULT D3DXGetImageInfoFromFileA(const char* srcFile,
+                                  D3DXIMAGE_INFO* srcInfo) {
 
-    return E_FAIL;
+    if (!srcFile || !srcInfo) {
+        return E_FAIL;
+    }
+
+    auto texImage = d3d9client::chooseTextureImage(srcFile);
+    if (!texImage) {
+        return E_FAIL;
+    }
+
+    auto hr = texImage->loadFromFile(srcFile);
+    if (hr != S_OK) {
+        return hr;
+    }
+
+    srcInfo->Width = texImage->getWidth();
+    srcInfo->Height = texImage->getHeight();
+    srcInfo->Depth = texImage->getDepth();
+    srcInfo->MipLevels = texImage->getMipLevels();
+    srcInfo->Format = texImage->getFormat();
+    srcInfo->ResourceType = D3DRTYPE_TEXTURE; // TODO: cube and volume textures
+    srcInfo->ImageFileFormat = D3DXIFF_DDS; // TODO: Other file formats.
+
+    return S_OK;
 }
 
 HRESULT D3DXLoadSurfaceFromFileA(struct IDirect3DSurface9* /*destSurface*/,

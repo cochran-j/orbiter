@@ -33,6 +33,7 @@ public:
 
     virtual std::uint32_t getWidth() const = 0;
     virtual std::uint32_t getHeight() const = 0;
+    virtual std::uint32_t getDepth() const = 0;
     virtual std::uint32_t getMipLevels() const = 0;
     virtual D3DFORMAT getFormat() const = 0;
 
