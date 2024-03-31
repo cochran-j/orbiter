@@ -24,3 +24,6 @@ set(CMAKE_CXX_FLAGS_RELEASE_INIT        "-flto=thin -O3 -D_FORTIFY_SOURCE=2 -DND
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-flto=thin -O3 -D_FORTIFY_SOURCE=2 -g")
 
 set(CMAKE_LD_FLAGS_INIT    "-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -Wl,--as-needed -Wl,-z,relro,-z,now")
+set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_LD_FLAGS_INIT})
+set(CMAKE_SHARED_LINKER_FLAGS ${CMAKE_LD_FLAGS_INIT})
+set(CMAKE_MODULE_LINKER_FLAGS ${CMAKE_LD_FLAGS_INIT})
