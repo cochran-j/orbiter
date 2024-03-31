@@ -23,6 +23,7 @@ using DOUBLE = double;
 #include "TextureImage.h"
 /* WARNING:  DirectXMath is not a nice header and has to go last. */
 #include "DirectXMath.h"
+#include "DirectXCollision.h"
 
 
 
@@ -414,14 +415,28 @@ HRESULT D3DXLoadSurfaceFromSurface(struct IDirect3DSurface9* /*destSurface*/,
 
 
 
-HRESULT D3DXComputeBoundingSphere(const D3DXVECTOR3* /*firstPosition*/,
-                                  DWORD /*numVertices*/,
-                                  DWORD /*dwStride */,
-                                  D3DXVECTOR3* /*center*/,
-                                  float* /*radius*/) {
+HRESULT D3DXComputeBoundingSphere(const D3DXVECTOR3* firstPosition,
+                                  DWORD numVertices,
+                                  DWORD dwStride,
+                                  D3DXVECTOR3* center,
+                                  float* radius) {
 
+    DirectX::BoundingSphere bs {};
+    bs.CreateFromPoints(bs,
+                        numVertices,
+                        reinterpret_cast<const DirectX::XMFLOAT3*>(firstPosition),
+                        dwStride);
 
-    return E_FAIL;
+    if (center) {
+        center->x = bs.Center.x;
+        center->y = bs.Center.y;
+        center->z = bs.Center.z;
+    }
+
+    if (radius) {
+        *radius = bs.Radius;
+    }
+    return S_OK;
 }
 
 HRESULT D3DXCompileShaderFromFileA(const char* /*srcFile*/,
