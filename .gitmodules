@@ -16,3 +16,7 @@
 [submodule "Extern/DirectXMath"]
 	path = Extern/DirectXMath
 	url = https://github.com/microsoft/DirectXMath.git
+[submodule "Extern/DirectXShaderCompiler"]
+	path = Extern/DirectXShaderCompiler
+	url = https://github.com/microsoft/DirectXShaderCompiler.git
+	branch = release-1.8.2403

@@ -68,6 +68,14 @@ if(ORBITER_BUILD_D3D9CLIENT)
     set(DIRECTXMATH_INCLUDE_DIR
         ${CMAKE_SOURCE_DIR}/Extern/DirectXMath/Inc
     )
+
+    include(${CMAKE_SOURCE_DIR}/Extern/DirectXShaderCompiler/cmake/caches/PredefinedParams.cmake)
+    # Create build targets for tools, but don't actually build them.
+    # If we build them, for some reason we can't install llvm-as.
+    # (It doesn't get built--disabled by MSFT).
+    set(LLVM_INCLUDE_TOOLS ON) # Needed for something (unittests?)
+    set(LLVM_BUILD_TOOLS OFF)
+    add_subdirectory(DirectXShaderCompiler)
     # WARN(jec):  DirectXTK is not very portable.
     # DirectXTK shader build uses cmd batch script.
     #set(USE_PREBUILT_SHADERS ON CACHE BOOL
