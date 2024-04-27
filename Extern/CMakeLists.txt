@@ -75,7 +75,13 @@ if(ORBITER_BUILD_D3D9CLIENT)
     # (It doesn't get built--disabled by MSFT).
     set(LLVM_INCLUDE_TOOLS ON) # Needed for something (unittests?)
     set(LLVM_BUILD_TOOLS OFF)
+    set(LLVM_INSTALL_TOOLCHAIN_ONLY ON)
     add_subdirectory(DirectXShaderCompiler)
+    # Hack the install location of dxcompiler to Modules/PLugins
+    install(TARGETS dxcompiler
+        DESTINATION ${ORBITER_INSTALL_ROOT_DIR}
+        COMPONENT dxcompiler
+    )
     # WARN(jec):  DirectXTK is not very portable.
     # DirectXTK shader build uses cmd batch script.
     #set(USE_PREBUILT_SHADERS ON CACHE BOOL
