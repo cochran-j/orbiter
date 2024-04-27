@@ -185,6 +185,7 @@ target_include_directories(D3D9Client PUBLIC
     #${DIRECTXMATH_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/Extern/DirectXMath/Inc
     ${CMAKE_SOURCE_DIR}/Extern/SAL
+    ${CMAKE_SOURCE_DIR}/Extern/DirectXShaderCompiler/include
 )
 
 target_link_directories(D3D9Client PUBLIC
@@ -214,6 +215,8 @@ target_link_libraries(D3D9Client
 
     # TEST
     stdc++fs
+
+    dxcompiler
 )
 target_compile_definitions(D3D9Client PUBLIC
     D3D9CLIENT_EXPORTS
@@ -232,9 +235,6 @@ if(ORBITER_DXVK)
     target_link_directories(D3D9Client PUBLIC
         ${DXVK_LIB_DIR}
         ${SDL2_LIB_DIR}
-    )
-    target_compile_definitions(D3D9Client PUBLIC
-        CONFIG_DXVK=1
     )
     target_link_libraries(D3D9Client
         dxvk_d3d9
