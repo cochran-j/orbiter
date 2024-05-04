@@ -77,6 +77,7 @@ set(SourceFiles
     TextureImage.cpp
     DDSTextureImage.cpp
     WinCompat.cpp
+    DxcCompat.cpp
 )
 
 set(IncludeFiles

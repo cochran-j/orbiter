@@ -18,13 +18,16 @@ using DOUBLE = double;
 
 #include <cstddef>
 #include <cmath>
+#include <vector>
+#include <fstream>
 #include <d3dx9.h>
 
 #include "TextureImage.h"
+#include "DxcCompat.h"
 /* WARNING:  DirectXMath is not a nice header and has to go last. */
 #include "DirectXMath.h"
 #include "DirectXCollision.h"
-
+#include "dxc/dxcapi.h"
 
 
 HRESULT D3DXCreateTexture(struct IDirect3DDevice9* device,
@@ -439,16 +442,111 @@ HRESULT D3DXComputeBoundingSphere(const D3DXVECTOR3* firstPosition,
     return S_OK;
 }
 
-HRESULT D3DXCompileShaderFromFileA(const char* /*srcFile*/,
+HRESULT D3DXCompileShaderFromFileA(const char* srcFile,
                                    const D3DXMACRO* /*defines*/,
                                    struct ID3DXInclude* /*include*/,
                                    const char* /*functionName*/,
                                    const char* /*profile*/,
                                    DWORD /*flags*/,
-                                   struct ID3DXBuffer** /*shader*/,
-                                   struct ID3DXBuffer** /*errorMsgs*/,
-                                   struct ID3DXConstantTable** /*constantTable*/) {
+                                   struct ID3DXBuffer** shader,
+                                   struct ID3DXBuffer** errorMsgs,
+                                   struct ID3DXConstantTable** constantTable) {
+    if (!srcFile) {
+        return E_FAIL;
+    }
 
+    std::ifstream ifs {srcFile};
+    if (!ifs.is_open()) {
+        return E_FAIL;
+    }
+
+    /* Read srcFile into DxcBuffer. */
+    d3d9client::StringDxcBuffer srcFileBuf {ifs};
+    ifs.close();
+
+    /* Create an IDxcCompiler3 */
+    IDxcCompiler3* compiler {nullptr};
+    HRESULT hr = DxcCreateInstance(CLSID_DxcCompiler,
+                                   uuidof(IDxcCompiler3),
+                                   reinterpret_cast<void**>(&compiler));
+
+    if (hr != S_OK) {
+        return hr;
+    }
+    if (!compiler) {
+        return E_FAIL;
+    }
+
+    /* Function name, profile and flags? */
+    /* Deal with includes -- Not actually in use in this program. */
+
+    /* Get an IDxcResult */
+    IDxcResult* result {nullptr};
+    hr = compiler->Compile(&srcFileBuf.dxcBuffer(),
+                           nullptr, // no arguments
+                           0,       // arg count
+                           nullptr, // No include handler.
+                           uuidof(IDxcResult),
+                           reinterpret_cast<void**>(&result));
+
+    if (hr != S_OK) {
+        compiler->Release();
+        return hr;
+    }
+    if (!result) {
+        compiler->Release();
+        return E_FAIL;
+    }
+
+    /* Map back to ID3DXBuffers */
+    if (shader) {
+        IDxcBlob* shaderBlob {nullptr};
+        hr = result->GetOutput(DXC_OUT_OBJECT,
+                               uuidof(IDxcBlob),
+                               reinterpret_cast<void**>(&shaderBlob),
+                               nullptr);
+        if (hr != S_OK) {
+            result->Release();
+            compiler->Release();
+            return hr;
+        }
+        if (!shaderBlob) {
+            result->Release();
+            compiler->Release();
+            return E_FAIL;
+        }
+
+        auto shaderBuffer = new d3d9client::DxcBlob_D3DXBuffer{shaderBlob};
+        shaderBlob->Release(); // We no longer need shaderBlob.
+        *shader = shaderBuffer; // Passing ownership.
+    }
+
+    if (errorMsgs) {
+        IDxcBlobUtf8* errorMsgBlob {nullptr};
+        hr = result->GetOutput(DXC_OUT_ERRORS,
+                               uuidof(IDxcBlobUtf8),
+                               reinterpret_cast<void**>(&errorMsgBlob),
+                               nullptr);
+        if (hr != S_OK) {
+            result->Release();
+            compiler->Release();
+            return hr;
+        }
+        if (!errorMsgBlob) {
+            result->Release();
+            compiler->Release();
+            return hr;
+        }
+
+        auto errorMsgBuffer =
+            new d3d9client::DxcBlobUtf8_D3DXBuffer{errorMsgBlob};
+        errorMsgBlob->Release(); // We no longer need errorMsgBlob.
+        *errorMsgs = errorMsgBuffer; // Passing ownership.
+    }
+
+    if (constantTable) {
+        /* TODO(jec):  Do we actually need this?  It's a lot of methods. */
+    }
 
     return E_FAIL;
 }
